@@ -31,18 +31,23 @@ class SidebarMenuComponent extends HTMLElement {
   }
 
   get items() {
+    // return [
+    //   { path: '/inicio', label: 'Inicio', icon: 'home' },
+    //   { path: '/formularios', label: 'Formularios', icon: 'file-text' },
+    //   { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
+    //   { path: '/tareas', label: 'Tareas', icon: 'check' }
+    // ];
     return [
-      { path: '/inicio', label: 'Inicio', icon: 'home' },
-      { path: '/formularios', label: 'Formularios', icon: 'file-text' },
-      { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
-      { path: '/tareas', label: 'Tareas', icon: 'check' }
+      { path: '/inicio', label: 'Inicio', icon: 'home' },      
+      { path: '/puntos-interes', label: 'Supervisión', icon: 'comments' },      
     ];
   }
 
   get sentItems() {
-    return [
-      { path: '/timeline', label: 'Bandeja de salida', icon: 'clock' }
-    ];
+    // return [
+    //   { path: '/timeline', label: 'Bandeja de salida', icon: 'clock' }
+    // ];
+    return [];
   }
 
   get syncItem() {
@@ -308,8 +313,8 @@ class SidebarMenuComponent extends HTMLElement {
               </span>-->
             </div>
             <div class="uk-width-expand" data-role="brand-text">
-              <div class="uk-text-bold sidebar-menu-component-title">Movilzandome lite</div>
-              <div class="uk-text-meta sidebar-menu-component-subtitle">Movilizando tu productividad</div>
+              <div class="uk-text-bold sidebar-menu-component-title">SVG Supervisión</div>
+              <div class="uk-text-meta sidebar-menu-component-subtitle">Observando tu entorno</div>
             </div>
           </div>
 

@@ -129,7 +129,7 @@ export function renderInicioLayout(container, options = {}) {
 
         <main class="inicio-main uk-padding-small">
           <header-component
-            nombre-cliente="Movilizandome"
+            nombre-cliente="SVG - Supervisión"
             razon-social="Air Logistic S.A. de C.V."
             nombre-usuario="${userState.nombre_completo || userState.usuario || 'Usuario'}"
             rol-usuario="${userState.usuario ? userState.usuario : ''}"

@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 
 const APIS_ME_BASE_URL = import.meta.env.DEV
-  ? 'http://localhost:8091/apis_me'
+  ? 'http://localhost:8070/apis_me'
   : '/apis_me';
 
 function normalizePath(path) {

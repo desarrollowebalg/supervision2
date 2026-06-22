@@ -36,9 +36,9 @@ export default class LoginPage {
     container.innerHTML = `
       <div class="uk-card uk-card-default uk-card-body uk-width-large uk-box-shadow-large fade-in uk-border-rounded">
         <h2 class="uk-card-title uk-text-center">
-          <span uk-icon="icon: location; ratio: 2"></span>
+          <span uk-icon="icon: video-camera; ratio: 2"></span>
           <br>
-          Movilizandome
+          Supervisión
         </h2>
         <p class="uk-text-center uk-text-muted">---</p>
 
