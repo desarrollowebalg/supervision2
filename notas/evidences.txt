@@ -1,0 +1,17 @@
+Agente responsable: api-action-agent.
+Listo, ya quedó creada la nueva estructura en apis_me/evidences para recibir ambos tipos de JSON por separado:
+Texto: /apis_me/evidences/save-text/
+Fotografías: /apis_me/evidences/save-photos/
+Archivos creados:
+apis_me/evidences/.htaccess
+apis_me/evidences/index.php
+apis_me/evidences/actions.php
+apis_me/evidences/apiEvidences.class.php
+Qué hace esta primera versión:
+Recibe POST con Content-Type: application/json.
+Valida sesión (ID_CLIENTE, ID_USUARIO) igual que los módulos API actuales.
+Valida campos requeridos por acción:save-text: formRef, savedAt, answers
+save-photos: formRef, savedAt, photos
+
+Responde en formato uniforme (status, success, message, data).
+Por ahora solo recibe/valida y regresa el payload con metadata (idCliente, idUsuario, receivedAt) para procesamiento posterior.

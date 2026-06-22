@@ -1,0 +1,30 @@
+RewriteEngine On
+
+# Ensure service worker is always revalidated
+<IfModule mod_headers.c>
+  <Files "sw.js">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </Files>
+</IfModule>
+
+# PWA / assets que nunca deben pasar por index.php
+RewriteRule ^sw\.js$ - [L]
+RewriteRule ^manifest\.webmanifest$ dist/manifest.webmanifest [L]
+RewriteRule ^workbox-.*\.js$ - [L]
+RewriteRule ^registerSW\.js$ dist/registerSW.js [L]
+RewriteRule ^js/(.*)$ dist/js/$1 [L]
+RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
+RewriteRule ^dist/ - [L]
+RewriteRule ^errors/ - [L]
+RewriteRule ^.+\.[A-Za-z0-9]+$ - [L]
+
+# Evitar que las reglas afecten a archivos o carpetas reales
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^([^/]+)/([^/]+)/([^/]+)/([^/]+)/?$ index.php?m=$1&c=$2&i=$3&h=$4 [L,QSA]
+RewriteRule ^([^/]+)/([^/]+)/([^/]+)/?$ index.php?m=$1&c=$2&i=$3 [L,QSA]
+RewriteRule ^([^/]+)/([^/]+)/?$ index.php?m=$1&c=$2 [L,QSA]
+RewriteRule ^([^/]+)/?$ index.php?m=$1 [L,QSA]

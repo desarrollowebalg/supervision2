@@ -1,0 +1,39 @@
+<section class="contenedorLogoApp">
+  <user-avatar-enhanced
+    url={LOGO}
+    nombre="Supervisión"
+    size="60px"
+    shape="rounded">
+  </user-avatar-enhanced>
+</section>
+<div uk-navbar class="uk-flex-stretch alinearMenuApp">				
+  <ul class="uk-navbar-nav menuUsuarioApp uk-flex-column">
+    <li>
+      <a href="index.php?m=app&c=default" class="menuColorFuente" title="Regresar al inicio" uk-title>
+        <div class="estructuraItemMenu_Vertical">
+          <span class="material-icons iconoMenu">home</span>
+          <span class="descItemMenu">Home</span>
+        </div>
+      </a>
+    </li>
+    {MENU_USUARIO}
+  </ul>
+</div>
+<section class="contenedorImgPerfilUsuario">
+  <a href="#" class="uk-display-block uk-margin-small uk-text-center uk-text-decoration-none">
+    <user-avatar-enhanced
+      url="{FOTO_PERFIL_USUARIO}"
+      nombre="{NOMBRE_COMPLETO}"
+      size="50px"
+      status="online"
+      clv="{CLV_USUARIO}"
+      usuario="{USUARIO}">
+    </user-avatar-enhanced>
+  </a>
+  <a href="index.php?m=login&c=login&md=lo" class="btnCerrarSesion uk-display-block uk-text-center uk-margin uk-margin-remove-bottom uk-text-decoration-none">
+    <div class="estructuraItemMenu_Vertical">
+      <span class="material-icons iconoMenu colorAdvertencia">logout</span>
+      <span class="descItemMenu uk-text-truncate">Cerrar sesión</span>
+    </div>
+  </a>
+</section>

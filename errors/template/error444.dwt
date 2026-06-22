@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<title>Permiso Denegado</title>
+<body> 
+<center>
+<h3>Usted no tiene permiso para ingresar al modulo solicitado</h3>
+<a href="../index.php">Regresar</a>
+<br>
+<img src="../public/images/404.jpg" alt="" style="position: absolute; left: 50%; top: 50%; margin-left: -285px; margin-top: -190px;">
+</center>
+</body>
+</html>

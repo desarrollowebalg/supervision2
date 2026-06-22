@@ -1,0 +1,86 @@
+/* .btnAddComponentPdi_v0{
+  font-size: 1.6rem;
+}
+.contentComponentFilterPDI_UI_ALG3v0{
+  background: var(--color-divisor-linea);
+  border: 1px solid var(--color-divisor-linea2);
+  height: 56px;
+} */
+.rdbFormListTaskV3{
+  display: none;
+}
+.botonesAsistComponentFrm_v0{
+  font-size: 1rem;
+  text-transform: none;
+}
+.labelLitsFrmTaskComponentV3{		
+  background: #FFF;
+  border-bottom: 1px solid var(--color-divisor-linea2);
+  color: var(--texto-secundario);
+  font-size: 1.1rem;
+  padding: 8px 2px;
+}
+.labelLitsFrmTaskComponentV3:hover{
+  background: var(--color-hover-background-tabla)!important;
+  cursor: pointer;
+}
+.regSeleccionadoListFormComponentALG input[type=radio]:checked + label { 
+  background: var(--color-accion-seleccion)!important;
+  border: 1px solid var(--theme-color);
+  border-radius: 5px;
+  color: var(--enlace-secundario);
+}
+.regSeleccionadoListFormComponentALG input[type=checkbox]:checked + label { 
+  background: var(--color-accion-seleccion)!important;
+  border: 1px solid var(--theme-color);
+  border-radius: 5px;
+  color: var(--enlace-secundario);
+}
+.fuente15MsgVtnComponentFrm_v0{
+  font-size: 1.5rem;
+}
+.botonesPaginadorComponentFrm_v0{
+  font-size: 1.2rem;
+  background: var(--fondoBotonSecondary)!important;
+  color: var(--GRAL-TEXTO-BLANCO) !important;
+  text-transform: none;
+  margin: 0 10px;
+}
+.itemContenedorIconoComponenteUsr_v0{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-top: 5px;
+}
+.itemContenedorIconoComponente_v0_iconoForm{
+  font-size: 3rem;
+  color: var(--theme-color);
+}
+.contenedorDescripcionItemFrm_v0{
+  padding-left: 0;
+  padding: 8px 0;
+}
+.contenedorUserDescripcionItem_v0_titulo{
+  font-size: 1rem;
+  color: var(--texto-primario);
+  margin-left: 15px;
+}
+.contenedorUserDescripcionItem_v0_subtitulo{
+  font-size: 1rem;
+  margin-left: 15px;
+}
+.noMostrarElementoComponenteFrm_v0{
+  display: none;
+}
+.contenedorBotonesPaginadorComponentForm_v0{
+  text-align: center;
+  margin: 10px 0;
+}
+.fotoPerfilUsuarioItemList{
+  width: 45px;
+  height: auto;
+  max-width: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--theme-color);
+}

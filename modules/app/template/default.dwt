@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{PAGE_TITLE}</title>
+    <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico" sizes="16x16 24x24 36x36 48x48">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1" />
+    <meta name="description" content="Plataforma Movilizandome - Gestión y seguimiento logístico">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Movilizandome">
+    <link rel="manifest" href="/dist/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/public/images/icons/icon-192x192.png">		
+		<script src=../../../apis_me/analiticsALG/analiticsALG.js?v={TIME}"></script>
+    <!-- VITE DEVs -->
+	  <script type="module" src="{VITE_JS}"></script>
+	  {VITE_CSS}
+</head>
+<body>
+	<div id="appMain"></div>
+	<script>
+    // window.analiticsALGv1=window.analiticsALGv1;    
+    // function sendCounterAnaliticsALG(p){
+    //   console.log("Payload => ",p);
+    //   const c=document.getElementById("hdnClienteEntregas").value;
+    //   const u=document.getElementById("hdnUserEntregas").value;
+    //   analiticsALGv1.counterSendALG_v1(c,u,p);
+    // }		
+  </script>	
+</body>
+</html>

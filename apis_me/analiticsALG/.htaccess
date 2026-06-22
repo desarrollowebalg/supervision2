@@ -1,0 +1,12 @@
+#RewriteEngine on
+#RewriteCond %{SCRIPT_FILENAME} !-d  
+#RewriteCond %{SCRIPT_FILENAME} !-f
+#Rewriterule ^(.+)/(.+)/(.+)/(.+)/$ index.php?r=$1&u=$2&o=$3&e=$4 [QSA]
+#Rewriterule ^(.+)/(.+)/(.+)$ index.php?r=$1&u=$2&o=$3 [QSA]
+#Rewriterule ^(.+)/(.+)/$ index.php?r=$1&u=$2 [QSA]
+
+# nueva estructura
+Options -MultiViews
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]

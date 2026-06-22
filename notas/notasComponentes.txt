@@ -1,0 +1,45 @@
+
+# Componente de caja de comentarios
+<comment-box
+    user-id="123"
+    user-name="Juan Pérez"
+    nickname="juanp"
+    user-photo="ruta/a/la/foto.jpg">
+</comment-box>
+
+# Para escuchar los comentarios guardados:
+
+document.querySelector('comment-box').addEventListener('comment-saved', (event) => {
+    const comment = event.detail;
+    const comment = event.detail;
+    console.log('ID del usuario:', comment.userId);
+    console.log('Nombre del usuario:', comment.userName);
+    console.log('Nickname:', comment.nickname);
+    console.log('Texto del comentario:', comment.text);
+    console.log('Fecha y hora:', comment.timestamp);  
+});
+
+# Si se requiere cambiar el texto del placeholder:
+
+const commentBox = document.querySelector('comment-box');
+commentBox.setPlaceholderText('Nuevo texto del placeholder');
+
+# Componente de historial de incidencias
+
+<historial-component
+    fecha="2025-08-06"
+    hora="14:30"
+    usuario="usuario123"
+    nombre-completo="Juan Pérez"
+    foto-usuario="ruta/a/la/foto.jpg"
+    estatus="completado"
+    comentario="Este es un comentario de ejemplo">
+</historial-component>
+
+# posibles estilos personalizados para el componente de historial:
+
+historial-component {
+    --badge-success-bg: #00ff00;
+    --badge-success-color: #000000;
+    /* ... otros colores personalizados ... */
+}
