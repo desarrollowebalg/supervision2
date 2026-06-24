@@ -1,9 +1,11 @@
 import './ui.js';
 import { getUser } from './services/authService.js';
 import { getUserState, setUser } from './store.js';
+import { themeService } from './services/theme.service.js';
 
 // cosas globales
 console.log('App inicializada');
+themeService.inicializar();
 
 export async function initApp(){
   const result = await getUser();

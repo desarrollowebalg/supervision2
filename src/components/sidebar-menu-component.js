@@ -1,5 +1,6 @@
 import './userAvatar.js';
 import { storageService } from '../core/services/storage.service.js';
+import { themeService } from '../core/services/theme.service.js';
 
 class SidebarMenuComponent extends HTMLElement {
   static COLLAPSE_STORAGE_KEY = 'sidebarCollapsed';
@@ -11,6 +12,7 @@ class SidebarMenuComponent extends HTMLElement {
   constructor() {
     super();
     this._onHashChange = () => this._syncActiveRoute();
+    this._onThemeChange = () => this._syncThemeToggleState();
   }
 
   connectedCallback() {
@@ -18,10 +20,12 @@ class SidebarMenuComponent extends HTMLElement {
     this._ensureStyles();
     this.render();
     window.addEventListener('hashchange', this._onHashChange);
+    window.addEventListener('app-theme-changed', this._onThemeChange);
   }
 
   disconnectedCallback() {
     window.removeEventListener('hashchange', this._onHashChange);
+    window.removeEventListener('app-theme-changed', this._onThemeChange);
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -31,16 +35,12 @@ class SidebarMenuComponent extends HTMLElement {
   }
 
   get items() {
-    // return [
-    //   { path: '/inicio', label: 'Inicio', icon: 'home' },
-    //   { path: '/formularios', label: 'Formularios', icon: 'file-text' },
-    //   { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
-    //   { path: '/tareas', label: 'Tareas', icon: 'check' }
-    // ];
     return [
-      { path: '/inicio', label: 'Inicio', icon: 'home' },      
-      { path: '/puntos-interes', label: 'Supervisión', icon: 'comments' },      
+      { path: '/inicio', label: 'Inicio', icon: 'home' },
+      { path: '/supervision-2', label: 'Supervisión 2', icon: 'location' },
     ];
+    // { path: '/formularios', label: 'Formularios', icon: 'file-text' },
+    // { path: '/tareas', label: 'Tareas', icon: 'check' }
   }
 
   get sentItems() {
@@ -52,6 +52,17 @@ class SidebarMenuComponent extends HTMLElement {
 
   get syncItem() {
     return { label: 'Descargar datos', icon: 'download' };
+  }
+
+  get preferenceItems() {
+    const effectiveTheme = themeService.getEffectiveTheme();
+    const nextThemeLabel = effectiveTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+    const nextThemeIcon = effectiveTheme === 'dark' ? 'sun' : 'moon';
+
+    return [
+      { path: '/settings', label: 'Configuración', icon: 'settings' },
+      { action: 'toggle-theme', label: nextThemeLabel, icon: nextThemeIcon }
+    ];
   }
 
   get collapsed() {
@@ -96,11 +107,10 @@ class SidebarMenuComponent extends HTMLElement {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        border: 1px solid var(--uk-border-color, #e5e5e5);
-        color: var(--uk-emphasis-color, #333);
+        border: 1px solid var(--app-border, #e5e5e5);
+        color: var(--app-text, #333);
         padding: 0;
-        /*background: var(--uk-muted-background, #f8f8f8);*/
-        background: #F3F4F6;
+        background: var(--app-surface, #f3f4f6);
       }
 
       sidebar-menu-component [data-role='brand-avatar-wrap'] {
@@ -141,17 +151,15 @@ class SidebarMenuComponent extends HTMLElement {
 
       sidebar-menu-component [data-role='panel'] {
         height: 100%;
-        /*border-radius: 14px;*/
-        /*background: var(--uk-muted-background, #f8f8f8);*/
-        /*border: 1px solid var(--uk-border-color, #e5e5e5);*/
-        background: #f3f4f6;
+        background: var(--app-sidebar-bg, #f3f4f6);
+        color: var(--app-text, #1f2937);
       }
 
       sidebar-menu-component [data-role='brand-icon'] {
         width: 2.5rem;
         height: 2.5rem;
         border-radius: 0.75rem;
-        background: rgba(153, 153, 153, 0.16);
+        background: var(--app-primary-soft, rgba(153, 153, 153, 0.16));
       }
 
       sidebar-menu-component [data-role='brand-avatar'] {
@@ -160,8 +168,7 @@ class SidebarMenuComponent extends HTMLElement {
       }
 
       sidebar-menu-component [data-role='nav-link'] {
-        --tw-text-opacity: 1;
-        color: rgb(107 114 128 / var(--tw-text-opacity, 1))!important;
+        color: var(--app-text-muted, #6b7280);
         font-weight: 500;
         border-radius: 0.75rem;
         transition: background-color 0.2s ease, color 0.2s ease;
@@ -175,16 +182,14 @@ class SidebarMenuComponent extends HTMLElement {
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        --tw-text-opacity: 1;
-        color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+        color: var(--app-text-soft, #9ca3af);
         font-size: 10px;
       }
 
       sidebar-menu-component [data-role='nav-link']:hover,
       sidebar-menu-component [data-role='nav-list'] > li.uk-active > [data-role='nav-link'] {
-        background: rgba(102, 173, 244, 0.16);
-        --tw-text-opacity: 1;
-        color: rgb(37 99 235 / var(--tw-text-opacity, 1))!important;        
+        background: var(--app-primary-soft, rgba(102, 173, 244, 0.16));
+        color: var(--app-primary, #2563eb);
       }
 
       sidebar-menu-component [data-role='nav-list'] > li.uk-active > [data-role='nav-link'] {
@@ -196,7 +201,7 @@ class SidebarMenuComponent extends HTMLElement {
       }
 
       sidebar-menu-component [data-role='profile-card'] {
-        border-top: 1px solid var(--uk-border-color, #e5e5e5);
+        border-top: 1px solid var(--app-border, #e5e5e5);
       }
 
       sidebar-menu-component[data-collapsed='true'] [data-role='brand-text'],
@@ -211,6 +216,8 @@ class SidebarMenuComponent extends HTMLElement {
       sidebar-menu-component[data-collapsed='true'] [data-role='nav-link'],
       sidebar-menu-component[data-collapsed='true'] [data-role='profile-card'] {
         justify-content: center;
+        width: 40px;
+        margin-left: -20px;
       }
 
       sidebar-menu-component[data-collapsed='true'] [data-role='profile-card'] {
@@ -230,8 +237,7 @@ class SidebarMenuComponent extends HTMLElement {
       }
 
       .sidebar-menu-component-title {
-        --tw-text-opacity: 1;
-        color: rgb(55 65 81 / var(--tw-text-opacity, 1));
+        color: var(--app-text, #374151);
         font-size: 0.875rem;
         line-height: 1.25rem;
       }
@@ -239,6 +245,13 @@ class SidebarMenuComponent extends HTMLElement {
       .sidebar-menu-component-subtitle{
         font-size: 0.75rem;
         line-height: 1rem;
+        color: var(--app-text-muted, #6b7280);
+      }
+
+      .button-close-sidebar-mobile {
+        position: absolute; 
+        top: 20px; 
+        right: 15px;
       }
 
       @media (min-width: 1199px) {
@@ -267,26 +280,7 @@ class SidebarMenuComponent extends HTMLElement {
   render() {
     this.innerHTML = `
       <div class="uk-card uk-card-body uk-flex uk-flex-column sidebar-menu-compornent-padding" data-role="panel">
-
-        <div class="uk-margin-small-top uk-hidden">
-          <div class="uk-margin-small-bottom uk-padding-small-left" data-role="section-title">Perfil</div>
-          <div class="user-wrapper">
-            <div class="user-info uk-flex" data-action="user-menu">
-              <div class="uk-flex uk-flex-column user-details">
-                <span class="user-name uk-text-small" data-user-nombre>Gerardo Lara</span>
-                <span class="user-role uk-text-meta uk-text-small" data-user-rol>N/A</span>
-              </div>
-              <user-avatar-enhanced class="user-avatar" data-avatar></user-avatar-enhanced>
-            </div>
-
-            <div class="user-context-menu" data-user-context>
-              <button class="context-item" data-action="user-profile">Perfil</button>
-              <button class="context-item" data-action="user-settings">Configuración</button>
-              <button class="context-item" data-action="user-logout">Cerrar sesión</button>
-            </div>
-          </div>
-        </div>
-
+        
         <div data-role="brand-avatar-wrap">
           <div data-role="brand-avatar">
             <user-avatar-enhanced
@@ -313,12 +307,12 @@ class SidebarMenuComponent extends HTMLElement {
               </span>-->
             </div>
             <div class="uk-width-expand" data-role="brand-text">
-              <div class="uk-text-bold sidebar-menu-component-title">SVG Supervisión</div>
-              <div class="uk-text-meta sidebar-menu-component-subtitle">Observando tu entorno</div>
+              <div class="uk-text-bold sidebar-menu-component-title">SVG - Supervisión</div>
+              <div class="uk-text-meta sidebar-menu-component-subtitle">BD DYNAMICS</div>
             </div>
           </div>
 
-          <div class="uk-flex uk-flex-middle uk-grid-small" uk-grid>
+          <div class="button-close-sidebar-mobile">
             <div class="uk-width-auto uk-hidden@l">
               <button type="button" class="uk-icon-button" data-action="close-sidebar" title="Cerrar menu">
                 <span uk-icon="icon: close"></span>
@@ -338,6 +332,29 @@ class SidebarMenuComponent extends HTMLElement {
                 </a>
               </li>
             `).join('')}
+          </ul>
+        </div>
+
+        <div class="uk-margin-small-top sidebar-menu-compornent-padding">
+          <div class="uk-margin-small-bottom uk-padding-small-left" data-role="section-title">Preferencias</div>
+          <ul class="uk-nav uk-nav-default uk-margin-remove" data-role="nav-list">
+            ${this.preferenceItems.map((item) => item.path
+              ? `
+                <li data-role="nav-item">
+                  <a class="uk-flex uk-flex-middle uk-padding-small" data-role="nav-link" href="#${item.path}" data-route="${item.path}" title="${item.label}">
+                    <span class="uk-inline uk-text-center" data-role="icon-slot" uk-icon="icon: ${item.icon}; ratio: 1.1"></span>
+                    <span class="uk-margin-small-left" data-role="nav-text">${item.label}</span>
+                  </a>
+                </li>
+              `
+              : `
+                <li data-role="nav-item">
+                  <button class="uk-button uk-button-text uk-flex uk-flex-middle uk-padding-small uk-width-1-1" data-role="nav-link" data-action="${item.action}" type="button" title="${item.label}">
+                    <span class="uk-inline uk-text-center" data-role="icon-slot" uk-icon="icon: ${item.icon}; ratio: 1.1"></span>
+                    <span class="uk-margin-small-left" data-role="nav-text">${item.label}</span>
+                  </button>
+                </li>
+              `).join('')}
           </ul>
         </div>
 
@@ -427,6 +444,10 @@ class SidebarMenuComponent extends HTMLElement {
     this.querySelector('[data-action="manual-sync"]')?.addEventListener('click', () => {
       this.dispatchEvent(new CustomEvent('sidebar-manual-sync-click', { bubbles: true }));
     });
+
+    this.querySelector('[data-action="toggle-theme"]')?.addEventListener('click', () => {
+      this.dispatchEvent(new CustomEvent('sidebar-theme-toggle-click', { bubbles: true }));
+    });
   }
 
   _syncCollapsedState() {
@@ -461,6 +482,27 @@ class SidebarMenuComponent extends HTMLElement {
       item?.classList.toggle('uk-active', isActive);
       item?.classList.toggle('text-blue-600', isActive);
     });
+  }
+
+  _syncThemeToggleState() {
+    const toggleButton = this.querySelector('[data-action="toggle-theme"]');
+    if (!toggleButton) {
+      return;
+    }
+
+    const effectiveTheme = themeService.getEffectiveTheme();
+    const nextThemeLabel = effectiveTheme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+    const nextThemeIcon = effectiveTheme === 'dark' ? 'sun' : 'moon';
+    const iconNode = toggleButton.querySelector('[uk-icon]');
+    const textNode = toggleButton.querySelector('[data-role="nav-text"]');
+
+    toggleButton.setAttribute('title', nextThemeLabel);
+    if (iconNode) {
+      iconNode.setAttribute('uk-icon', `icon: ${nextThemeIcon}; ratio: 1.1`);
+    }
+    if (textNode) {
+      textNode.textContent = nextThemeLabel;
+    }
   }
 }
 

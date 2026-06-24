@@ -1,0 +1,161 @@
+:root {
+  color-scheme: light;
+  --app-bg: #f5f7fb;
+  --app-bg-soft: #eef2f7;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f3f4f6;
+  --app-surface-elevated: #ffffff;
+  --app-border: #e5e7eb;
+  --app-border-strong: #cbd5e1;
+  --app-text: #1f2937;
+  --app-text-muted: #6b7280;
+  --app-text-soft: #94a3b8;
+  --app-primary: #1e87f0;
+  --app-primary-soft: rgba(30, 135, 240, 0.14);
+  --app-primary-contrast: #ffffff;
+  --app-header-bg: rgba(255, 255, 255, 0.92);
+  --app-header-action: #334155;
+  --app-header-action-hover: rgba(148, 163, 184, 0.16);
+  --app-header-user-hover: rgba(226, 232, 240, 0.7);
+  --app-sidebar-bg: #f3f4f6;
+  --app-overlay: rgba(15, 23, 42, 0.45);
+  --app-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --app-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.12);
+  --app-hero-bg: linear-gradient(135deg, #1e87f0 0%, #38b6ff 100%);
+  --app-timeline-fade: linear-gradient(to top, rgba(245, 247, 251, 0.96), rgba(245, 247, 251, 0));
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #0f172a;
+  --app-bg-soft: #111827;
+  --app-surface: #111827;
+  --app-surface-muted: #1f2937;
+  --app-surface-elevated: #172033;
+  --app-border: #273449;
+  --app-border-strong: #334155;
+  --app-text: #e5eefb;
+  --app-text-muted: #94a3b8;
+  --app-text-soft: #64748b;
+  --app-primary: #60a5fa;
+  --app-primary-soft: rgba(96, 165, 250, 0.2);
+  --app-primary-contrast: #0f172a;
+  --app-header-bg: rgba(15, 23, 42, 0.94);
+  --app-header-action: #dbeafe;
+  --app-header-action-hover: rgba(96, 165, 250, 0.18);
+  --app-header-user-hover: rgba(30, 41, 59, 0.92);
+  --app-sidebar-bg: #111827;
+  --app-overlay: rgba(2, 6, 23, 0.7);
+  --app-shadow: 0 16px 36px rgba(2, 6, 23, 0.35);
+  --app-shadow-soft: 0 14px 30px rgba(2, 6, 23, 0.42);
+  --app-hero-bg: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+  --app-timeline-fade: linear-gradient(to top, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0));
+}
+
+html,
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+body,
+.uk-offcanvas-content {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.uk-card-default,
+.uk-card-muted,
+.uk-modal-dialog,
+.uk-dropdown {
+  background-color: var(--app-surface);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.uk-card-default,
+.uk-card-muted {
+  box-shadow: var(--app-shadow);
+}
+
+.uk-card-default .uk-card-title,
+.uk-card-default h1,
+.uk-card-default h2,
+.uk-card-default h3,
+.uk-card-default h4,
+.uk-card-default h5,
+.uk-card-default h6,
+.uk-card-muted .uk-card-title,
+.uk-card-muted h1,
+.uk-card-muted h2,
+.uk-card-muted h3,
+.uk-card-muted h4,
+.uk-card-muted h5,
+.uk-card-muted h6 {
+  color: var(--app-text);
+}
+
+.uk-text-meta,
+.uk-text-muted,
+.uk-form-label,
+.uk-description-list > dt,
+.uk-description-list > dd {
+  color: var(--app-text-muted);
+}
+
+.uk-card-title,
+.uk-heading-small,
+.uk-heading-bullet > *,
+.uk-h1,
+.uk-h2,
+.uk-h3,
+.uk-h4,
+.uk-h5,
+.uk-h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  color: inherit;
+}
+
+.uk-input,
+.uk-select,
+.uk-textarea {
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.uk-input:focus,
+.uk-select:focus,
+.uk-textarea:focus {
+  border-color: var(--app-primary);
+}
+
+.uk-button-default {
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.uk-button-default:hover,
+.uk-button-default:focus {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+  border-color: var(--app-border-strong);
+}
+
+.uk-button-primary {
+  background: var(--app-primary);
+  color: var(--app-primary-contrast);
+  border-color: transparent;
+}
+
+.uk-button-primary:hover,
+.uk-button-primary:focus {
+  filter: brightness(1.04);
+  color: var(--app-primary-contrast);
+}

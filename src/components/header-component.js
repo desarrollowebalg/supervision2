@@ -82,18 +82,15 @@ class HeaderComponent extends HTMLElement {
 
       header-component .header-wrapper {        
         width: 100%;        
-        /*border-bottom: 1px solid rgba(255, 255, 255, 0.3);*/
-        box-shadow: 0 1px 0px rgba(0, 0, 0, 0.12);
         padding: 0.4rem 1rem;                
         position: relative;
-        --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
-        box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-        --tw-bg-opacity: 1;
-        background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+        background-color: var(--app-header-bg, #ffffff);
+        backdrop-filter: blur(12px);
         padding-left: 2rem;
         padding-right: 2rem;
-        border-bottom: 1px solid #f0f1f2;
+        border-bottom: 1px solid var(--app-border, #f0f1f2);
+        color: var(--app-text, #1f2937);
       }
 
       header-component .header-wrapper.is-offline {
@@ -112,24 +109,20 @@ class HeaderComponent extends HTMLElement {
       header-component .menu-toggle-btn {
         display: none;
         border: 0;
-        /*background: transparent;*/
-        background: gray;
+        background: var(--app-header-action, #64748b);
         border-radius: 8px;
         padding: 0.45rem;
-        color: #fff;
+        color: var(--app-primary-contrast, #fff);
         cursor: pointer;
       }
 
       header-component .menu-toggle-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: var(--app-header-action-hover, rgba(255, 255, 255, 0.15));
       }
 
       header-component .app-name {
-        font-size: 0.875rem;
-        line-height: 1.25rem;
         font-weight: 700;
-        --tw-text-opacity: 1;
-        color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+        color: var(--app-text, #1f2937);
       }
 
       header-component .app-subtitle {        
@@ -137,8 +130,7 @@ class HeaderComponent extends HTMLElement {
         margin: 0;
         font-size: 0.75rem;
         line-height: 1rem;
-        --tw-text-opacity: 1;
-        color: rgb(107 114 128 / var(--tw-text-opacity, 1));
+        color: var(--app-text-muted, #6b7280);
       }
 
       header-component .offline-message {
@@ -160,11 +152,11 @@ class HeaderComponent extends HTMLElement {
         padding: 0.45rem;
         border-radius: 999px;
         transition: background 0.2s;
-        color: #fff;
+        color: var(--app-header-action, #334155);
       }
 
       header-component .action-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: var(--app-header-action-hover, rgba(148, 163, 184, 0.16));
       }
 
       header-component .notification-badge {
@@ -198,8 +190,7 @@ class HeaderComponent extends HTMLElement {
 
       header-component .user-info:hover,
       header-component .user-info.is-open {
-        /*background: rgba(255, 255, 255, 0.15);*/
-        background: rgba(255, 255, 255, 0.8);
+        background: var(--app-header-user-hover, rgba(255, 255, 255, 0.8));
       }
 
       header-component .user-details {
@@ -213,8 +204,7 @@ class HeaderComponent extends HTMLElement {
         margin: 0;
         font-size: 0.75rem;
         line-height: 1rem;
-        --tw-text-opacity: 1;
-        color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+        color: var(--app-text, #1f2937);
       }
 
       header-component .user-role {        
@@ -223,8 +213,7 @@ class HeaderComponent extends HTMLElement {
         letter-spacing: 0.5px;
         margin: 0;
         font-size: 10px;
-        --tw-text-opacity: 1;
-        color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+        color: var(--app-text-soft, #9ca3af);
       }
 
       header-component .user-avatar {
@@ -238,10 +227,10 @@ class HeaderComponent extends HTMLElement {
         top: calc(100% + 8px);
         right: 0;
         min-width: 190px;
-        background: #fff;
-        border: 1px solid #e5e7eb;
+        background: var(--app-surface, #fff);
+        border: 1px solid var(--app-border, #e5e7eb);
         border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+        box-shadow: var(--app-shadow-soft, 0 8px 24px rgba(15, 23, 42, 0.15));
         padding: 6px;
         display: none;
         z-index: 60;
@@ -258,12 +247,12 @@ class HeaderComponent extends HTMLElement {
         text-align: left;
         border-radius: 8px;
         padding: 9px 10px;
-        color: #1f2937;
+        color: var(--app-text, #1f2937);
         cursor: pointer;
       }
 
       header-component .context-item:hover {
-        background: #f1f5f9;
+        background: var(--app-surface-muted, #f1f5f9);
       }
 
       @media (max-width: 1199px) {

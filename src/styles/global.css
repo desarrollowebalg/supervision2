@@ -7,7 +7,7 @@ body,document,html{
   /* font-family: 'Roboto', sans-serif!important;
   font-size: clamp(.8rem,1rem, 2.5vw); */
   overflow-x: hidden;
-  background-color: #f5f5f5!important;
+  background-color: var(--app-bg);
 }
 .inputTxtFrm {
   font-size: 1rem;
@@ -27,7 +27,7 @@ body,document,html{
   display: flex;
   flex-direction: column;
   /* background: #eef0f4; */
-  background: #f9fafb;
+  background: var(--app-bg);
 }
 
 .inicio-shell.is-sidebar-collapsed {
@@ -58,6 +58,7 @@ body,document,html{
   transform: translateX(-102%);
   transition: transform 0.2s ease;
   border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--app-border);
 }
 
 .inicio-main {
@@ -81,7 +82,7 @@ body,document,html{
 .inicio-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--app-overlay);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -140,7 +141,7 @@ body,document,html{
 .welcome-hero {
   /* background: linear-gradient(135deg, #1e87f0 0%, #38b6ff 100%); */
   --tw-bg-opacity: 1;
-  background: rgb(59 130 246 / var(--tw-bg-opacity, 1));
+  background: var(--app-hero-bg);
   border-radius: 1rem;
 }
 
@@ -193,10 +194,12 @@ body,document,html{
   justify-content: space-between;
   align-items: center;
   padding: 0.8rem 0.6rem;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--app-shadow-soft);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
   /* background: #d8eafc; */
-  color: #1e87f0;
+  color: var(--app-primary);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
 }
 
 .welcome-kpi-link:hover {
@@ -226,7 +229,8 @@ body,document,html{
   color: inherit;
   display: block;
   border-radius: 1rem;
-  border: 1px solid #e1e1e1;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
 }
 
 .timeline-preview-link:hover {  
@@ -247,7 +251,7 @@ body,document,html{
   right: 0;
   bottom: 0;
   height: 72px;
-  background: linear-gradient(to top, rgba(238, 240, 244, 0.95), rgba(238, 240, 244, 0));
+  background: var(--app-timeline-fade);
   pointer-events: none;
 }
 
@@ -309,12 +313,12 @@ body,document,html{
 .welcome-quick-card {
   border-radius: 1rem;
   box-shadow: none;
-  border: 1px solid #e1e1e1;
+  border: 1px solid var(--app-border);
 }
 
 .background-app {
-  --tw-bg-opacity: 1;
-  background-color: rgb(249 250 251 / var(--tw-bg-opacity, 1));
+  background-color: var(--app-bg);
+  color: var(--app-text);
 }
 
 @media (min-width: 960px) {

@@ -2,6 +2,7 @@ import { navigate } from '../core/router.js';
 import { logoutApp } from '../core/services/authService.js';
 import { connectivityService } from '../core/services/connectivity.service.js';
 import { storageService } from '../core/services/storage.service.js';
+import { themeService } from '../core/services/theme.service.js';
 import { getUserState, setUser } from '../core/store.js';
 import { syncAllCatalogs } from '../core/services/apis-me/catalog-sync.service.js';
 
@@ -130,7 +131,7 @@ export function renderInicioLayout(container, options = {}) {
         <main class="inicio-main uk-padding-small">
           <header-component
             nombre-cliente="SVG - Supervisión"
-            razon-social="Air Logistic S.A. de C.V."
+            razon-social="BD Dynamics"
             nombre-usuario="${userState.nombre_completo || userState.usuario || 'Usuario'}"
             rol-usuario="${userState.usuario ? userState.usuario : ''}"
             avatar-url="${userState.foto_perfil || 'https://app.movilizandome.net/public/images/userDesc.png'}"
@@ -170,8 +171,14 @@ export function bindInicioLayoutEvents(container) {
   const mqDesktop = window.matchMedia('(min-width: 1200px)');
   let isLoggingOut = false;
   const clearBrowserStorage = () => {
+    const themePreference = themeService.getPreference();
     window.localStorage.clear();
     window.sessionStorage.clear();
+    if (themePreference !== 'system') {
+      themeService.setPreference(themePreference);
+    } else {
+      themeService.clearStoredPreference();
+    }
   };
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -255,7 +262,13 @@ export function bindInicioLayoutEvents(container) {
   });
 
   header?.addEventListener('settings-click', () => {
-    console.log('Configuración clicked');
+    closeSidebar();
+    navigate('/settings');
+  });
+
+  header?.addEventListener('user-settings-click', () => {
+    closeSidebar();
+    navigate('/settings');
   });
 
   sidebarComponent?.addEventListener('sidebar-collapsed-change', (event) => {
@@ -298,6 +311,14 @@ export function bindInicioLayoutEvents(container) {
     } finally {
       hideGlobalSyncOverlay();
     }
+  });
+
+  sidebarComponent?.addEventListener('sidebar-theme-toggle-click', () => {
+    const nextTheme = themeService.toggleTheme();
+    showUiNotice({
+      message: `Tema ${nextTheme === 'dark' ? 'oscuro' : 'claro'} activado.`,
+      status: 'primary'
+    });
   });
 
   const syncViewportState = () => {

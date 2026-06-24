@@ -22,6 +22,34 @@ It includes what each agent does, what each one can do, what cannot be done with
 - `frontend-structure-agent`
 - `api-action-agent`
 
+## ES - Agente de Soporte
+- `security-review-agent`
+  - Uso: auditorias, revisiones de seguridad y backlog de endurecimiento.
+  - Estado: disponible en `agents/`, pero no forma parte de la asignacion por defecto salvo que la tarea sea de seguridad.
+
+## EN - Support Agent
+- `security-review-agent`
+  - Use: audits, security reviews, and hardening backlog.
+  - Status: available in `agents/`, but not part of the default assignment path unless the task is security-focused.
+
+## ES - Modelo Operativo de Agentes
+- Los archivos dentro de `agents/` funcionan como contratos operativos y guias de ejecucion para trabajo humano y asistido por IA.
+- No existe actualmente un cargador automatico del proyecto que descubra o ejecute `agents/*.md`.
+- Para que un agente "funcione" operativamente, su archivo debe mantenerse alineado con:
+  - la estructura real del repositorio,
+  - este `AGENTS.md`,
+  - y `notas/BUILD.md` como referencia de validacion.
+- El indice operativo de agentes vive en `agents/README.md`.
+
+## EN - Agent Operating Model
+- Files inside `agents/` act as operational contracts and execution guides for human and AI-assisted work.
+- There is currently no project-side automatic loader that discovers or executes `agents/*.md`.
+- For an agent to "function" operationally, its file must stay aligned with:
+  - the real repository structure,
+  - this root `AGENTS.md`,
+  - and `notas/BUILD.md` as the validation baseline.
+- The operational agent index lives in `agents/README.md`.
+
 ## ES - Librer?a UI Principal
 - La librer?a principal de interfaz del proyecto es **UIkit CSS**, tomando como referencia base su documentaci?n oficial de introducci?n:
   - https://getuikit.com/docs/introduction
@@ -190,7 +218,7 @@ Regla de validaci?n:
 - Si los cambios son fuera de `src/`, la validaci?n se ejecutar? en la URL/entorno que indique el responsable del proyecto (actualmente en contenedor Docker).
 
 Referencia:
-- Ver [BUILD.md](BUILD.md).
+- Ver [notas/BUILD.md](notas/BUILD.md).
 
 ## EN - Workflow (Minimum)
 1. Plan
@@ -202,7 +230,7 @@ Validation rule:
 - If changes are outside `src/`, validation will run on the URL/environment provided by the project owner (currently Docker container based).
 
 Reference:
-- See [BUILD.md](BUILD.md).
+- See [notas/BUILD.md](notas/BUILD.md).
 
 ## ES - Aprobaciones Obligatorias
 Todos los cambios de c?digo y configuraci?n requieren aprobaci?n humana antes de confirmar/integrar cambios.
@@ -327,6 +355,8 @@ If an integration causes an incident:
   - Then `frontend-agent`.
 - If the task is documentation-focused:
   - Use `documentation-agent`.
+- If the task is a security review, audit, or hardening analysis:
+  - Use `security-review-agent`.
 
 
 ## ES - Regla de Evidencias con Fotos/Firma (Frontend + Backend)

@@ -20,9 +20,14 @@ class TasksSummaryWidget extends HTMLElement {
       }
 
       .tasks-summary-shell {
-        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-        border: 1px solid rgba(148, 163, 184, 0.26);
+        background: linear-gradient(
+          180deg,
+          var(--app-surface, #ffffff) 0%,
+          var(--app-surface-elevated, #f8fafc) 100%
+        );
+        border: 1px solid var(--app-border, rgba(148, 163, 184, 0.26));
         border-radius: 1rem;
+        color: var(--app-text, #1f2937);
       }
 
       .tasks-summary-row {
@@ -31,20 +36,28 @@ class TasksSummaryWidget extends HTMLElement {
         gap: 0.65rem;
         padding: 0.7rem 0.8rem;
         border-radius: 0.75rem;
-        background: rgba(241, 245, 249, 0.75);
+        background: color-mix(in srgb, var(--app-surface-muted, #f1f5f9) 78%, transparent);
+        border: 1px solid color-mix(in srgb, var(--app-border, #e5e7eb) 72%, transparent);
+        color: var(--app-text, #1f2937);
       }
 
       .tasks-summary-row + .tasks-summary-row {
         margin-top: 0.6rem;
       }
 
+      .tasks-summary-row p,
+      .tasks-summary-row li {
+        color: var(--app-text, #1f2937);
+      }
+
       .tasks-summary-row [uk-icon] {
         margin-top: 0.1rem;
-        color: #2563eb;
+        color: var(--app-primary, #2563eb);
       }
 
       .tasks-summary-list {
         margin: 0.45rem 0 0 1.1rem;
+        color: var(--app-text-muted, #6b7280);
       }
 
       .tasks-summary-list li + li {
@@ -55,13 +68,25 @@ class TasksSummaryWidget extends HTMLElement {
         display: inline-block;
         margin-top: 0.5rem;
         font-style: italic;
-        color: #64748b;
+        color: var(--app-text-muted, #64748b);
         text-decoration: none;
       }
 
       .tasks-summary-note-link:hover {
-        color: #334155;
+        color: var(--app-primary, #334155);
         text-decoration: underline;
+      }
+
+      html[data-theme='dark'] .tasks-summary-shell {
+        background: linear-gradient(
+          180deg,
+          var(--app-surface-elevated, #172033) 0%,
+          var(--app-surface, #111827) 100%
+        );
+      }
+
+      html[data-theme='dark'] .tasks-summary-row {
+        background: color-mix(in srgb, var(--app-surface-muted, #1f2937) 86%, transparent);
       }
     `;
 
