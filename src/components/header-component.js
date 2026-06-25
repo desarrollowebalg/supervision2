@@ -78,6 +78,8 @@ class HeaderComponent extends HTMLElement {
         display: block;
         width: 100%;
         height: 4rem;
+        position: relative;
+        z-index: 30;
       }
 
       header-component .header-wrapper {        
@@ -176,15 +178,19 @@ class HeaderComponent extends HTMLElement {
 
       header-component .user-wrapper {
         position: relative;
+        z-index: 70;
       }
 
       header-component .user-info {
+        display: inline-flex;
         gap: 0.75rem;
         align-items: center;
         cursor: pointer;
         padding: 0.35rem 0.6rem;
         border-radius: 10px;
         transition: background 0.2s;
+        border: 0;
+        background: transparent;
         /*background: linear-gradient(145deg, #d8eafc 97%, #3f6f95 91%, #315f86 18%);*/        
       }
 
@@ -234,6 +240,7 @@ class HeaderComponent extends HTMLElement {
         padding: 6px;
         display: none;
         z-index: 60;
+        pointer-events: auto;
       }
 
       header-component .user-context-menu.is-open {
@@ -315,18 +322,18 @@ class HeaderComponent extends HTMLElement {
             </button>-->
 
             <div class="user-wrapper">
-              <div class="user-info uk-flex" data-action="user-menu">
+              <button type="button" class="user-info uk-flex" data-action="user-menu" aria-haspopup="menu" aria-expanded="false">
                 <div class="uk-flex uk-flex-column user-details">
                   <span class="user-name uk-text-small" data-user-nombre></span>
                   <span class="user-role uk-text-meta uk-text-small" data-user-rol></span>
                 </div>
                 <user-avatar-enhanced class="user-avatar" data-avatar></user-avatar-enhanced>
-              </div>
+              </button>
 
-              <div class="user-context-menu" data-user-context>
-                <button class="context-item" data-action="user-profile">Perfil</button>
-                <button class="context-item" data-action="user-settings">Configuración</button>
-                <button class="context-item" data-action="user-logout">Cerrar sesión</button>
+              <div class="user-context-menu" data-user-context role="menu">
+                <button type="button" class="context-item" data-action="user-profile">Perfil</button>
+                <button type="button" class="context-item" data-action="user-settings">Configuración</button>
+                <button type="button" class="context-item" data-action="user-logout">Cerrar sesión</button>
               </div>
             </div>
           </div>
@@ -364,6 +371,7 @@ class HeaderComponent extends HTMLElement {
     const setContextMenu = (open) => {
       userContext?.classList.toggle('is-open', open);
       userMenu?.classList.toggle('is-open', open);
+      userMenu?.setAttribute('aria-expanded', open ? 'true' : 'false');
     };
 
     menuToggleBtn?.addEventListener('click', () => {
@@ -381,7 +389,12 @@ class HeaderComponent extends HTMLElement {
       this.dispatchEvent(new CustomEvent('settings-click', { bubbles: true }));
     });
 
+    userContext?.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
     userMenu?.addEventListener('click', (event) => {
+      event.preventDefault();
       event.stopPropagation();
       const shouldOpen = !userContext?.classList.contains('is-open');
       setContextMenu(shouldOpen);
@@ -391,17 +404,23 @@ class HeaderComponent extends HTMLElement {
       }));
     });
 
-    this.querySelector('[data-action="user-profile"]')?.addEventListener('click', () => {
+    this.querySelector('[data-action="user-profile"]')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       this.dispatchEvent(new CustomEvent('user-profile-click', { bubbles: true }));
       setContextMenu(false);
     });
 
-    this.querySelector('[data-action="user-settings"]')?.addEventListener('click', () => {
+    this.querySelector('[data-action="user-settings"]')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       this.dispatchEvent(new CustomEvent('user-settings-click', { bubbles: true }));
       setContextMenu(false);
     });
 
-    this.querySelector('[data-action="user-logout"]')?.addEventListener('click', async () => {
+    this.querySelector('[data-action="user-logout"]')?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       if (!this._confirmLogout()) {
         setContextMenu(false);
         return;

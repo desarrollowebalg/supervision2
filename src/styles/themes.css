@@ -129,10 +129,28 @@ p {
   border-color: var(--app-border);
 }
 
+.uk-input.uk-background-muted,
+.uk-select.uk-background-muted,
+.uk-textarea.uk-background-muted {
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+}
+
 .uk-input:focus,
 .uk-select:focus,
 .uk-textarea:focus {
+  background: var(--app-surface-elevated);
+  color: var(--app-text);
   border-color: var(--app-primary);
+}
+
+.uk-input::placeholder,
+.uk-textarea::placeholder {
+  color: var(--app-text-muted);
+}
+
+.uk-form-icon {
+  color: var(--app-text-soft);
 }
 
 .uk-button-default {
