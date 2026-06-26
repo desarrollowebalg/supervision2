@@ -33,11 +33,11 @@ export default class Tareas {
 
     renderInicioLayout(container, {
       title: `
-        <span class="tasks-page-title-row">
-          <span class="tasks-page-title-text uk-text-left">Tareas</span>
+        <span class="tasks-page-title-row catalog-page-title-row">
+          <span class="tasks-page-title-text catalog-page-title-text uk-text-left">Tareas</span>
           <button
             type="button"
-            class="uk-button uk-button-primary uk-button-small uk-border-rounded uk-hidden@s tasks-page-title-search-btn"
+            class="uk-button uk-button-primary uk-button-small uk-border-rounded uk-hidden@s tasks-page-title-search-btn catalog-page-title-search-btn"
             data-tasks-mobile-search-toggle
             aria-label="Mostrar buscador"
             aria-expanded="false">
@@ -47,14 +47,15 @@ export default class Tareas {
       `,
       description: '',
       contentHtml: `
-        <div class="uk-margin-small-bottom uk-flex uk-flex-middle uk-grid-small task-toolbar tasks-search-row" uk-grid data-tasks-search-row>
+        <section class="tasks-page catalog-list-page">
+        <div class="uk-margin-small-bottom uk-flex uk-flex-middle uk-grid-small task-toolbar tasks-search-row catalog-search-row catalog-toolbar" uk-grid data-tasks-search-row>
           <div class="uk-width-auto uk-hidden">
             <button id="tasksBackBtn" class="uk-button uk-button-default" type="button" aria-label="Regresar">
               <span uk-icon="arrow-left"></span>
             </button>
           </div>
           <div class="uk-width-expand">
-            <input id="tasksSearchInput" class="uk-input uk-border-rounded inputTxtFrm" type="search" placeholder="Buscar por lugar, tarea o descripcion..." />
+            <input id="tasksSearchInput" class="uk-input uk-border-rounded inputTxtFrm catalog-search-input" type="search" placeholder="Buscar por lugar, tarea o descripcion..." />
           </div>
           <div class="uk-width-auto uk-hidden">
             <button id="tasksRefreshBtn" class="uk-button uk-button-primary" type="button" aria-label="Actualizar remoto">
@@ -91,6 +92,7 @@ export default class Tareas {
           <li><div id="tasksStateContainerPending"></div></li>
           <li><div id="tasksStateContainerOverdue"></div></li>
         </ul>
+        </section>
       `
     });
 
@@ -167,7 +169,7 @@ export default class Tareas {
       this.renderFilteredTasks(container);
     } catch (error) {
       const errorHtml = `
-        <div class="uk-alert-danger" uk-alert>
+        <div class="uk-alert-danger uk-border-rounded tasks-state-alert tasks-state-alert--danger" uk-alert>
           <p>No fue posible cargar las tareas.</p>
         </div>
       `;
@@ -318,7 +320,7 @@ export default class Tareas {
     counterContainer.innerHTML = `
       <div class="uk-flex uk-flex-middle uk-flex-between task-active-counter uk-padding-small uk-border-rounded">
         <span class="uk-text-bold">Regla de control</span>
-        <span class="uk-label uk-label-warning">1 tarea activa</span>
+        <span class="uk-label uk-label-warning task-active-counter__badge">1 tarea activa</span>
       </div>
     `;
   }
@@ -326,7 +328,7 @@ export default class Tareas {
   renderTasks(container, tasks) {
     if (!tasks.length) {
       container.innerHTML = `
-        <div class="uk-alert-warning" uk-alert>
+        <div class="uk-alert-warning uk-border-rounded tasks-state-alert tasks-state-alert--warning" uk-alert>
           <p>No hay tareas para mostrar.</p>
         </div>
       `;
@@ -370,7 +372,7 @@ export default class Tareas {
             <a class="uk-display-block uk-padding-small uk-border-rounded ${rowClass}" href="#/tareas/${rowId}">
               <div class="uk-flex uk-flex-between@s uk-flex-middle@s uk-grid-small" uk-grid>
                 <div class="uk-width-expand">
-                  <h3 class="uk-text-emphasis uk-margin-remove uk-text-truncate task-row__title">${title}</h3>
+                  <h3 class="uk-margin-remove uk-text-truncate task-row__title">${title}</h3>
                 </div>
                 <div class="uk-width-auto@s">
                   <span class="uk-label ${statusLabelClass} task-row__status task-row__status--desktop">${status}</span>
@@ -408,7 +410,7 @@ export default class Tareas {
     container.innerHTML = `
       <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom uk-margin-medium-top">
         <span class="uk-text-meta">Total de tareas</span>
-        <span class="uk-label uk-label-warning">${tasks.length}</span>
+        <span class="uk-label task-count-badge">${tasks.length}</span>
       </div>
       <div class="task-timeline uk-margin-remove-top">
         ${groupsHtml}
@@ -605,8 +607,36 @@ export default class Tareas {
     const style = document.createElement('style');
     style.id = 'tasks-list-page-styles';
     style.textContent = `
+      .tasks-page {
+        --tasks-accent: var(--app-primary, #1e87f0);
+        --tasks-accent-soft: var(--app-primary-soft, rgba(30, 135, 240, 0.14));
+        --tasks-surface: var(--app-surface, #ffffff);
+        --tasks-surface-muted: var(--app-surface-muted, #f3f4f6);
+        --tasks-surface-elevated: var(--app-surface-elevated, #ffffff);
+        --tasks-border: var(--app-border, #e5e7eb);
+        --tasks-border-strong: var(--app-border-strong, #cbd5e1);
+        --tasks-text: var(--app-text, #1f2937);
+        --tasks-text-muted: var(--app-text-muted, #6b7280);
+        --tasks-shadow: var(--app-shadow, 0 12px 30px rgba(15, 23, 42, 0.08));
+        --tasks-warning-bg: color-mix(in srgb, var(--tasks-surface) 84%, #f59e0b 16%);
+        --tasks-warning-text: color-mix(in srgb, var(--tasks-text) 72%, #b45309 28%);
+        --tasks-warning-border: color-mix(in srgb, var(--tasks-border) 58%, #f59e0b 42%);
+        --tasks-danger-bg: color-mix(in srgb, var(--tasks-surface) 84%, #ef4444 16%);
+        --tasks-danger-text: color-mix(in srgb, var(--tasks-text) 72%, #b91c1c 28%);
+        --tasks-danger-border: color-mix(in srgb, var(--tasks-border) 58%, #ef4444 42%);
+      }
+
+      html[data-theme='dark'] .tasks-page {
+        --tasks-warning-bg: color-mix(in srgb, var(--tasks-surface-muted) 82%, #f59e0b 18%);
+        --tasks-warning-text: #fcd34d;
+        --tasks-warning-border: color-mix(in srgb, var(--tasks-border-strong) 60%, #f59e0b 40%);
+        --tasks-danger-bg: color-mix(in srgb, var(--tasks-surface-muted) 82%, #ef4444 18%);
+        --tasks-danger-text: #fca5a5;
+        --tasks-danger-border: color-mix(in srgb, var(--tasks-border-strong) 60%, #ef4444 40%);
+      }
+
       .task-group__border{
-        border-bottom: 2px solid rgba(148, 163, 184, 0.35);
+        border-bottom: 2px solid color-mix(in srgb, var(--tasks-border) 78%, var(--tasks-accent) 22%);
       }
 
       .task-timeline {
@@ -635,7 +665,7 @@ export default class Tareas {
         bottom: -1.25rem;
         left: 50%;
         width: 2px;
-        background: rgba(30, 135, 240, 0.18);
+        background: color-mix(in srgb, var(--tasks-border) 58%, var(--tasks-accent) 42%);
         transform: translateX(-50%);
       }
 
@@ -647,7 +677,8 @@ export default class Tareas {
         width: 88px;
         padding: 0.75rem 0.5rem;
         text-align: center;
-        border: 1px solid rgba(30, 135, 240, 0.16);
+        border: 1px solid color-mix(in srgb, var(--tasks-border) 50%, var(--tasks-accent) 50%);
+        background: var(--tasks-surface);
         box-shadow: none;
       }
 
@@ -655,7 +686,7 @@ export default class Tareas {
         font-size: 1.75rem;
         line-height: 1;
         font-weight: 700;
-        color: #1e87f0;
+        color: var(--tasks-accent);
       }
 
       .task-timeline__date-meta {
@@ -663,7 +694,7 @@ export default class Tareas {
         font-size: 0.72rem;
         line-height: 1.2;
         letter-spacing: 0.08em;
-        color: #6b7280;
+        color: var(--tasks-text-muted);
       }
 
       .task-timeline__date-inline {
@@ -677,6 +708,7 @@ export default class Tareas {
       .task-timeline__content > .task-row__group-title {
         margin-left: 2rem;
         letter-spacing: 0.06em;
+        color: var(--tasks-text-muted);
       }
 
       .task-timeline__entry {
@@ -685,8 +717,8 @@ export default class Tareas {
 
       .task-row {
         position: relative;
-        border: 1px solid rgba(30, 135, 240, 0.10);
-        background: var(--uk-card-default-background, #fff);
+        border: 1px solid color-mix(in srgb, var(--tasks-border) 72%, var(--tasks-accent) 28%);
+        background: var(--tasks-surface);
         text-decoration: none;
         color: inherit;
         transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
@@ -699,13 +731,13 @@ export default class Tareas {
         top: 1.45rem;
         width: 1rem;
         height: 2px;
-        background: rgba(30, 135, 240, 0.18);
+        background: color-mix(in srgb, var(--tasks-border) 58%, var(--tasks-accent) 42%);
       }
 
       .task-row:hover {
         transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-        background: var(--uk-muted-background, #f8f8f8);
+        box-shadow: var(--tasks-shadow);
+        background: color-mix(in srgb, var(--tasks-surface) 84%, var(--tasks-accent) 16%);
         text-decoration: none;
       }
 
@@ -726,6 +758,16 @@ export default class Tareas {
 
       .task-row__creator {
         text-align: right;
+        color: var(--tasks-text-muted);
+      }
+
+      .task-row__title {
+        color: var(--tasks-text);
+      }
+
+      .task-row:hover .task-row__title,
+      .task-row:focus-within .task-row__title {
+        color: var(--tasks-text);
       }
 
       .task-row__status {
@@ -746,23 +788,26 @@ export default class Tareas {
       }
 
       .tasks-tabs > .uk-active > a {
-        background: var(--uk-muted-background, #f8f8f8);
+        background: var(--tasks-surface-muted);
         border-top-left-radius: 6px;
         border-top-right-radius: 6px;
+        color: var(--tasks-text);
       }
 
       .task-active-banner {
-        border: 1px solid rgba(59, 130, 246, 0.25);
+        border: 1px solid color-mix(in srgb, var(--tasks-border) 55%, var(--tasks-accent) 45%);
+        background: color-mix(in srgb, var(--tasks-surface) 82%, var(--tasks-accent) 18%);
       }
 
       .task-active-banner__row {
-        border: 1px solid rgba(245, 158, 11, 0.25);
-        background: var(--uk-card-default-background, #fff);
+        border: 1px solid var(--tasks-warning-border);
+        background: var(--tasks-surface);
       }
 
       .task-active-counter {
-        border: 1px dashed rgba(245, 158, 11, 0.4);
-        background: rgba(255, 247, 237, 0.8);
+        border: 1px dashed var(--tasks-warning-border);
+        background: var(--tasks-warning-bg);
+        color: var(--tasks-warning-text);
       }
 
       .task-active-banner__status {
@@ -775,15 +820,47 @@ export default class Tareas {
         width: 100%;
       }
 
+      .task-count-badge {
+        background: var(--tasks-accent-soft);
+        color: var(--tasks-accent);
+        border-radius: 999px;
+      }
+
+      .task-active-counter__badge {
+        border-radius: 999px;
+      }
+
+      .tasks-state-alert {
+        border: 1px solid var(--tasks-warning-border);
+      }
+
+      .tasks-state-alert--warning {
+        background: var(--tasks-warning-bg);
+        color: var(--tasks-warning-text);
+        border-color: var(--tasks-warning-border);
+      }
+
+      .tasks-state-alert--danger {
+        background: var(--tasks-danger-bg);
+        color: var(--tasks-danger-text);
+        border-color: var(--tasks-danger-border);
+      }
+
+      .tasks-state-alert p {
+        color: inherit;
+      }
+
       .tasks-tab-item--today > a {
         padding-left: 0;
         text-transform: none;
+        color: var(--tasks-text-muted);
       }
 
       .tasks-tab-item--pending > a,
       .tasks-tab-item--overdue > a {
         padding-left: 0;
         text-transform: none;
+        color: var(--tasks-text-muted);
       }
 
       .tasks-page-title-row {
@@ -823,7 +900,7 @@ export default class Tareas {
           padding: 0.4rem 0.45rem;
           position: relative;
           z-index: 1;
-          background: var(--uk-card-default-background, #fff);
+          background: var(--tasks-surface);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -845,7 +922,7 @@ export default class Tareas {
           line-height: 1.1;
           letter-spacing: 0.04em;
           font-weight: 700;
-          color: #1e87f0;
+          color: var(--tasks-accent);
           white-space: nowrap;
           text-transform: uppercase;
         }
@@ -870,7 +947,7 @@ export default class Tareas {
 
         .task-row__title {
           line-height: 1.15;
-          color: rgba(34, 34, 34, 0.96);
+          color: var(--tasks-text);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;

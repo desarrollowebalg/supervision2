@@ -38,16 +38,19 @@ class SidebarMenuComponent extends HTMLElement {
     return [
       { path: '/inicio', label: 'Inicio', icon: 'home' },
       { path: '/supervision-2', label: 'Supervisión 2', icon: 'location' },
+      { path: '/formularios', label: 'Formularios', icon: 'file-text' },
+      { path: '/tareas', label: 'Tareas', icon: 'check' },
+      { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
     ];
     // { path: '/formularios', label: 'Formularios', icon: 'file-text' },
     // { path: '/tareas', label: 'Tareas', icon: 'check' }
   }
 
   get sentItems() {
-    // return [
-    //   { path: '/timeline', label: 'Bandeja de salida', icon: 'clock' }
-    // ];
-    return [];
+    return [
+      { path: '/timeline', label: 'Bandeja de salida', icon: 'clock' }
+    ];
+    // return [];
   }
 
   get syncItem() {

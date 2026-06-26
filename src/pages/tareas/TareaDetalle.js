@@ -25,11 +25,13 @@ export default class TareaDetalle {
   render(container, params = {}) {
     this.container = container;
     this.params = params;
+    this.ensureTaskDetailStyles();
 
     renderInicioLayout(container, {
       title: '',
       description: '',
       contentHtml: `
+        <section class="task-detail-page">
         <div class="uk-margin-small-bottom uk-flex uk-flex-between uk-flex-middle">
           <button id="taskDetailBackBtn" class="uk-button uk-button-default uk-hidden uk-border-rounded" type="button" aria-label="Regresar">
             <span uk-icon="arrow-left"></span>
@@ -39,6 +41,7 @@ export default class TareaDetalle {
           </button>
         </div>
         <div id="taskDetailState"></div>
+        </section>
       `
     });
 
@@ -91,17 +94,17 @@ export default class TareaDetalle {
       const taskItemNumber = this.escapeHtml(task?.ITEM_NUMBER || 'Sin item number');
       const activeElapsed = this.resolveActiveElapsed(activeTask, task);
       const lockMessage = isOtherTaskActive
-        ? `<div class="uk-alert-warning uk-margin-small-bottom" uk-alert>
+        ? `<div class="uk-alert-warning uk-border-rounded uk-margin-small-bottom task-detail-alert task-detail-alert--warning" uk-alert>
             <p>Hay una tarea activa en progreso. Debes finalizarla antes de continuar con esta tarea.</p>
           </div>`
         : '';
 
       stateNode.innerHTML = `
-        <article class="uk-card uk-card-default uk-card-body uk-border-rounded">
+        <article class="uk-card uk-card-default uk-card-body uk-border-rounded task-detail-card">
           ${lockMessage}
           <div class="uk-grid-medium uk-flex-middle" uk-grid>
             <div class="uk-width-expand@m">
-              <div class="uk-card uk-card-muted uk-border-rounded uk-padding-small">
+              <div class="uk-card uk-card-muted uk-border-rounded uk-padding-small task-detail-summary-card">
                 <div class="uk-margin-small-bottom">
                   <p class="uk-margin-remove-bottom uk-margin-small-bottom">
                     <span class="uk-label ${taskStatusClass}">${taskStatus}</span>
@@ -149,7 +152,7 @@ export default class TareaDetalle {
       this.bindTaskWorkflowActions(stateNode, task, buttonState);
     } catch (error) {
       stateNode.innerHTML = `
-        <div class="uk-alert-danger" uk-alert>
+        <div class="uk-alert-danger uk-border-rounded task-detail-alert task-detail-alert--danger" uk-alert>
           <p>No fue posible cargar el detalle de la tarea.</p>
         </div>
       `;
@@ -460,5 +463,70 @@ export default class TareaDetalle {
       return 'uk-label-danger';
     }
     return '';
+  }
+
+  ensureTaskDetailStyles() {
+    if (document.getElementById('task-detail-page-styles')) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'task-detail-page-styles';
+    style.textContent = `
+      .task-detail-page {
+        --task-detail-accent: var(--app-primary, #1e87f0);
+        --task-detail-surface: var(--app-surface, #ffffff);
+        --task-detail-surface-muted: var(--app-surface-muted, #f3f4f6);
+        --task-detail-border: var(--app-border, #e5e7eb);
+        --task-detail-border-strong: var(--app-border-strong, #cbd5e1);
+        --task-detail-text: var(--app-text, #1f2937);
+        --task-detail-text-muted: var(--app-text-muted, #6b7280);
+        --task-detail-warning-bg: color-mix(in srgb, var(--task-detail-surface) 84%, #f59e0b 16%);
+        --task-detail-warning-text: color-mix(in srgb, var(--task-detail-text) 72%, #b45309 28%);
+        --task-detail-warning-border: color-mix(in srgb, var(--task-detail-border) 58%, #f59e0b 42%);
+        --task-detail-danger-bg: color-mix(in srgb, var(--task-detail-surface) 84%, #ef4444 16%);
+        --task-detail-danger-text: color-mix(in srgb, var(--task-detail-text) 72%, #b91c1c 28%);
+        --task-detail-danger-border: color-mix(in srgb, var(--task-detail-border) 58%, #ef4444 42%);
+      }
+
+      html[data-theme='dark'] .task-detail-page {
+        --task-detail-warning-bg: color-mix(in srgb, var(--task-detail-surface-muted) 82%, #f59e0b 18%);
+        --task-detail-warning-text: #fcd34d;
+        --task-detail-warning-border: color-mix(in srgb, var(--task-detail-border-strong) 60%, #f59e0b 40%);
+        --task-detail-danger-bg: color-mix(in srgb, var(--task-detail-surface-muted) 82%, #ef4444 18%);
+        --task-detail-danger-text: #fca5a5;
+        --task-detail-danger-border: color-mix(in srgb, var(--task-detail-border-strong) 60%, #ef4444 40%);
+      }
+
+      .task-detail-card,
+      .task-detail-summary-card {
+        border-color: var(--task-detail-border);
+      }
+
+      .task-detail-summary-card {
+        background: var(--task-detail-surface-muted);
+      }
+
+      .task-detail-alert {
+        border: 1px solid var(--task-detail-warning-border);
+      }
+
+      .task-detail-alert--warning {
+        background: var(--task-detail-warning-bg);
+        color: var(--task-detail-warning-text);
+        border-color: var(--task-detail-warning-border);
+      }
+
+      .task-detail-alert--danger {
+        background: var(--task-detail-danger-bg);
+        color: var(--task-detail-danger-text);
+        border-color: var(--task-detail-danger-border);
+      }
+
+      .task-detail-alert p {
+        color: inherit;
+      }
+    `;
+    document.head.appendChild(style);
   }
 }

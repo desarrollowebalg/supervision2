@@ -114,6 +114,32 @@ app.inicializar();
   - ancho m?ximo sidebar: `18rem`
   - ancho m?nimo sidebar: `4rem`
   - estilos base en `.inicio-sidebar`: `display: inline-block; height: calc(100vh - 100px); margin: 10px;`
+- Para p?ginas tipo cat?logo/listado con:
+  - t?tulo
+  - subt?tulo
+  - buscador
+  - barra de nombres de columnas
+  - contenido en forma de lista
+  usar como base compartida `src/pages/shared/catalog-list-page.base.js`.
+- Esa base ya resuelve:
+  - estructura visual compatible con `renderInicioLayout(...)`
+  - buscador responsive con toggle mobile
+  - barra de encabezado de columnas
+  - badge de conteo
+  - hover compatible con temas `light/dark`
+  - tokens visuales conectados a `src/styles/themes.css`
+- Si una nueva p?gina necesita ese patr?n, no duplicar estilos inline o `style` local salvo ajuste realmente espec?fico del dominio.
+- Si se requieren variaciones, extender la clase base y mantener naming consistente:
+  - contenedor general: `catalog-list-page`
+  - fila: `catalog-row`
+  - t?tulo de fila: `catalog-row__title`
+  - meta secundaria: `catalog-row__meta`
+  - encabezado de columnas: `catalog-column-header`
+  - buscador: `catalog-search-input`
+- Referencia de implementaci?n actual:
+  - `src/pages/puntosInteres/PuntosInteres.js`
+- Documentaci?n de uso para nuevas p?ginas:
+  - `src/pages/README.md`
 
 ---
 

@@ -32,6 +32,96 @@ Este directorio contiene las páginas de la SPA y sus entrypoints activos.
 - `src/pages/inicio-layout.js` centraliza el shell (`header`, `sidebar`, `main`) y eventos comunes de navegación/logout.
 - Las páginas de `/inicio` reutilizan `renderInicioLayout(...)` para mantener consistencia visual y funcional.
 
+## Patrón base para páginas de listado
+
+- Para páginas con estructura `título + subtítulo + buscador + barra de columnas + lista`, reutilizar `src/pages/shared/catalog-list-page.base.js`.
+- Esta base ya resuelve:
+  - integración con `renderInicioLayout(...)`
+  - buscador responsive con toggle en mobile
+  - barra de cabecera para columnas
+  - badge de conteo
+  - estilos compatibles con `light/dark`
+  - hover de filas conectado a tokens globales de tema
+- Referencia activa:
+  - `src/pages/puntosInteres/PuntosInteres.js`
+  - `src/pages/formularios/formularios.js`
+- Diagrama y flujo de creación:
+  - `src/pages/shared/CATALOG_LIST_PAGE_FLOW.md`
+
+### Cómo crear una nueva página basada en este patrón
+
+1. Crear una clase Singleton en `src/pages/<modulo>/<Pagina>.js`.
+2. Extender `CatalogListPageBase`.
+3. Llamar `renderCatalogListPage(...)` dentro de `render(...)`.
+4. Conectar `bindCatalogMobileSearchToggle(container)` si hay buscador.
+5. Renderizar items con `renderCatalogList(...)`.
+6. Mantener cualquier ajuste visual extra como complemento, no como reemplazo del patrón.
+
+Ejemplo base:
+
+```js
+import { CatalogListPageBase } from '../shared/catalog-list-page.base.js';
+
+export default class MiListado extends CatalogListPageBase {
+  static instancia = null;
+
+  constructor() {
+    if (MiListado.instancia) {
+      return MiListado.instancia;
+    }
+
+    super();
+    this.items = [];
+    MiListado.instancia = this;
+  }
+
+  async inicializar(container) {
+    if (container) {
+      this.render(container);
+    }
+    return this;
+  }
+
+  render(container) {
+    this.renderCatalogListPage(container, {
+      title: 'Mi listado',
+      description: 'Consulta elementos disponibles.',
+      searchPlaceholder: 'Buscar por nombre',
+      searchInputId: 'miListadoSearchInput',
+      stateContainerId: 'miListadoStateContainer'
+    });
+
+    this.bindCatalogMobileSearchToggle(container);
+    this.renderItems(container.querySelector('#miListadoStateContainer'));
+  }
+
+  renderItems(stateContainer) {
+    this.renderCatalogList(stateContainer, {
+      items: this.items,
+      emptyMessage: 'No hay elementos para mostrar.',
+      mobileCounterLabel: 'Total de resultados',
+      desktopHeaderLabel: 'Nombre / Clave',
+      renderMobileItem: (item) => `
+        <li class="catalog-list__item">
+          <article class="catalog-row catalog-row--mobile uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small">
+            <h3 class="uk-margin-remove-bottom uk-text-bold catalog-row__title">${this.escapeHtml(item.nombre)}</h3>
+            <p class="uk-margin-small-top uk-margin-remove-bottom catalog-row__meta">Clave: ${this.escapeHtml(item.clave)}</p>
+          </article>
+        </li>
+      `,
+      renderDesktopItem: (item) => `
+        <li class="catalog-list__item uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">
+          <article class="catalog-row catalog-row--desktop uk-border-rounded uk-padding-small">
+            <h3 class="uk-margin-remove-bottom catalog-row__title">${this.escapeHtml(item.nombre)}</h3>
+            <p class="uk-margin-small-top uk-margin-remove-bottom catalog-row__meta">Clave: ${this.escapeHtml(item.clave)}</p>
+          </article>
+        </li>
+      `
+    });
+  }
+}
+```
+
 ## Convención de clases de página (Singleton)
 
 Las clases nuevas o modificadas en `src/pages/**` deben seguir estructura Singleton como base:
@@ -78,7 +168,7 @@ export default class MiPagina {
 - La vista `#/formularios/:indicator` registra referencia activa por formulario usando `indicator + CLV`.
 - Se guarda un snapshot del `schema` y respuestas en `localStorage` por formulario activo.
 - El autosave se dispara al perder foco (`focusout`) y en cambios (`change`) para cubrir inputs visuales.
-- Debajo del t�tulo del formulario se muestra estado peque�o de guardado autom�tico con hora.
+- Debajo del título del formulario se muestra estado pequeño de guardado automático con hora.
 
 ## Submit actual
 
@@ -92,4 +182,3 @@ export default class MiPagina {
 - `signature` mantiene canvas, boton `Limpiar` y reintento manual de envio.
 - Cada campo visual muestra estado discreto no bloqueante: `idle`, `uploading`, `uploaded`, `error`.
 - En error de subida se habilita reintento manual por campo.
-

@@ -273,6 +273,10 @@ export default MiComponente;
 - **Usar clases UIKit** para consistencia (`uk-flex`, `uk-heading-*`, etc.)
 - Usar selectores específicos para estilos custom (ej: `header-component .mi-clase`)
 - Agregar estilos solo una vez al head con ID único
+- Diseñar el componente para `light/dark` desde el inicio usando tokens globales (`--app-*`)
+- Usar `var(--app-text)`, `var(--app-border)`, `var(--app-surface)`, `var(--app-primary)`, etc. en vez de colores fijos
+- Si hay `hover`, `focus`, badges, líneas, fondos o acentos visuales, deben responder al tema activo
+- Preferir clases UIKit para superficie/base y usar CSS custom solo como complemento temático
 
 ❌ **EVITAR:**
 - Usar `innerHTML` para contenido dinámico
@@ -281,6 +285,7 @@ export default MiComponente;
 - Lógica compleja en el constructor
 - Manipulación del DOM padre
 - Duplicar estilos en cada instancia del componente
+- Colores hardcodeados como `#fff`, `#1e87f0`, `#d6d6d6` cuando existe equivalente con tokens globales
 
 ### Manejo de Caracteres Especiales
 
@@ -344,6 +349,45 @@ _addStyles() {
   `;
   document.head.appendChild(style);
 }
+```
+
+### Soporte obligatorio para light/dark
+
+Todo componente nuevo o modificado debe considerar ambos modos visuales desde su creación.
+
+Reglas mínimas:
+
+- No fijar colores estructurales con hexadecimales si existe token global.
+- Conectar bordes, textos, superficies y acentos a `src/styles/themes.css`.
+- Validar que `hover`, `focus`, `empty states`, `badges` y `modals` sigan siendo legibles en oscuro.
+- Si UIKit ya resuelve el comportamiento visual base, no reemplazarlo; solo complementar con tokens del proyecto.
+
+Ejemplo recomendado:
+
+```js
+style.textContent = `
+  mi-componente {
+    --comp-surface: var(--app-surface, #ffffff);
+    --comp-border: var(--app-border, #e5e7eb);
+    --comp-text: var(--app-text, #1f2937);
+    --comp-text-muted: var(--app-text-muted, #6b7280);
+    --comp-accent: var(--app-primary, #1e87f0);
+  }
+
+  mi-componente .card {
+    background: var(--comp-surface);
+    border: 1px solid var(--comp-border);
+    color: var(--comp-text);
+  }
+
+  mi-componente .meta {
+    color: var(--comp-text-muted);
+  }
+
+  mi-componente .card:hover {
+    border-color: var(--comp-accent);
+  }
+`;
 ```
 
 **Patrón completo:**

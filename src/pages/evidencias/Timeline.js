@@ -22,14 +22,50 @@ export default class Timeline {
   }
 
   render(container) {
+    this.ensureTimelinePageStyles();
+
     renderInicioLayout(container, {
-      title: '',
-      description: '',
+      title: 'Bandeja de salida',
+      description: 'Consulta y reintenta el envío de evidencias almacenadas localmente.',
       contentHtml: `
-        <section class="uk-width-1-1">
+        <section class="timeline-page uk-width-1-1">
           <forms-timeline-component days-window="7" title="Bandeja de salida" subtitle="Registros guardados"></forms-timeline-component>
         </section>
       `
     });
+  }
+
+  ensureTimelinePageStyles() {
+    if (document.getElementById('timeline-page-styles')) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'timeline-page-styles';
+    style.textContent = `
+      .timeline-page {
+        --timeline-page-surface: var(--app-surface, #ffffff);
+        --timeline-page-border: var(--app-border, #e5e7eb);
+        --timeline-page-shadow: var(--app-shadow, 0 12px 30px rgba(15, 23, 42, 0.08));
+        --timeline-page-text: var(--app-text, #1f2937);
+        color: var(--timeline-page-text);
+      }
+
+      .timeline-page forms-timeline-component {
+        display: block;
+      }
+
+      .timeline-page forms-timeline-component > section,
+      .timeline-page .uk-card {
+        border-color: var(--timeline-page-border);
+      }
+
+      @media (max-width: 639px) {
+        .timeline-page {
+          margin-top: 0.75rem;
+        }
+      }
+    `;
+    document.head.appendChild(style);
   }
 }

@@ -68,6 +68,19 @@ class FormsTimelineComponent extends HTMLElement {
     style.textContent = `
       forms-timeline-component {
         display: block;
+        --timeline-accent: var(--app-primary, #1e87f0);
+        --timeline-accent-soft: var(--app-primary-soft, rgba(30, 135, 240, 0.14));
+        --timeline-border: var(--app-border, #e5e7eb);
+        --timeline-border-strong: var(--app-border-strong, #cbd5e1);
+        --timeline-text: var(--app-text, #1f2937);
+        --timeline-text-muted: var(--app-text-muted, #6b7280);
+        --timeline-surface: var(--app-surface, #ffffff);
+        --timeline-surface-muted: var(--app-surface-muted, #f3f4f6);
+        --timeline-shadow: var(--app-shadow, 0 12px 30px rgba(15, 23, 42, 0.08));
+      }
+
+      html[data-theme='dark'] forms-timeline-component {
+        --timeline-accent-soft: rgba(96, 165, 250, 0.18);
       }
 
       forms-timeline-component .timeline-list {
@@ -95,7 +108,8 @@ class FormsTimelineComponent extends HTMLElement {
         width: 0.55rem;
         height: 0.55rem;
         border-radius: 50%;
-        background: #1e87f0;
+        background: var(--timeline-accent);
+        box-shadow: 0 0 0 5px var(--timeline-accent-soft);
       }
 
       forms-timeline-component .timeline-item::after {
@@ -105,11 +119,58 @@ class FormsTimelineComponent extends HTMLElement {
         top: 1rem;
         bottom: -0.75rem;
         width: 1px;
-        background: #d6d6d6;
+        background: var(--timeline-border);
       }
 
       forms-timeline-component .timeline-item:last-child::after {
         display: none;
+      }
+
+      forms-timeline-component .timeline-record-card {
+        border: 1px solid var(--timeline-border);
+        background: var(--timeline-surface-muted);
+        color: var(--timeline-text);
+        transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      }
+
+      forms-timeline-component .timeline-record-card:hover,
+      forms-timeline-component .timeline-record-card:focus-within {
+        border-color: var(--timeline-border-strong);
+        box-shadow: var(--timeline-shadow);
+      }
+
+      forms-timeline-component .timeline-record-card strong {
+        color: var(--timeline-text);
+      }
+
+      forms-timeline-component .timeline-record-card .uk-text-meta {
+        color: var(--timeline-text-muted);
+      }
+
+      forms-timeline-component .timeline-summary-badge {
+        background: var(--timeline-accent-soft);
+        color: var(--timeline-accent);
+        border-radius: 999px;
+      }
+
+      forms-timeline-component .timeline-mobile-modal-title {
+        color: var(--timeline-text);
+      }
+
+      forms-timeline-component .timeline-empty-alert.uk-alert-warning {
+        background: color-mix(in srgb, var(--timeline-surface) 84%, #f59e0b 16%);
+        color: color-mix(in srgb, var(--timeline-text) 72%, #b45309 28%);
+        border: 1px solid color-mix(in srgb, var(--timeline-border) 58%, #f59e0b 42%);
+      }
+
+      html[data-theme='dark'] forms-timeline-component .timeline-empty-alert.uk-alert-warning {
+        background: color-mix(in srgb, var(--timeline-surface-muted) 82%, #f59e0b 18%);
+        color: #fcd34d;
+        border-color: color-mix(in srgb, var(--timeline-border-strong) 60%, #f59e0b 40%);
+      }
+
+      forms-timeline-component .timeline-empty-alert p {
+        color: inherit;
       }
     `;
 
@@ -134,7 +195,6 @@ class FormsTimelineComponent extends HTMLElement {
 
   _getStatusLabelClass(status) {
     const normalized = (status || '').toLowerCase();
-    console.log("Estatus: ",normalized);
     if (normalized.includes('enviada')) return 'uk-label-success';
     if (normalized.includes('no enviada')) return 'uk-label-danger';
     if (normalized.includes('pendiente')) return 'uk-label-warning';
@@ -196,7 +256,7 @@ class FormsTimelineComponent extends HTMLElement {
             <h3 class="uk-card-title uk-margin-remove-bottom">${this.title}</h3>
             <p class="uk-text-meta uk-margin-remove-top">${this.subtitle}</p>
           </div>
-          <span class="uk-label">${filtered.length} registros</span>
+          <span class="uk-label timeline-summary-badge">${filtered.length} registros</span>
         </div>
 
         ${this._isLoading ? `
@@ -223,7 +283,7 @@ class FormsTimelineComponent extends HTMLElement {
             `).join('')}
           </ul>
         ` : `
-          <div class="uk-alert-warning" uk-alert>
+          <div class="uk-alert-warning uk-border-rounded timeline-empty-alert" uk-alert>
             <p class="uk-margin-remove">No hay evidencias enviadas.</p>
           </div>
         `}
@@ -232,7 +292,7 @@ class FormsTimelineComponent extends HTMLElement {
       <div id="${modalId}" uk-modal class="uk-hidden@s">
         <div class="uk-modal-dialog uk-modal-body">
           <button class="uk-modal-close-default" type="button" uk-close></button>
-          <h4 class="uk-modal-title">Opciones de evidencia</h4>
+          <h4 class="uk-modal-title timeline-mobile-modal-title">Opciones de evidencia</h4>
           <div data-role="mobile-actions-slot"></div>
         </div>
       </div>

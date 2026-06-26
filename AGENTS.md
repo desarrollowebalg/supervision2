@@ -100,6 +100,32 @@ Strict global policy (mandatory):
 4. Is remaining custom CSS justified by a real UIkit limitation?
 5. Do desktop and mobile stay consistent with UIkit patterns?
 
+## ES - Patr?n Reutilizable para P?ginas de Listado
+- Cuando una p?gina frontend comparta el patr?n:
+  - t?tulo
+  - subt?tulo
+  - buscador
+  - barra de columnas
+  - contenido en lista
+  debe reutilizarse la base `src/pages/shared/catalog-list-page.base.js`.
+- Esta base existe para evitar duplicaci?n de estilos y mantener consistencia visual entre `light/dark`.
+- El hover de items y los colores de superficie deben depender de tokens globales (`--app-*`) definidos por tema, no de colores fijos.
+- `src/pages/puntosInteres/PuntosInteres.js` queda como referencia operativa del patr?n.
+- Si una p?gina nueva necesita este mismo estilo, extender la base y limitar el CSS custom a necesidades del dominio que UIkit o la base compartida no cubran.
+
+## EN - Reusable Pattern for List Pages
+- When a frontend page shares this pattern:
+  - title
+  - subtitle
+  - search box
+  - column header bar
+  - list content
+  it must reuse the base `src/pages/shared/catalog-list-page.base.js`.
+- This base exists to prevent style duplication and preserve visual consistency across `light/dark`.
+- Item hover and surface colors must depend on global theme tokens (`--app-*`), not fixed colors.
+- `src/pages/puntosInteres/PuntosInteres.js` is the current operational reference for this pattern.
+- If a new page needs the same style, extend the base and keep custom CSS limited to domain-specific needs not covered by UIkit or the shared base.
+
 ## ES - Estructura de Clases JavaScript (Singleton)
 - Las clases JavaScript nuevas o modificadas en frontend deben usar patrón **Singleton** como estructura base.
 - Modelo de referencia:
