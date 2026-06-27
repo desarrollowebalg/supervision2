@@ -14,7 +14,7 @@ import Settings from '../settings.js';
 import Formularios from '../formularios/formularios.js';
 import FormEvidencia from '../formularios/form-evidencia.js';
 import PuntosInteres from '../puntosInteres/PuntosInteres.js';
-import Supervision2 from '../supervision2.js';
+import Supervision2 from '../supervision/supervision2.js';
 import Tareas from '../tareas/Tareas.js';
 import TareaDetalle from '../tareas/TareaDetalle.js';
 import Timeline from '../evidencias/Timeline.js';

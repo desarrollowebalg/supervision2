@@ -38,7 +38,7 @@ export default class LoginPage {
         <h2 class="uk-card-title uk-text-center">
           <span uk-icon="icon: video-camera; ratio: 2"></span>
           <br>
-          Supervisión
+          SVG Supervisión
         </h2>
         <p class="uk-text-center uk-text-muted">---</p>
 

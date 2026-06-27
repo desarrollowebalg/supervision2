@@ -16,9 +16,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['images/**/*', 'sounds/**/*'],
       manifest: {
-        name: 'Movilizandome - Plataforma Logística',
-        short_name: 'Movilizandome',
-        description: 'Plataforma de gestión y seguimiento logístico',
+        name: 'BDDynamics - Supervisiín y control de incidencas',
+        short_name: 'BD Dynamics',
+        description: 'Plataforma de gestión y control de incidencias.',
         theme_color: '#000000',
         background_color: '#ffffff',
         display: 'standalone',

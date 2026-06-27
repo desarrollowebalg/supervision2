@@ -37,7 +37,7 @@ class SidebarMenuComponent extends HTMLElement {
   get items() {
     return [
       { path: '/inicio', label: 'Inicio', icon: 'home' },
-      { path: '/supervision-2', label: 'Supervisión 2', icon: 'location' },
+      { path: '/supervision-2', label: 'Supervisión 2', icon: 'comments' },
       { path: '/formularios', label: 'Formularios', icon: 'file-text' },
       { path: '/tareas', label: 'Tareas', icon: 'check' },
       { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
