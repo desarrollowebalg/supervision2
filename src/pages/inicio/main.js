@@ -14,7 +14,7 @@ import Settings from '../settings.js';
 import Formularios from '../formularios/formularios.js';
 import FormEvidencia from '../formularios/form-evidencia.js';
 import PuntosInteres from '../puntosInteres/PuntosInteres.js';
-import Supervision2 from '../supervision/supervision2.js';
+import Supervision from '../supervision/supervision.js';
 import Tareas from '../tareas/Tareas.js';
 import TareaDetalle from '../tareas/TareaDetalle.js';
 import Timeline from '../evidencias/Timeline.js';
@@ -37,7 +37,7 @@ if (!user.isAuthenticated) {
   registerRoute('/formularios', Formularios, { meta: { title: 'Formularios', requiresAuth: true } });
   registerRoute('/formularios/:indicator', FormEvidencia, { meta: { title: 'Detalle de formulario', requiresAuth: true } });
   registerRoute('/puntos-interes', PuntosInteres, { meta: { title: 'Puntos de interés', requiresAuth: true } });
-  registerRoute('/supervision-2', Supervision2, { meta: { title: 'Supervisión 2', requiresAuth: true } });
+  registerRoute('/supervision', Supervision, { meta: { title: 'Supervisión', requiresAuth: true } });
   registerRoute('/tareas', Tareas, { meta: { title: 'Tareas', requiresAuth: true } });
   registerRoute('/tareas/:taskId', TareaDetalle, { meta: { title: 'tarea-detalle', requiresAuth: true } });
   registerRoute('/timeline', Timeline, { meta: { title: 'Timeline', requiresAuth: true } });

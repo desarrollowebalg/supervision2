@@ -1,14 +1,17 @@
 import { renderInicioLayout } from '../inicio-layout.js';
 
-export default class Supervision2 {
+export default class Supervision {
   static instancia = null;
+  static PARENT_CARD_CLASS = 'supervision-page-parent-card';
 
   constructor() {
-    if (Supervision2.instancia) {
-      return Supervision2.instancia;
+    if (Supervision.instancia) {
+      return Supervision.instancia;
     }
 
-    Supervision2.instancia = this;
+    Supervision.instancia = this;
+    this.parentCardElement = null;
+    this.titleElement = null;
   }
 
   async inicializar(container) {
@@ -20,13 +23,13 @@ export default class Supervision2 {
   }
 
   render(container) {
-    this.ensureSupervision2Styles();
+    this.ensureSupervisionStyles();
 
     renderInicioLayout(container, {
       title: '',
       description: '',
       contentHtml: `
-        <section class="supervision2-page uk-section uk-section-small uk-padding-remove-top">
+        <section class="supervision2-page uk-section uk-section-small uk-padding-remove-top uk-padding-remove-bottom">
           <div class="supervision2-shell">
             <div class="supervision2-layout">
               <aside class="supervision2-panel supervision2-panel--left">
@@ -88,7 +91,7 @@ export default class Supervision2 {
                     pendingId: 'pendientes-user-list-1'
                   })}
 
-                  <li class="uk-open supervision2-card supervision2-card--informative">
+                  <li class="supervision2-card supervision2-card--informative">
                     <a class="uk-accordion-title supervision2-card__title" href="#">
                       <span class="uk-text-truncate" title="Nivel 0: Informativo → Contexto → sin SLA Contexto" uk-tooltip>
                         ⚪ Nivel 0: Informativo → Contexto → sin SLA Contexto
@@ -118,11 +121,13 @@ export default class Supervision2 {
         </section>
       `
     });
+
+    this.syncParentCardClass(container);
   }
 
   renderLevelAccordionItem({ levelClass, title, listId, pendingId }) {
     return `
-      <li class="uk-open supervision2-card ${levelClass}">
+      <li class="supervision2-card ${levelClass}">
         <a class="uk-accordion-title supervision2-card__title" href="#">
           <span class="uk-text-truncate" title="${this.escapeAttribute(title)}" uk-tooltip>${title}</span>
         </a>
@@ -145,7 +150,51 @@ export default class Supervision2 {
       .replaceAll('>', '&gt;');
   }
 
-  ensureSupervision2Styles() {
+  syncParentCardClass(container) {
+    this.removeParentCardClass();
+    this.removeTitleHiddenClass();
+
+    const supervisionRoot = container?.querySelector('.supervision2-page');
+    const parentCard = supervisionRoot?.closest('.uk-card.uk-card-body');
+    const titleElement = supervisionRoot?.previousElementSibling;
+
+    if (!parentCard) {
+      return;
+    }
+
+    parentCard.classList.add(Supervision.PARENT_CARD_CLASS);
+    this.parentCardElement = parentCard;
+
+    if (titleElement?.matches('h1.uk-card-title')) {
+      titleElement.classList.add('uk-hidden');
+      this.titleElement = titleElement;
+    }
+  }
+
+  removeParentCardClass() {
+    if (!this.parentCardElement) {
+      return;
+    }
+
+    this.parentCardElement.classList.remove(Supervision.PARENT_CARD_CLASS);
+    this.parentCardElement = null;
+  }
+
+  removeTitleHiddenClass() {
+    if (!this.titleElement) {
+      return;
+    }
+
+    this.titleElement.classList.remove('uk-hidden');
+    this.titleElement = null;
+  }
+
+  destroy() {
+    this.removeParentCardClass();
+    this.removeTitleHiddenClass();
+  }
+
+  ensureSupervisionStyles() {
     if (document.getElementById('supervision2-page-styles')) {
       return;
     }
@@ -168,13 +217,22 @@ export default class Supervision2 {
         --supervision2-shadow-soft: var(--app-shadow-soft);
         --supervision2-badge-bg: color-mix(in srgb, var(--app-surface-elevated) 70%, var(--app-border) 30%);
         --supervision2-badge-text: var(--app-text-muted);
-        top: -50px;
+        height: 100%;
+        top: -20px;
         position: relative;
+      }
+
+      .${Supervision.PARENT_CARD_CLASS} {
+        height: calc(100vh - 200px);
+      }
+
+      .${Supervision.PARENT_CARD_CLASS} > .supervision2-page {
+        height: 100%;
       }
 
       .supervision2-shell {
         width: 100%;
-        min-height: calc(100vh - 220px);
+        height: calc(100vh - 100px);
       }
 
       .supervision2-layout {
@@ -182,6 +240,7 @@ export default class Supervision2 {
         grid-template-columns: minmax(300px, 26%) 1fr;
         gap: 0.75rem;
         align-items: start;
+        height: 100%;
       }
 
       .supervision2-panel {
@@ -342,6 +401,7 @@ export default class Supervision2 {
 
         .supervision2-layout {
           grid-template-columns: 1fr;
+          height: auto;
         }
 
         .supervision2-panel--left {
