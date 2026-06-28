@@ -1,8 +1,11 @@
+import { renderSupervisionSidebar } from '../../components/supervision-sidebar/supervision-sidebar.js';
 import { renderInicioLayout } from '../inicio-layout.js';
+import { loadSupervisionSidebarConfig } from './services/supervision-sidebar-config.service.js';
 
 export default class Supervision {
   static instancia = null;
   static PARENT_CARD_CLASS = 'supervision-page-parent-card';
+  static DEFAULT_WORKSPACE_ID = '1';
 
   constructor() {
     if (Supervision.instancia) {
@@ -16,14 +19,16 @@ export default class Supervision {
 
   async inicializar(container) {
     if (container) {
-      this.render(container);
+      await this.render(container);
     }
 
     return this;
   }
 
-  render(container) {
+  async render(container) {
     this.ensureSupervisionStyles();
+
+    const sidebarConfig = await loadSupervisionSidebarConfig(Supervision.DEFAULT_WORKSPACE_ID);
 
     renderInicioLayout(container, {
       title: '',
@@ -33,80 +38,7 @@ export default class Supervision {
           <div class="supervision2-shell">
             <div class="supervision2-layout">
               <aside class="supervision2-panel supervision2-panel--left">
-                <ul class="uk-accordion" uk-accordion="multiple: true">
-                  <li class="uk-open supervision2-card supervision2-card--tools">
-                    <a class="uk-accordion-title supervision2-card__title" href="#">                      
-                      <span uk-icon="calendar"></span>
-                      <span>Herramientas</span>
-                      <span id="loaderGralSupNiveles"></span>
-                    </a>
-                    <div class="uk-accordion-content uk-margin-small-top">
-                      <div class="uk-alert-primary uk-border-rounded supervision2-tools-box" uk-alert>
-                        <label class="uk-form-label uk-hidden" for="datePickerMapHot">Selecciona una fecha</label>
-                        <div class="uk-grid-small uk-flex-middle" uk-grid>
-                          <div class="uk-width-auto@s">
-                            <input id="datePickerMapHot" class="uk-input uk-form-width-small uk-border-rounded" type="date">
-                          </div>
-                          <div class="uk-width-expand@s">
-                            <span id="heatmapTitle" class="uk-hidden supervision2-week-title">Sem -- Año --</span>
-                            <span id="weekInfo" class="uk-text-meta">Selecciona una fecha para ver la semana correspondiente.</span>
-                          </div>
-                        </div>
-                      </div>
-                      <span id="msgContentsPanels"></span>
-                      <section class="uk-margin-small-top uk-margin-small-bottom uk-hidden">
-                        <input type="hidden" id="idSupervisorSeleccionado" value="0">
-                        <div id="contenedorSupervisioresSup_v0" class="uk-margin-small-top uk-margin-small-bottom">
-                          <div id="user-list-supervisores" class="supervision2-users-container"></div>
-                        </div>
-                      </section>
-                    </div>
-                  </li>
-
-                  ${this.renderLevelAccordionItem({
-                    levelClass: 'supervision2-card--critical',
-                    title: '🔴 Nivel 4: Crítico → Riesgo inmediato → SLA 60s',
-                    listId: 'user-list-4',
-                    pendingId: 'pendientes-user-list-4'
-                  })}
-
-                  ${this.renderLevelAccordionItem({
-                    levelClass: 'supervision2-card--relevant',
-                    title: '🟠 Nivel 3: Relevante → Riesgo potencial → SLA 120s',
-                    listId: 'user-list-3',
-                    pendingId: 'pendientes-user-list-3'
-                  })}
-
-                  ${this.renderLevelAccordionItem({
-                    levelClass: 'supervision2-card--important',
-                    title: '🟡 Nivel 2: Importante → Seguimiento necesario → SLA 240s',
-                    listId: 'user-list-2',
-                    pendingId: 'pendientes-user-list-2'
-                  })}
-
-                  ${this.renderLevelAccordionItem({
-                    levelClass: 'supervision2-card--operational',
-                    title: '🟢 Nivel 1: Operativo → Registro operativo → SLA 480s',
-                    listId: 'user-list-1',
-                    pendingId: 'pendientes-user-list-1'
-                  })}
-
-                  <li class="supervision2-card supervision2-card--informative">
-                    <a class="uk-accordion-title supervision2-card__title" href="#">
-                      <span class="uk-text-truncate" title="Nivel 0: Informativo → Contexto → sin SLA Contexto" uk-tooltip>
-                        ⚪ Nivel 0: Informativo → Contexto → sin SLA Contexto
-                      </span>
-                      <span class="uk-badge uk-margin-small-left uk-hidden" id="user-count">0</span>
-                    </a>
-                    <div class="uk-accordion-content uk-margin-small-top">
-                      <span class="uk-badge supervision2-pending-badge supervision2-pending-badge--inactive">
-                        Pendientes:
-                        <span id="pendientes-user-list" class="supervision2-pending-total">0</span>
-                      </span>
-                      <div id="user-list" class="supervision2-users-container"></div>
-                    </div>
-                  </li>
-                </ul>
+                ${renderSupervisionSidebar(sidebarConfig)}
               </aside>
 
               <section class="supervision2-panel supervision2-panel--right">
@@ -123,31 +55,6 @@ export default class Supervision {
     });
 
     this.syncParentCardClass(container);
-  }
-
-  renderLevelAccordionItem({ levelClass, title, listId, pendingId }) {
-    return `
-      <li class="supervision2-card ${levelClass}">
-        <a class="uk-accordion-title supervision2-card__title" href="#">
-          <span class="uk-text-truncate" title="${this.escapeAttribute(title)}" uk-tooltip>${title}</span>
-        </a>
-        <div class="uk-accordion-content uk-margin-small-top">
-          <span class="uk-badge supervision2-pending-badge supervision2-pending-badge--inactive">
-            Pendientes:
-            <span id="${pendingId}" class="supervision2-pending-total">0</span>
-          </span>
-          <div id="${listId}" class="supervision2-users-container"></div>
-        </div>
-      </li>
-    `;
-  }
-
-  escapeAttribute(value) {
-    return String(value || '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('"', '&quot;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;');
   }
 
   syncParentCardClass(container) {
@@ -298,6 +205,16 @@ export default class Supervision {
       .supervision2-page .uk-accordion-title::before {
         filter: none;
         opacity: 0.75;
+      }
+
+      .supervision2-level-indicator {
+        display: inline-flex;
+        flex: 0 0 auto;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 999px;
+        background: var(--supervision2-indicator-color, var(--supervision2-primary));
+        border: 1px solid color-mix(in srgb, var(--supervision2-indicator-color, var(--supervision2-primary)) 70%, #000 30%);
       }
 
       .supervision2-title-icon {

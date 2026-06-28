@@ -462,3 +462,57 @@ If an integration causes an incident:
   - `code: "SESSION_EXPIRED"`
   - HTTP `401`
 - Legacy endpoints still pending hardening (documented): `vistaPreviaQST`, `pdi`, `analiticsALG`.
+
+## ES - Regla del Sidebar Configurable de Supervisión
+- La estructura del panel izquierdo de `supervision` debe salir de la configuración externa por cliente en:
+  - `doctosSupervision/<clienteId>/supervision-sidebar.json`
+- El cliente inicial activo para esta primera fase es:
+  - `doctosSupervision/1/supervision-sidebar.json`
+- El archivo de configuración solo define estructura declarativa:
+  - `workspaceId`
+  - `schemaVersion`
+  - `accordion`
+  - `queryPanel`
+  - `panels`
+- No debe contener runtime vivo:
+  - conteos reales
+  - incidencias reales
+  - errores de consulta
+  - estado de carga
+  - fecha seleccionada actual
+- El flujo obligatorio del sidebar es:
+  1. lectura por `supervision-sidebar-config.service.js`
+  2. normalización por `supervision-sidebar-config.normalizer.js`
+  3. composición por `src/components/supervision-sidebar/`
+  4. integración final en `src/pages/supervision/supervision.js`
+- Si el cambio es solo de nombre, color, orden o visibilidad del panel, debe modificarse primero el JSON del cliente y no el HTML de la página.
+- Documentación operativa de referencia:
+  - `src/pages/supervision/SUPERVISION_SIDEBAR_CONFIG.md`
+  - `doctosSupervision/1/README.md`
+
+## EN - Supervision Configurable Sidebar Rule
+- The left sidebar structure for `supervision` must come from per-client external configuration at:
+  - `doctosSupervision/<clientId>/supervision-sidebar.json`
+- The initial active client for this first phase is:
+  - `doctosSupervision/1/supervision-sidebar.json`
+- The configuration file must only define declarative structure:
+  - `workspaceId`
+  - `schemaVersion`
+  - `accordion`
+  - `queryPanel`
+  - `panels`
+- It must not contain live runtime state:
+  - real counters
+  - real incidents
+  - fetch errors
+  - loading state
+  - current selected date
+- Required sidebar flow:
+  1. read via `supervision-sidebar-config.service.js`
+  2. normalize via `supervision-sidebar-config.normalizer.js`
+  3. compose via `src/components/supervision-sidebar/`
+  4. integrate in `src/pages/supervision/supervision.js`
+- If the change is only label, color, order, or visibility, update the client JSON first instead of the page HTML.
+- Reference operational documentation:
+  - `src/pages/supervision/SUPERVISION_SIDEBAR_CONFIG.md`
+  - `doctosSupervision/1/README.md`

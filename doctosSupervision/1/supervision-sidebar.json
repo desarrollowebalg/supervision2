@@ -1,0 +1,107 @@
+{
+  "workspaceId": "1",
+  "schemaVersion": 1,
+  "accordion": {
+    "multipleOpen": true
+  },
+  "queryPanel": {
+    "id": "query",
+    "enabled": true,
+    "label": "Herramientas",
+    "icon": "calendar",
+    "accordion": {
+      "initialOpen": true
+    },
+    "controls": {
+      "date": {
+        "enabled": true,
+        "required": true,
+        "defaultStrategy": "today"
+      }
+    },
+    "behavior": {
+      "fetchOnInitialLoad": true,
+      "fetchOnChange": true
+    },
+    "summary": {
+      "helperText": "Selecciona una fecha para ver la semana correspondiente."
+    }
+  },
+  "panels": [
+    {
+      "id": "critical",
+      "label": "Nivel 4: Crítico",
+      "indicatorTone": "critical",
+      "indicatorColor": "#ff2d2d",
+      "order": 10,
+      "enabled": true,
+      "initialOpen": false,
+      "detailSlot": "incidents-list",
+      "dataSourceKey": "severity-4",
+      "meta": {
+        "subtitle": "Riesgo inmediato",
+        "slaLabel": "SLA 60s"
+      }
+    },
+    {
+      "id": "relevant",
+      "label": "Nivel 3: Relevante",
+      "indicatorTone": "high",
+      "indicatorColor": "#ff7a00",
+      "order": 20,
+      "enabled": true,
+      "initialOpen": false,
+      "detailSlot": "incidents-list",
+      "dataSourceKey": "severity-3",
+      "meta": {
+        "subtitle": "Riesgo potencial",
+        "slaLabel": "SLA 120s"
+      }
+    },
+    {
+      "id": "important",
+      "label": "Nivel 2: Importante",
+      "indicatorTone": "medium",
+      "indicatorColor": "#ffe600",
+      "order": 30,
+      "enabled": true,
+      "initialOpen": false,
+      "detailSlot": "incidents-list",
+      "dataSourceKey": "severity-2",
+      "meta": {
+        "subtitle": "Seguimiento necesario",
+        "slaLabel": "SLA 240s"
+      }
+    },
+    {
+      "id": "operational",
+      "label": "Nivel 1: Operativo",
+      "indicatorTone": "low",
+      "indicatorColor": "#2bdc00",
+      "order": 40,
+      "enabled": true,
+      "initialOpen": false,
+      "detailSlot": "incidents-list",
+      "dataSourceKey": "severity-1",
+      "meta": {
+        "subtitle": "Registro operativo",
+        "slaLabel": "SLA 480s"
+      }
+    },
+    {
+      "id": "informative",
+      "label": "Nivel 0: Informativo",
+      "indicatorTone": "neutral",
+      "indicatorColor": "#f1f1f1",
+      "order": 50,
+      "enabled": true,
+      "initialOpen": false,
+      "detailSlot": "incidents-list",
+      "dataSourceKey": "severity-0",
+      "meta": {
+        "subtitle": "Contexto",
+        "slaLabel": "Sin SLA"
+      }
+    }
+  ]
+}
