@@ -51,7 +51,7 @@ function ensureGlobalSyncOverlayStyles() {
       position: fixed;
       inset: 0;
       z-index: 12000;
-      background: rgba(15, 23, 42, 0.45);
+      background: var(--app-overlay);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -61,11 +61,16 @@ function ensureGlobalSyncOverlayStyles() {
     .global-sync-overlay__card {
       width: min(28rem, 92vw);
       border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+      background: var(--app-surface-elevated);
+      color: var(--app-text);
+      border: 1px solid var(--app-border);
+      box-shadow: var(--app-shadow-soft);
       padding: 1rem 1.1rem;
       text-align: center;
+    }
+
+    .global-sync-overlay__card .uk-text-meta {
+      color: var(--app-text-muted) !important;
     }
   `;
   document.head.appendChild(style);
@@ -92,9 +97,9 @@ function showGlobalSyncOverlay(options = {}) {
   overlay.id = 'globalSyncOverlay';
   overlay.className = 'global-sync-overlay';
   overlay.innerHTML = `
-    <div class="global-sync-overlay__card">
+    <div class="global-sync-overlay__card uk-card uk-card-default uk-card-body">
       <div class="uk-flex uk-flex-center uk-margin-small-bottom"><div uk-spinner></div></div>
-      <h3 class="uk-margin-small-bottom" data-global-overlay-title>${title}</h3>
+      <h3 class="uk-card-title uk-margin-small-bottom" data-global-overlay-title>${title}</h3>
       <p class="uk-margin-remove uk-text-meta" data-global-overlay-message>${message}</p>
     </div>
   `;

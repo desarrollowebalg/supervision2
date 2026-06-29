@@ -2,7 +2,7 @@ import Dexie from 'dexie';
 
 class CatalogDatabase extends Dexie {
   constructor() {
-    super('appLiteMovi');
+    super('appLiteSup');
 
     this.version(1).stores({
       catalogs: 'id, catalogKey, contextKey, updatedAt, expiresAt, version',

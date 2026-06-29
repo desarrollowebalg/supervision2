@@ -1,5 +1,5 @@
 <?php
-class apiUsuarios{
+class apiCuadrantes{
   private $objBd;
   private $hostCM;
   private $portCM;
@@ -7,8 +7,8 @@ class apiUsuarios{
   private $userCM;
   private $passCM;
   private $idCliente = 0;
-  private $idUsuario = 0;
   private $registros = array();
+  private $stepResults = array();
 
   function __construct($host,$usuario,$password,$base,$puerto) {
     $this->hostCM = $host;
@@ -33,7 +33,7 @@ class apiUsuarios{
 
     $this->objBd = @mysqli_connect($this->hostCM, $this->userCM, $this->passCM, $this->bnameCM, $this->portCM);
     if(!$this->objBd){
-      $this->erroresConfUsuariosApi(300, "Error al conectar con la base de datos");
+      $this->erroresConfCuadrantesApi(300, "Error al conectar con la base de datos");
       return false;
     }
 
@@ -48,7 +48,7 @@ class apiUsuarios{
 
     $stmt = @mysqli_prepare($this->objBd, $sql);
     if(!$stmt){
-      $this->erroresConfUsuariosApi(300, "Error al preparar la consulta");
+      $this->erroresConfCuadrantesApi(300, "Error al preparar la consulta");
       return false;
     }
 
@@ -72,20 +72,20 @@ class apiUsuarios{
 
     if($types !== "" && !$this->bindStatementParams($stmt, $types, $params)){
       @mysqli_stmt_close($stmt);
-      $this->erroresConfUsuariosApi(300, "Error al preparar los parametros de consulta");
+      $this->erroresConfCuadrantesApi(300, "Error al preparar los parametros de consulta");
       return false;
     }
 
     if(!@mysqli_stmt_execute($stmt)){
       @mysqli_stmt_close($stmt);
-      $this->erroresConfUsuariosApi(300, "Error al ejecutar la consulta");
+      $this->erroresConfCuadrantesApi(300, "Error al ejecutar la consulta");
       return false;
     }
 
     $result = @mysqli_stmt_get_result($stmt);
     if($result === false){
       @mysqli_stmt_close($stmt);
-      $this->erroresConfUsuariosApi(300, "Error al obtener la informacion");
+      $this->erroresConfCuadrantesApi(300, "Error al obtener la informacion");
       return false;
     }
 
@@ -95,33 +95,57 @@ class apiUsuarios{
 
   private function validarContextoSesion(){
     if((int)$this->idCliente <= 0){
-      $this->erroresConfUsuariosApi(300, "Sesion no valida");
-      return false;
-    }
-
-    if((int)$this->idUsuario <= 0){
-      $this->erroresConfUsuariosApi(300, "Sesion no valida");
+      $this->erroresConfCuadrantesApi(300, "Sesion no valida");
       return false;
     }
 
     $this->idCliente = (int)$this->idCliente;
-    $this->idUsuario = (int)$this->idUsuario;
     return true;
   }
 
   private function resolverBinding($bindingDefinition){
-    if(!isset($bindingDefinition["source"]) || !isset($bindingDefinition["name"])){
-      $this->erroresConfUsuariosApi(300, "Configuracion de bindings invalida");
+    if(!isset($bindingDefinition["source"])){
+      $this->erroresConfCuadrantesApi(300, "Configuracion de bindings invalida");
       return false;
     }
 
-    if($bindingDefinition["source"] !== "property"){
-      $this->erroresConfUsuariosApi(300, "Origen de binding no soportado");
+    switch($bindingDefinition["source"]){
+      case "property":
+        if(!isset($bindingDefinition["name"])){
+          $this->erroresConfCuadrantesApi(300, "Configuracion de bindings invalida");
+          return false;
+        }
+
+        $property = $bindingDefinition["name"];
+        return $this->$property;
+      case "step_field":
+        return $this->resolverBindingStepField($bindingDefinition);
+      default:
+        $this->erroresConfCuadrantesApi(300, "Origen de binding no soportado");
+        return false;
+    }
+  }
+
+  private function resolverBindingStepField($bindingDefinition){
+    if(!isset($bindingDefinition["step"]) || !isset($bindingDefinition["field"])){
+      $this->erroresConfCuadrantesApi(300, "Configuracion de bindings invalida");
       return false;
     }
 
-    $property = $bindingDefinition["name"];
-    return $this->$property;
+    $stepKey = $bindingDefinition["step"];
+    $field = $bindingDefinition["field"];
+
+    if(!isset($this->stepResults[$stepKey]) || !is_array($this->stepResults[$stepKey])){
+      $this->erroresConfCuadrantesApi(300, "Resultado intermedio no disponible");
+      return false;
+    }
+
+    if(!array_key_exists($field, $this->stepResults[$stepKey])){
+      $this->erroresConfCuadrantesApi(300, "Campo intermedio no disponible");
+      return false;
+    }
+
+    return $this->stepResults[$stepKey][$field];
   }
 
   private function construirBindings($executionDefinition){
@@ -131,7 +155,7 @@ class apiUsuarios{
 
     foreach($bindings as $bindingDefinition){
       if(!isset($bindingDefinition["type"])){
-        $this->erroresConfUsuariosApi(300, "Configuracion de bindings invalida");
+        $this->erroresConfCuadrantesApi(300, "Configuracion de bindings invalida");
         return false;
       }
 
@@ -178,13 +202,13 @@ class apiUsuarios{
     }
 
     if(!isset($actionDefinition["execution"]) || !is_array($actionDefinition["execution"])){
-      $this->erroresConfUsuariosApi(300, "Configuracion de ejecucion invalida");
+      $this->erroresConfCuadrantesApi(300, "Configuracion de ejecucion invalida");
       return;
     }
 
     $executionDefinition = $actionDefinition["execution"];
     if(!isset($executionDefinition["type"])){
-      $this->erroresConfUsuariosApi(300, "Tipo de ejecucion invalido");
+      $this->erroresConfCuadrantesApi(300, "Tipo de ejecucion invalido");
       return;
     }
 
@@ -192,18 +216,21 @@ class apiUsuarios{
       case "query":
         $this->executeDefinedQuery($executionDefinition);
       break;
+      case "query_chain":
+        $this->executeDefinedQueryChain($executionDefinition);
+      break;
       case "stored_procedure":
         $this->executeDefinedProcedure($executionDefinition);
       break;
       default:
-        $this->erroresConfUsuariosApi(300, "Tipo de ejecucion no soportado");
+        $this->erroresConfCuadrantesApi(300, "Tipo de ejecucion no soportado");
       break;
     }
   }
 
   private function executeDefinedQuery($executionDefinition){
     if(!isset($executionDefinition["sql"]) || trim((string)$executionDefinition["sql"]) === ""){
-      $this->erroresConfUsuariosApi(300, "Consulta no definida");
+      $this->erroresConfCuadrantesApi(300, "Consulta no definida");
       return;
     }
 
@@ -221,9 +248,66 @@ class apiUsuarios{
     $this->normalizarResultado($resultMode, $result);
   }
 
+  private function executeDefinedQueryChain($executionDefinition){
+    if(!isset($executionDefinition["steps"]) || !is_array($executionDefinition["steps"]) || count($executionDefinition["steps"]) === 0){
+      $this->erroresConfCuadrantesApi(300, "Pasos de consulta no definidos");
+      return;
+    }
+
+    $this->stepResults = array();
+    $lastRows = array();
+
+    foreach($executionDefinition["steps"] as $stepDefinition){
+      if(!isset($stepDefinition["key"]) || trim((string)$stepDefinition["key"]) === ""){
+        $this->erroresConfCuadrantesApi(300, "Paso de consulta invalido");
+        return;
+      }
+
+      if(!isset($stepDefinition["sql"]) || trim((string)$stepDefinition["sql"]) === ""){
+        $this->erroresConfCuadrantesApi(300, "Consulta no definida");
+        return;
+      }
+
+      $bindingData = $this->construirBindings($stepDefinition);
+      if($bindingData === false){
+        return;
+      }
+
+      $result = $this->ejecutarConsultaPreparada($stepDefinition["sql"], $bindingData["types"], $bindingData["params"]);
+      if($result === false){
+        return;
+      }
+
+      $rows = $this->obtenerFilasResultado($result);
+      if($rows === false){
+        return;
+      }
+
+      if(count($rows) === 0){
+        $this->registros = array();
+        $this->stepResults = array();
+        return;
+      }
+
+      $stepKey = $stepDefinition["key"];
+      $resultMode = isset($stepDefinition["result_mode"]) ? $stepDefinition["result_mode"] : "list";
+
+      if($resultMode === "single"){
+        $this->stepResults[$stepKey] = $rows[0];
+      } else {
+        $this->stepResults[$stepKey] = $rows;
+      }
+
+      $lastRows = $rows;
+    }
+
+    $this->stepResults = array();
+    $this->registros = $lastRows;
+  }
+
   private function executeDefinedProcedure($executionDefinition){
     if(!isset($executionDefinition["sql"]) || trim((string)$executionDefinition["sql"]) === ""){
-      $this->erroresConfUsuariosApi(300, "Procedimiento no definido");
+      $this->erroresConfCuadrantesApi(300, "Procedimiento no definido");
       return;
     }
 
@@ -245,7 +329,19 @@ class apiUsuarios{
     return @mysqli_num_rows($result);
   }
 
-  private function erroresConfUsuariosApi($errorNo, $mensaje){
+  private function obtenerFilasResultado($result){
+    $rows = @mysqli_fetch_all($result, MYSQLI_ASSOC);
+    @mysqli_free_result($result);
+
+    if(!is_array($rows)){
+      $this->erroresConfCuadrantesApi(300, "Error al obtener la informacion");
+      return false;
+    }
+
+    return $rows;
+  }
+
+  private function erroresConfCuadrantesApi($errorNo, $mensaje){
     switch ($errorNo) {
       case '200':
         $this->registros = array();
@@ -258,4 +354,3 @@ class apiUsuarios{
   }
 }
 ?>
-

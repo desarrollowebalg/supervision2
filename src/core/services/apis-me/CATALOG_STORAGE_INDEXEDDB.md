@@ -15,7 +15,7 @@ Current implementation:
 - Forms integration: `src/core/services/apis-me/forms.service.js`
 
 ## ES - Base de datos y tablas
-- DB name: `appLiteMovi`
+- DB name: `appLiteSup`
 - Tabla `catalogs`:
   - `id`, `catalogKey`, `contextKey`, `data`, `version`, `updatedAt`, `expiresAt`
 - Tabla `syncMeta`:
@@ -25,7 +25,7 @@ Current implementation:
 - `${catalogKey}:${contextKey}`
 
 ## EN - Database and tables
-- DB name: `appLiteMovi`
+- DB name: `appLiteSup`
 - `catalogs` table:
   - `id`, `catalogKey`, `contextKey`, `data`, `version`, `updatedAt`, `expiresAt`
 - `syncMeta` table:
