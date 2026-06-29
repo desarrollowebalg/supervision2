@@ -24,7 +24,7 @@ return array(
       ),
       "execution" => array(
         "type" => "api",
-        "method" => "POST",
+        "method" => "GET",
         "url" => "https://ktw6p76syh.execute-api.us-east-1.amazonaws.com/DEV/Supervision/ReporteSupervision",
         "result_mode" => "list",
         "empty_result_status" => 200,

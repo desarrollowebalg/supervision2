@@ -46,13 +46,13 @@
 	// echo "</pre>";
 	// exit();
 
-	if($verificacionUL[0]["COD_ENTITY_PWA"]==="0"){
-		$respuesta = array(
-			'result'=>'0',
-			'desc'=>'Usuario no registrado en plataforma'
-		);
-		imprimirSalidaJson(403,$respuesta);
-	}
+	// if($verificacionUL[0]["COD_ENTITY_PWA"]==="0"){
+	// 	$respuesta = array(
+	// 		'result'=>'0',
+	// 		'desc'=>'Usuario no registrado en plataforma'
+	// 	);
+	// 	imprimirSalidaJson(403,$respuesta);
+	// }
 
 	if($verificacionUL[0]==="Error"){		
 		$respuesta = array(
