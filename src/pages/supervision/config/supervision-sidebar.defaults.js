@@ -31,7 +31,7 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
   },
   panels: [
     {
-      id: 'critical',
+      id: '4',
       label: 'Nivel 4: Crítico',
       indicatorTone: 'critical',
       indicatorColor: '#ff2d2d',
@@ -46,7 +46,7 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
       }
     },
     {
-      id: 'relevant',
+      id: '3',
       label: 'Nivel 3: Relevante',
       indicatorTone: 'high',
       indicatorColor: '#ff7a00',
@@ -61,7 +61,7 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
       }
     },
     {
-      id: 'important',
+      id: '2',
       label: 'Nivel 2: Importante',
       indicatorTone: 'medium',
       indicatorColor: '#ffe600',
@@ -76,7 +76,7 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
       }
     },
     {
-      id: 'operational',
+      id: '1',
       label: 'Nivel 1: Operativo',
       indicatorTone: 'low',
       indicatorColor: '#2bdc00',
@@ -91,7 +91,7 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
       }
     },
     {
-      id: 'informative',
+      id: '0',
       label: 'Nivel 0: Informativo',
       indicatorTone: 'neutral',
       indicatorColor: '#f1f1f1',

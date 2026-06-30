@@ -1,12 +1,9 @@
-import { syncAssignedForms } from './forms.service.js';
-import { syncAssignedTasks } from './tareas.service.js';
-import { syncPayloadsCatalogs } from './payloads.service.js';
-import { syncAssignedPdis } from './pdis.service.js';
-import { fetchAndStoreMaxDays, getStoredMaxDays } from './usuarios.service.js';
+import { syncClientUsers } from './usuarios.service.js';
+import { syncClientCuadrantes } from './cuadrantes.service.js';
 import { getSessionCatalogContext } from './session-catalog-context.service.js';
 import catalogIndexedDbService from '../catalog-indexeddb.service.js';
 
-const CATALOG_KEYS = ['formularios', 'tareas', 'pdis', 'payloads', 'payloadsTasks'];
+const CATALOG_KEYS = ['usuarios', 'cuadrantes'];
 
 export async function syncAllCatalogs({ refreshMaxDays = true } = {}) {
   const sessionContext = getSessionCatalogContext();
@@ -14,24 +11,15 @@ export async function syncAllCatalogs({ refreshMaxDays = true } = {}) {
     await catalogIndexedDbService.clearAnonCatalogEntries({ catalogKeys: CATALOG_KEYS });
   }
 
-  const maxdays = refreshMaxDays && sessionContext.hasStableIdentity
-    ? await fetchAndStoreMaxDays()
-    : getStoredMaxDays();
-
-  const [forms, tasks, payloads, pdis] = await Promise.all([
-    syncAssignedForms(),
-    syncAssignedTasks({ maxdays }),
-    syncPayloadsCatalogs({ maxdays }),
-    syncAssignedPdis()
+  const [users, cuadrantes] = await Promise.all([
+    syncClientUsers(),
+    syncClientCuadrantes()
   ]);
 
   return {
-    maxdays,
     skipped: !sessionContext.hasStableIdentity,
     reason: sessionContext.hasStableIdentity ? null : 'missing_user_id',
-    forms,
-    tasks,
-    payloads,
-    pdis
+    users,
+    cuadrantes
   };
 }

@@ -13,6 +13,7 @@ import Profile from '../profile/Profile.js';
 import Settings from '../settings.js';
 import Formularios from '../formularios/formularios.js';
 import FormEvidencia from '../formularios/form-evidencia.js';
+import Cuadrantes from '../cuadrantes/Cuadrantes.js';
 import PuntosInteres from '../puntosInteres/PuntosInteres.js';
 import Supervision from '../supervision/supervision.js';
 import Tareas from '../tareas/Tareas.js';
@@ -36,6 +37,7 @@ if (!user.isAuthenticated) {
   registerRoute('/settings', Settings, { meta: { title: 'Configuración', requiresAuth: true } });
   registerRoute('/formularios', Formularios, { meta: { title: 'Formularios', requiresAuth: true } });
   registerRoute('/formularios/:indicator', FormEvidencia, { meta: { title: 'Detalle de formulario', requiresAuth: true } });
+  registerRoute('/cuadrantes', Cuadrantes, { meta: { title: 'Cuadrantes', requiresAuth: true } });
   registerRoute('/puntos-interes', PuntosInteres, { meta: { title: 'Puntos de interés', requiresAuth: true } });
   registerRoute('/supervision', Supervision, { meta: { title: 'Supervisión', requiresAuth: true } });
   registerRoute('/tareas', Tareas, { meta: { title: 'Tareas', requiresAuth: true } });

@@ -1,19 +1,40 @@
 const PANEL_DOM_BINDINGS = {
+  '4': {
+    listId: 'user-list-4',
+    pendingId: 'pendientes-user-list-4'
+  },
   critical: {
     listId: 'user-list-4',
     pendingId: 'pendientes-user-list-4'
+  },
+  '3': {
+    listId: 'user-list-3',
+    pendingId: 'pendientes-user-list-3'
   },
   relevant: {
     listId: 'user-list-3',
     pendingId: 'pendientes-user-list-3'
   },
+  '2': {
+    listId: 'user-list-2',
+    pendingId: 'pendientes-user-list-2'
+  },
   important: {
     listId: 'user-list-2',
     pendingId: 'pendientes-user-list-2'
   },
+  '1': {
+    listId: 'user-list-1',
+    pendingId: 'pendientes-user-list-1'
+  },
   operational: {
     listId: 'user-list-1',
     pendingId: 'pendientes-user-list-1'
+  },
+  '0': {
+    listId: 'user-list',
+    pendingId: 'pendientes-user-list',
+    countBadgeId: 'user-count'
   },
   informative: {
     listId: 'user-list',
@@ -21,6 +42,13 @@ const PANEL_DOM_BINDINGS = {
     countBadgeId: 'user-count'
   }
 };
+
+export function getPanelDomBindings(panelId) {
+  return PANEL_DOM_BINDINGS[panelId] || {
+    listId: `user-list-${escapeHtml(panelId)}`,
+    pendingId: `pendientes-${escapeHtml(panelId)}`
+  };
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -48,10 +76,7 @@ export function renderSupervisionAccordionItem(panel) {
     return '';
   }
 
-  const bindings = PANEL_DOM_BINDINGS[panel.id] || {
-    listId: `user-list-${escapeHtml(panel.id)}`,
-    pendingId: `pendientes-${escapeHtml(panel.id)}`
-  };
+  const bindings = getPanelDomBindings(panel.id);
   const openClass = panel.initialOpen ? 'uk-open ' : '';
   const labelParts = [panel.label, panel.meta?.subtitle, panel.meta?.slaLabel].filter(Boolean);
   const title = escapeHtml(labelParts.join(' → '));

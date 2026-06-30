@@ -39,8 +39,8 @@
       "detailSlot": "incidents-list",
       "dataSourceKey": "severity-4",
       "meta": {
-        "subtitle": "R",
-        "slaLabel": "S"
+        "subtitle": "Riesgo inmediato",
+        "slaLabel": "SLA 60s"
       }
     },
     {
@@ -54,8 +54,8 @@
       "detailSlot": "incidents-list",
       "dataSourceKey": "severity-3",
       "meta": {
-        "subtitle": "R",
-        "slaLabel": "S"
+        "subtitle": "Riesgo potencial",
+        "slaLabel": "SLA 120s"
       }
     },
     {
@@ -69,8 +69,8 @@
       "detailSlot": "incidents-list",
       "dataSourceKey": "severity-2",
       "meta": {
-        "subtitle": "S",
-        "slaLabel": "S"
+        "subtitle": "Seguimiento necesario",
+        "slaLabel": "SLA 240s"
       }
     },
     {
@@ -84,8 +84,8 @@
       "detailSlot": "incidents-list",
       "dataSourceKey": "severity-1",
       "meta": {
-        "subtitle": "R",
-        "slaLabel": "S"
+        "subtitle": "Registro operativo",
+        "slaLabel": "SLA 480s"
       }
     },
     {
@@ -99,8 +99,8 @@
       "detailSlot": "incidents-list",
       "dataSourceKey": "severity-0",
       "meta": {
-        "subtitle": "C",
-        "slaLabel": "S"
+        "subtitle": "Contexto",
+        "slaLabel": "Sin SLA"
       }
     }
   ]

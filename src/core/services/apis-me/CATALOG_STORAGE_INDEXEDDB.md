@@ -65,8 +65,9 @@ Function currently used in forms:
 6. Reescribir `catalogs` y `syncMeta` en transaccion.
 7. Regresar datos actualizados.
 
-Funcion usada en formularios:
-- `syncAssignedForms()`
+Funciones usadas actualmente:
+- `syncClientUsers()`
+- `syncClientCuadrantes()`
 
 ## EN - Update flow (sync)
 1. Validate stable identity (`user.id`).
@@ -77,8 +78,9 @@ Funcion usada en formularios:
 6. Rewrite `catalogs` and `syncMeta` in one transaction.
 7. Return updated data.
 
-Function currently used in forms:
-- `syncAssignedForms()`
+Functions currently used:
+- `syncClientUsers()`
+- `syncClientCuadrantes()`
 
 ## ES - Contrato minimo de uso
 Ejemplo base:
@@ -145,12 +147,12 @@ Sync results when stable identity is missing:
 ## ES - Higiene de cache anonima
 - Antes de sincronizar catalogos con identidad estable, limpiar entradas `user_anon:*`.
 - Servicio base: `catalog-indexeddb.service.js`, metodo `clearAnonCatalogEntries`.
-- Catalogos sincronizados actualmente: `formularios`, `tareas`, `pdis`, `payloads`, `payloadsTasks`.
+- Catalogos sincronizados actualmente: `usuarios`, `cuadrantes`.
 
 ## EN - Anonymous cache hygiene
 - Before syncing catalogs with stable identity, clear `user_anon:*` entries.
 - Base service: `catalog-indexeddb.service.js`, method `clearAnonCatalogEntries`.
-- Currently synced catalogs: `formularios`, `tareas`, `pdis`, `payloads`, `payloadsTasks`.
+- Currently synced catalogs: `usuarios`, `cuadrantes`.
 
 ## ES - Reglas para nuevos catalogos
 - Reutilizar `catalog-indexeddb.service.js`; no duplicar implementaciones por pagina.

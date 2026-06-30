@@ -1,4 +1,8 @@
 import { renderSupervisionSidebar } from '../../components/supervision-sidebar/supervision-sidebar.js';
+import { getPanelDomBindings } from '../../components/supervision-sidebar/supervision-accordion-item.js';
+import { renderSupervisionUserSummaryCard } from '../../components/supervision-sidebar/supervision-user-summary-card.js';
+import { fetchIncidenciasByDate } from '../../core/services/apis-me/incidencias.service.js';
+import { syncClientUsers } from '../../core/services/apis-me/usuarios.service.js';
 import { renderInicioLayout } from '../inicio-layout.js';
 import { loadSupervisionSidebarConfig } from './services/supervision-sidebar-config.service.js';
 
@@ -15,6 +19,11 @@ export default class Supervision {
     Supervision.instancia = this;
     this.parentCardElement = null;
     this.titleElement = null;
+    this.container = null;
+    this.sidebarConfig = null;
+    this.dateInputElement = null;
+    this.boundHandleDateChange = this.handleDateChange.bind(this);
+    this.boundHandleUserSelection = this.handleUserSelection.bind(this);
   }
 
   async inicializar(container) {
@@ -27,8 +36,10 @@ export default class Supervision {
 
   async render(container) {
     this.ensureSupervisionStyles();
+    this.container = container;
 
     const sidebarConfig = await loadSupervisionSidebarConfig(Supervision.DEFAULT_WORKSPACE_ID);
+    this.sidebarConfig = sidebarConfig;
 
     renderInicioLayout(container, {
       title: '',
@@ -55,6 +66,242 @@ export default class Supervision {
     });
 
     this.syncParentCardClass(container);
+    await this.initializeSidebarRuntime();
+  }
+
+  async initializeSidebarRuntime() {
+    const dateInput = this.container?.querySelector('#datePickerMapHot');
+    if (!dateInput) {
+      return;
+    }
+
+    if (this.dateInputElement && this.dateInputElement !== dateInput) {
+      this.dateInputElement.removeEventListener('change', this.boundHandleDateChange);
+    }
+
+    this.dateInputElement = dateInput;
+    this.dateInputElement.removeEventListener('change', this.boundHandleDateChange);
+    if (this.sidebarConfig?.queryPanel?.behavior?.fetchOnChange) {
+      this.dateInputElement.addEventListener('change', this.boundHandleDateChange);
+    }
+
+    const leftPanel = this.container?.querySelector('.supervision2-panel--left');
+    leftPanel?.removeEventListener('click', this.boundHandleUserSelection);
+    leftPanel?.addEventListener('click', this.boundHandleUserSelection);
+
+    if (!this.dateInputElement.value) {
+      this.dateInputElement.value = this.getDefaultDateValue();
+    }
+
+    if (this.sidebarConfig?.queryPanel?.behavior?.fetchOnInitialLoad) {
+      await this.loadIncidenciasForSelectedDate(this.dateInputElement.value);
+    }
+  }
+
+  getDefaultDateValue() {
+    const now = new Date();
+    const offsetMs = now.getTimezoneOffset() * 60 * 1000;
+    return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
+  }
+
+  async handleDateChange(event) {
+    const selectedDate = event?.target?.value || '';
+    await this.loadIncidenciasForSelectedDate(selectedDate);
+  }
+
+  async loadIncidenciasForSelectedDate(selectedDate) {
+    const safeDate = String(selectedDate || '').trim();
+    if (!safeDate) {
+      return;
+    }
+
+    this.setSidebarLoading(true);
+    this.updateWeekInfo(safeDate);
+    this.resetSidebarPanels();
+
+    try {
+      const [incidenciasResult, usersCatalogResult] = await Promise.allSettled([
+        fetchIncidenciasByDate(safeDate),
+        syncClientUsers()
+      ]);
+      const incidencias = incidenciasResult.status === 'fulfilled' ? incidenciasResult.value : [];
+      const usersCatalog = usersCatalogResult.status === 'fulfilled' ? usersCatalogResult.value : { data: [] };
+
+      if (incidenciasResult.status !== 'fulfilled') {
+        throw incidenciasResult.reason;
+      }
+
+      const usersById = new Map(
+        (Array.isArray(usersCatalog?.data) ? usersCatalog.data : []).map((user) => [
+          Number(user?.ID_USUARIO ?? 0),
+          user
+        ])
+      );
+
+      this.renderIncidenciasByLevel(
+        incidencias.map((item) => ({
+          ...item,
+          URL_FOTO_PERFIL: usersById.get(Number(item.ID_USUARIO))?.URL_FOTO_PERFIL || ''
+        }))
+      );
+      this.renderSidebarMessage('');
+    } catch (error) {
+      console.error('[supervision] error loading incidencias', error);
+      this.renderSidebarMessage('No se pudo cargar la lista de incidencias para la fecha seleccionada.');
+    } finally {
+      this.setSidebarLoading(false);
+    }
+  }
+
+  renderIncidenciasByLevel(records) {
+    const normalizedRecords = Array.isArray(records) ? records : [];
+    const recordsByLevel = new Map();
+
+    normalizedRecords.forEach((record) => {
+      const levelKey = this.resolvePanelIdFromLevel(record?.NIVEL);
+      if (!recordsByLevel.has(levelKey)) {
+        recordsByLevel.set(levelKey, []);
+      }
+
+      recordsByLevel.get(levelKey).push(record);
+    });
+
+    (this.sidebarConfig?.panels || []).forEach((panel) => {
+      const panelId = String(panel?.id || '');
+      const bindings = getPanelDomBindings(panelId);
+      const listElement = this.container?.querySelector(`#${bindings.listId}`);
+      const pendingElement = this.container?.querySelector(`#${bindings.pendingId}`);
+      const badgeElement = bindings.countBadgeId
+        ? this.container?.querySelector(`#${bindings.countBadgeId}`)
+        : null;
+      const panelRecords = recordsByLevel.get(panelId) || [];
+      const pendingTotal = panelRecords.reduce((sum, item) => sum + Number(item?.NO_LEIDOS ?? 0), 0);
+
+      if (listElement) {
+        listElement.innerHTML = panelRecords
+          .map((record) => renderSupervisionUserSummaryCard(record))
+          .join('');
+      }
+
+      if (pendingElement) {
+        pendingElement.textContent = String(pendingTotal);
+      }
+
+      if (badgeElement) {
+        badgeElement.textContent = String(panelRecords.length);
+        badgeElement.classList.toggle('uk-hidden', panelRecords.length === 0);
+      }
+    });
+  }
+
+  resolvePanelIdFromLevel(level) {
+    const normalizedLevel = String(Number(level ?? 0));
+    const hasNumericPanel = (this.sidebarConfig?.panels || []).some((panel) => panel?.id === normalizedLevel);
+    if (hasNumericPanel) {
+      return normalizedLevel;
+    }
+
+    const legacyMap = {
+      '4': 'critical',
+      '3': 'relevant',
+      '2': 'important',
+      '1': 'operational',
+      '0': 'informative'
+    };
+
+    return legacyMap[normalizedLevel] || '0';
+  }
+
+  resetSidebarPanels() {
+    (this.sidebarConfig?.panels || []).forEach((panel) => {
+      const bindings = getPanelDomBindings(panel.id);
+      const listElement = this.container?.querySelector(`#${bindings.listId}`);
+      const pendingElement = this.container?.querySelector(`#${bindings.pendingId}`);
+      const badgeElement = bindings.countBadgeId
+        ? this.container?.querySelector(`#${bindings.countBadgeId}`)
+        : null;
+
+      if (listElement) {
+        listElement.innerHTML = '';
+      }
+
+      if (pendingElement) {
+        pendingElement.textContent = '0';
+      }
+
+      if (badgeElement) {
+        badgeElement.textContent = '0';
+        badgeElement.classList.add('uk-hidden');
+      }
+    });
+  }
+
+  setSidebarLoading(isLoading) {
+    const loader = this.container?.querySelector('#loaderGralSupNiveles');
+    if (!loader) {
+      return;
+    }
+
+    loader.innerHTML = isLoading ? '<span uk-spinner="ratio: 0.6"></span>' : '';
+  }
+
+  updateWeekInfo(selectedDate) {
+    const weekInfo = this.container?.querySelector('#weekInfo');
+    const title = this.container?.querySelector('#heatmapTitle');
+    if (weekInfo) {
+      weekInfo.textContent = `Fecha seleccionada: ${selectedDate}`;
+    }
+
+    if (title) {
+      title.textContent = selectedDate;
+      title.classList.remove('uk-hidden');
+    }
+  }
+
+  renderSidebarMessage(message) {
+    const messageNode = this.container?.querySelector('#msgContentsPanels');
+    if (!messageNode) {
+      return;
+    }
+
+    if (!message) {
+      messageNode.innerHTML = '';
+      return;
+    }
+
+    messageNode.innerHTML = `<div class="uk-alert-warning uk-border-rounded uk-margin-small-top" uk-alert>${message}</div>`;
+  }
+
+  handleUserSelection(event) {
+    const trigger = event.target?.closest('[data-supervision-user-id]');
+    if (!trigger) {
+      return;
+    }
+
+    const userId = Number(trigger.getAttribute('data-supervision-user-id') || 0);
+    const userName = trigger.getAttribute('data-supervision-user-name') || '';
+    const selectedUserInput = this.container?.querySelector('#idSupervisorSeleccionado');
+    const detailPanel = this.container?.querySelector('#panelDerechoListIncidencias');
+
+    if (selectedUserInput) {
+      selectedUserInput.value = String(userId);
+    }
+
+    if (detailPanel) {
+      detailPanel.innerHTML = `
+        <div class="uk-alert-primary uk-border-rounded" uk-alert>
+          Usuario seleccionado: <strong>${userName}</strong> (${userId})
+        </div>
+      `;
+    }
+
+    window.dispatchEvent(new CustomEvent('supervision:user-selected', {
+      detail: {
+        userId,
+        userName,
+        selectedDate: this.dateInputElement?.value || ''
+      }
+    }));
   }
 
   syncParentCardClass(container) {
@@ -97,6 +344,10 @@ export default class Supervision {
   }
 
   destroy() {
+    this.dateInputElement?.removeEventListener('change', this.boundHandleDateChange);
+    this.container
+      ?.querySelector('.supervision2-panel--left')
+      ?.removeEventListener('click', this.boundHandleUserSelection);
     this.removeParentCardClass();
     this.removeTitleHiddenClass();
   }
@@ -255,10 +506,83 @@ export default class Supervision {
 
       .supervision2-users-container {
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 0.75rem;
         width: 100%;
         margin-top: 0.75rem;
+      }
+
+      .supervision2-user-summary {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 0.875rem;
+        width: 100%;
+        min-height: 76px;
+        padding: 0.875rem 1rem;
+        border-radius: 14px;
+        border: 1px solid var(--supervision2-border);
+        background: var(--supervision2-surface-elevated);
+        box-shadow: var(--supervision2-shadow-soft);
+        text-transform: none;
+      }
+
+      .supervision2-user-summary:hover,
+      .supervision2-user-summary:focus {
+        border-color: var(--supervision2-primary);
+        background: color-mix(in srgb, var(--supervision2-primary-soft) 22%, var(--supervision2-surface-elevated) 78%);
+      }
+
+      .supervision2-user-summary__avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--supervision2-surface);
+        border: 1px solid var(--supervision2-border);
+      }
+
+      .supervision2-user-summary__photo,
+      .supervision2-user-summary__photo-fallback {
+        width: 100%;
+        height: 100%;
+      }
+
+      .supervision2-user-summary__photo {
+        display: block;
+        object-fit: cover;
+      }
+
+      .supervision2-user-summary__photo-fallback {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--supervision2-text-muted);
+      }
+
+      .supervision2-user-summary__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+      }
+
+      .supervision2-user-summary__name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--supervision2-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .supervision2-user-summary__meta {
+        color: var(--supervision2-text-muted);
       }
 
       .supervision2-pending-badge {

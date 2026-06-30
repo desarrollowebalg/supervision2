@@ -1,8 +1,15 @@
 import { apisMeGet } from './client.js';
 import { storageService } from '../storage.service.js';
+import catalogIndexedDbService from '../catalog-indexeddb.service.js';
+import {
+  buildMissingUserSyncResult,
+  getSessionCatalogContext
+} from './session-catalog-context.service.js';
 
 const MAX_DAYS_SESSION_KEY = 'maxdays';
 const DEFAULT_MAX_DAYS = 7;
+const USERS_CACHE_TTL_MS = 30 * 60 * 1000;
+const USERS_CATALOG_KEY = 'usuarios';
 
 function normalizeMaxDaysValue(payload) {
   if (Array.isArray(payload) && payload.length) {
@@ -42,3 +49,54 @@ export function getStoredMaxDays() {
   return DEFAULT_MAX_DAYS;
 }
 
+function extractList(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (Array.isArray(payload?.body)) {
+    return payload.body;
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data;
+  }
+
+  if (Array.isArray(payload?.users)) {
+    return payload.users;
+  }
+
+  return [];
+}
+
+async function fetchUsersList() {
+  const response = await apisMeGet('usuarios/listar/');
+  return extractList(response?.data);
+}
+
+export async function syncClientUsers() {
+  const { contextKey, hasStableIdentity, userId } = getSessionCatalogContext();
+  if (!hasStableIdentity) {
+    const cached = await catalogIndexedDbService.getCatalog({
+      catalogKey: USERS_CATALOG_KEY,
+      contextKey
+    });
+    console.info('[usuarios] sync skipped (missing user.id)');
+    return buildMissingUserSyncResult(cached?.data);
+  }
+
+  const result = await catalogIndexedDbService.getOrSyncCatalog({
+    catalogKey: USERS_CATALOG_KEY,
+    contextKey,
+    ttlMs: USERS_CACHE_TTL_MS,
+    forceRefresh: true,
+    fetcher: async () => fetchUsersList()
+  });
+
+  console.info(`[usuarios] sync executed (user.id=${userId})`);
+  return {
+    skipped: false,
+    reason: null,
+    data: Array.isArray(result?.data) ? result.data : []
+  };
+}

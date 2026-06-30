@@ -40,6 +40,7 @@ class SidebarMenuComponent extends HTMLElement {
       { path: '/supervision', label: 'Supervisión', icon: 'comments' },
       { path: '/formularios', label: 'Formularios', icon: 'file-text' },
       { path: '/tareas', label: 'Tareas', icon: 'check' },
+      { path: '/cuadrantes', label: 'Cuadrantes', icon: 'thumbnails' },
       { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
     ];
     // { path: '/formularios', label: 'Formularios', icon: 'file-text' },
