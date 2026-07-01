@@ -9,6 +9,9 @@ class apiIncidencias{
   private $idCliente = 0;
   private $idUsuario = 0;
   private $fechaInicial = "";
+  private $fechaInicio = "";
+  private $fechaFin = "";
+  private $usuarioFiltro = 0;
   private $requiredSessionProperties = array();
   private $registros = array();
 
@@ -385,6 +388,11 @@ class apiIncidencias{
         return false;
       }
 
+      $value = $this->transformarValorApi($value, $fieldDefinition);
+      if($value === false && isset($this->registros["Error"])){
+        return false;
+      }
+
       $cast = isset($fieldDefinition["cast"]) ? (string)$fieldDefinition["cast"] : "";
       switch($cast){
         case "int":
@@ -400,6 +408,35 @@ class apiIncidencias{
     }
 
     return $payload;
+  }
+
+  private function transformarValorApi($value, $fieldDefinition){
+    if(!isset($fieldDefinition["transform"])){
+      return $value;
+    }
+
+    switch((string)$fieldDefinition["transform"]){
+      case "date_ymd_start_of_day":
+        return $this->formatearFechaIso($value, "00:00:01");
+      case "date_ymd_end_of_day":
+        return $this->formatearFechaIso($value, "23:59:59");
+      default:
+        $this->erroresApi(300, "Transformacion de payload API no soportada");
+        return false;
+    }
+  }
+
+  private function formatearFechaIso($value, $timeSuffix){
+    $date = DateTime::createFromFormat("Y-m-d H:i:s", trim((string)$value)." ".$timeSuffix);
+    $errors = DateTime::getLastErrors();
+    $hasErrors = $errors !== false && (($errors["warning_count"] ?? 0) > 0 || ($errors["error_count"] ?? 0) > 0);
+
+    if(!$date instanceof DateTime || $hasErrors){
+      $this->erroresApi(300, "Formato de fecha invalido, use YYYY-mm-dd");
+      return false;
+    }
+
+    return $date->format("Y-m-d H:i:s");
   }
 
   private function normalizarResultadoApi($resultMode, $decoded){

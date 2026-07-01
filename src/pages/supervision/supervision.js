@@ -50,6 +50,14 @@ export default class Supervision {
             <div class="supervision2-layout">
               <aside class="supervision2-panel supervision2-panel--left">
                 ${renderSupervisionSidebar(sidebarConfig)}
+                <div id="supervisionSidebarLoader" class="supervision2-panel-loader uk-hidden" aria-hidden="true">
+                  <div class="supervision2-panel-loader__content uk-text-center">
+                    <span uk-spinner="ratio: 1.1"></span>
+                    <p class="supervision2-panel-loader__message uk-margin-small-top uk-margin-remove-bottom">
+                      Buscando incidencias...
+                    </p>
+                  </div>
+                </div>
               </aside>
 
               <section class="supervision2-panel supervision2-panel--right">
@@ -154,7 +162,9 @@ export default class Supervision {
   }
 
   renderIncidenciasByLevel(records) {
-    const normalizedRecords = Array.isArray(records) ? records : [];
+    const normalizedRecords = Array.isArray(records)
+      ? [...records].sort((left, right) => this.compareIncidenciasByFechaDesc(left, right))
+      : [];
     const recordsByLevel = new Map();
 
     normalizedRecords.forEach((record) => {
@@ -237,25 +247,61 @@ export default class Supervision {
   }
 
   setSidebarLoading(isLoading) {
+    const panelLoader = this.container?.querySelector('#supervisionSidebarLoader');
+    const leftPanel = this.container?.querySelector('.supervision2-panel--left');
+
+    if (panelLoader) {
+      panelLoader.classList.toggle('uk-hidden', !isLoading);
+      panelLoader.setAttribute('aria-hidden', String(!isLoading));
+    }
+
+    if (leftPanel) {
+      leftPanel.classList.toggle('supervision2-panel--loading', isLoading);
+    }
+
     const loader = this.container?.querySelector('#loaderGralSupNiveles');
     if (!loader) {
       return;
     }
 
-    loader.innerHTML = isLoading ? '<span uk-spinner="ratio: 0.6"></span>' : '';
+    loader.innerHTML = '';
+  }
+
+  compareIncidenciasByFechaDesc(left, right) {
+    return this.parseIncidenciaDate(right?.FECHA) - this.parseIncidenciaDate(left?.FECHA);
+  }
+
+  parseIncidenciaDate(rawValue) {
+    const safeValue = String(rawValue || '').trim();
+    const match = safeValue.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
+
+    if (!match) {
+      return 0;
+    }
+
+    const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
+    return new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hours),
+      Number(minutes),
+      Number(seconds)
+    ).getTime();
   }
 
   updateWeekInfo(selectedDate) {
     const weekInfo = this.container?.querySelector('#weekInfo');
-    const title = this.container?.querySelector('#heatmapTitle');
+    // const title = this.container?.querySelector('#heatmapTitle');
     if (weekInfo) {
       weekInfo.textContent = `Fecha seleccionada: ${selectedDate}`;
+      weekInfo.classList.add('uk-hidden');
     }
 
-    if (title) {
-      title.textContent = selectedDate;
-      title.classList.remove('uk-hidden');
-    }
+    // if (title) {
+    //   title.textContent = selectedDate;
+    //   title.classList.remove('uk-hidden');
+    // }
   }
 
   renderSidebarMessage(message) {
@@ -409,10 +455,15 @@ export default class Supervision {
       }
 
       .supervision2-panel--left {
+        position: relative;
         background: var(--supervision2-surface-muted);
         padding: 0.5rem;
         height: 100%;
         overflow-y: auto;
+      }
+
+      .supervision2-panel--left.supervision2-panel--loading {
+        overflow: hidden;
       }
 
       .supervision2-panel--right {
@@ -617,6 +668,32 @@ export default class Supervision {
         background: var(--supervision2-primary-soft);
         color: var(--supervision2-primary);
         border: 1px solid var(--supervision2-border);
+      }
+
+      .supervision2-panel-loader {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        background: color-mix(in srgb, var(--supervision2-surface-muted) 88%, transparent);
+        backdrop-filter: blur(2px);
+      }
+
+      .supervision2-panel-loader__content {
+        width: min(280px, 100%);
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--supervision2-border);
+        border-radius: 14px;
+        background: var(--supervision2-surface);
+        box-shadow: var(--supervision2-shadow);
+      }
+
+      .supervision2-panel-loader__message {
+        color: var(--supervision2-text);
+        font-weight: 600;
       }
 
       html[data-theme='dark'] .supervision2-page {

@@ -1,35 +1,43 @@
 const PANEL_DOM_BINDINGS = {
   '4': {
     listId: 'user-list-4',
-    pendingId: 'pendientes-user-list-4'
+    pendingId: 'pendientes-user-list-4',
+    countBadgeId: 'user-count-4'
   },
   critical: {
     listId: 'user-list-4',
-    pendingId: 'pendientes-user-list-4'
+    pendingId: 'pendientes-user-list-4',
+    countBadgeId: 'user-count-4'
   },
   '3': {
     listId: 'user-list-3',
-    pendingId: 'pendientes-user-list-3'
+    pendingId: 'pendientes-user-list-3',
+    countBadgeId: 'user-count-3'
   },
   relevant: {
     listId: 'user-list-3',
-    pendingId: 'pendientes-user-list-3'
+    pendingId: 'pendientes-user-list-3',
+    countBadgeId: 'user-count-3'
   },
   '2': {
     listId: 'user-list-2',
-    pendingId: 'pendientes-user-list-2'
+    pendingId: 'pendientes-user-list-2',
+    countBadgeId: 'user-count-2'
   },
   important: {
     listId: 'user-list-2',
-    pendingId: 'pendientes-user-list-2'
+    pendingId: 'pendientes-user-list-2',
+    countBadgeId: 'user-count-2'
   },
   '1': {
     listId: 'user-list-1',
-    pendingId: 'pendientes-user-list-1'
+    pendingId: 'pendientes-user-list-1',
+    countBadgeId: 'user-count-1'
   },
   operational: {
     listId: 'user-list-1',
-    pendingId: 'pendientes-user-list-1'
+    pendingId: 'pendientes-user-list-1',
+    countBadgeId: 'user-count-1'
   },
   '0': {
     listId: 'user-list',
@@ -46,7 +54,8 @@ const PANEL_DOM_BINDINGS = {
 export function getPanelDomBindings(panelId) {
   return PANEL_DOM_BINDINGS[panelId] || {
     listId: `user-list-${escapeHtml(panelId)}`,
-    pendingId: `pendientes-${escapeHtml(panelId)}`
+    pendingId: `pendientes-${escapeHtml(panelId)}`,
+    countBadgeId: `count-${escapeHtml(panelId)}`
   };
 }
 
@@ -63,7 +72,7 @@ function renderIndicator(panel) {
   return `<span class="supervision2-level-indicator" aria-hidden="true" style="--supervision2-indicator-color: ${color};"></span>`;
 }
 
-function renderInformativeBadge(bindings) {
+function renderCountBadge(bindings) {
   if (!bindings.countBadgeId) {
     return '';
   }
@@ -86,7 +95,7 @@ export function renderSupervisionAccordionItem(panel) {
       <a class="uk-accordion-title supervision2-card__title" href="#">
         ${renderIndicator(panel)}
         <span class="uk-text-truncate" title="${title}" uk-tooltip>${title}</span>
-        ${renderInformativeBadge(bindings)}
+        ${renderCountBadge(bindings)}
       </a>
       <div class="uk-accordion-content uk-margin-small-top">
         <span class="uk-badge supervision2-pending-badge supervision2-pending-badge--inactive">
