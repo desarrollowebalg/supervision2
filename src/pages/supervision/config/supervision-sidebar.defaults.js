@@ -108,6 +108,27 @@ export const DEFAULT_SUPERVISION_SIDEBAR_CONFIG = {
   ]
 };
 
+export const DEFAULT_SUPERVISION_SIDEBAR_FALLBACK_CONFIG = {
+  ...DEFAULT_SUPERVISION_SIDEBAR_CONFIG,
+  panels: [
+    {
+      id: '0',
+      label: 'Nivel 0: Informativo',
+      indicatorTone: 'neutral',
+      indicatorColor: '#f1f1f1',
+      order: 10,
+      enabled: true,
+      initialOpen: false,
+      detailSlot: 'incidents-list',
+      dataSourceKey: 'severity-0',
+      meta: {
+        subtitle: 'Contexto',
+        slaLabel: 'Sin SLA'
+      }
+    }
+  ]
+};
+
 export const DEFAULT_SUPERVISION_QUERY_PANEL = DEFAULT_SUPERVISION_SIDEBAR_CONFIG.queryPanel;
 
 export const DEFAULT_SUPERVISION_PANEL = {

@@ -1,15 +1,12 @@
 import { renderSupervisionSidebar } from '../../components/supervision-sidebar/supervision-sidebar.js';
-import { getPanelDomBindings } from '../../components/supervision-sidebar/supervision-accordion-item.js';
-import { renderSupervisionUserSummaryCard } from '../../components/supervision-sidebar/supervision-user-summary-card.js';
-import { fetchIncidenciasByDate } from '../../core/services/apis-me/incidencias.service.js';
-import { syncClientUsers } from '../../core/services/apis-me/usuarios.service.js';
+import { createSupervisionDetailPanel, renderSupervisionDetailPanel } from '../../components/supervision-detail/supervision-detail-panel.js';
+import { createSupervisionSidebarController } from '../../components/supervision-sidebar/supervision-sidebar.controller.js';
 import { renderInicioLayout } from '../inicio-layout.js';
 import { loadSupervisionSidebarConfig } from './services/supervision-sidebar-config.service.js';
 
 export default class Supervision {
   static instancia = null;
   static PARENT_CARD_CLASS = 'supervision-page-parent-card';
-  static DEFAULT_WORKSPACE_ID = '1';
 
   constructor() {
     if (Supervision.instancia) {
@@ -21,9 +18,8 @@ export default class Supervision {
     this.titleElement = null;
     this.container = null;
     this.sidebarConfig = null;
-    this.dateInputElement = null;
-    this.boundHandleDateChange = this.handleDateChange.bind(this);
-    this.boundHandleUserSelection = this.handleUserSelection.bind(this);
+    this.sidebarController = null;
+    this.detailPanel = null;
   }
 
   async inicializar(container) {
@@ -38,7 +34,7 @@ export default class Supervision {
     this.ensureSupervisionStyles();
     this.container = container;
 
-    const sidebarConfig = await loadSupervisionSidebarConfig(Supervision.DEFAULT_WORKSPACE_ID);
+    const sidebarConfig = await loadSupervisionSidebarConfig();
     this.sidebarConfig = sidebarConfig;
 
     renderInicioLayout(container, {
@@ -61,11 +57,7 @@ export default class Supervision {
               </aside>
 
               <section class="supervision2-panel supervision2-panel--right">
-                <p class="supervision2-empty-detail">
-                  Da clic en un usuario con incidencias para mostrar el detalle de las mismas.
-                </p>
-                <span id="loaderDetalleIncidencias"></span>
-                <section id="panelDerechoListIncidencias"></section>
+                ${renderSupervisionDetailPanel()}
               </section>
             </div>
           </div>
@@ -74,278 +66,28 @@ export default class Supervision {
     });
 
     this.syncParentCardClass(container);
-    await this.initializeSidebarRuntime();
-  }
-
-  async initializeSidebarRuntime() {
-    const dateInput = this.container?.querySelector('#datePickerMapHot');
-    if (!dateInput) {
-      return;
-    }
-
-    if (this.dateInputElement && this.dateInputElement !== dateInput) {
-      this.dateInputElement.removeEventListener('change', this.boundHandleDateChange);
-    }
-
-    this.dateInputElement = dateInput;
-    this.dateInputElement.removeEventListener('change', this.boundHandleDateChange);
-    if (this.sidebarConfig?.queryPanel?.behavior?.fetchOnChange) {
-      this.dateInputElement.addEventListener('change', this.boundHandleDateChange);
-    }
-
-    const leftPanel = this.container?.querySelector('.supervision2-panel--left');
-    leftPanel?.removeEventListener('click', this.boundHandleUserSelection);
-    leftPanel?.addEventListener('click', this.boundHandleUserSelection);
-
-    if (!this.dateInputElement.value) {
-      this.dateInputElement.value = this.getDefaultDateValue();
-    }
-
-    if (this.sidebarConfig?.queryPanel?.behavior?.fetchOnInitialLoad) {
-      await this.loadIncidenciasForSelectedDate(this.dateInputElement.value);
-    }
-  }
-
-  getDefaultDateValue() {
-    const now = new Date();
-    const offsetMs = now.getTimezoneOffset() * 60 * 1000;
-    return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
-  }
-
-  async handleDateChange(event) {
-    const selectedDate = event?.target?.value || '';
-    await this.loadIncidenciasForSelectedDate(selectedDate);
-  }
-
-  async loadIncidenciasForSelectedDate(selectedDate) {
-    const safeDate = String(selectedDate || '').trim();
-    if (!safeDate) {
-      return;
-    }
-
-    this.setSidebarLoading(true);
-    this.updateWeekInfo(safeDate);
-    this.resetSidebarPanels();
-
-    try {
-      const [incidenciasResult, usersCatalogResult] = await Promise.allSettled([
-        fetchIncidenciasByDate(safeDate),
-        syncClientUsers()
-      ]);
-      const incidencias = incidenciasResult.status === 'fulfilled' ? incidenciasResult.value : [];
-      const usersCatalog = usersCatalogResult.status === 'fulfilled' ? usersCatalogResult.value : { data: [] };
-
-      if (incidenciasResult.status !== 'fulfilled') {
-        throw incidenciasResult.reason;
-      }
-
-      const usersById = new Map(
-        (Array.isArray(usersCatalog?.data) ? usersCatalog.data : []).map((user) => [
-          Number(user?.ID_USUARIO ?? 0),
-          user
-        ])
-      );
-
-      this.renderIncidenciasByLevel(
-        incidencias.map((item) => ({
-          ...item,
-          URL_FOTO_PERFIL: usersById.get(Number(item.ID_USUARIO))?.URL_FOTO_PERFIL || ''
-        }))
-      );
-      this.renderSidebarMessage('');
-    } catch (error) {
-      console.error('[supervision] error loading incidencias', error);
-      this.renderSidebarMessage('No se pudo cargar la lista de incidencias para la fecha seleccionada.');
-    } finally {
-      this.setSidebarLoading(false);
-    }
-  }
-
-  renderIncidenciasByLevel(records) {
-    const normalizedRecords = Array.isArray(records)
-      ? [...records].sort((left, right) => this.compareIncidenciasByFechaDesc(left, right))
-      : [];
-    const recordsByLevel = new Map();
-
-    normalizedRecords.forEach((record) => {
-      const levelKey = this.resolvePanelIdFromLevel(record?.NIVEL);
-      if (!recordsByLevel.has(levelKey)) {
-        recordsByLevel.set(levelKey, []);
-      }
-
-      recordsByLevel.get(levelKey).push(record);
+    const detailContainer = this.container?.querySelector('.supervision2-panel--right');
+    this.detailPanel?.destroy?.();
+    this.detailPanel = createSupervisionDetailPanel({
+      container: detailContainer
     });
+    this.detailPanel.init();
 
-    (this.sidebarConfig?.panels || []).forEach((panel) => {
-      const panelId = String(panel?.id || '');
-      const bindings = getPanelDomBindings(panelId);
-      const listElement = this.container?.querySelector(`#${bindings.listId}`);
-      const pendingElement = this.container?.querySelector(`#${bindings.pendingId}`);
-      const badgeElement = bindings.countBadgeId
-        ? this.container?.querySelector(`#${bindings.countBadgeId}`)
-        : null;
-      const panelRecords = recordsByLevel.get(panelId) || [];
-      const pendingTotal = panelRecords.reduce((sum, item) => sum + Number(item?.NO_LEIDOS ?? 0), 0);
-
-      if (listElement) {
-        listElement.innerHTML = panelRecords
-          .map((record) => renderSupervisionUserSummaryCard(record))
-          .join('');
-      }
-
-      if (pendingElement) {
-        pendingElement.textContent = String(pendingTotal);
-      }
-
-      if (badgeElement) {
-        badgeElement.textContent = String(panelRecords.length);
-        badgeElement.classList.toggle('uk-hidden', panelRecords.length === 0);
-      }
+    this.sidebarController?.destroy?.();
+    this.sidebarController = createSupervisionSidebarController({
+      container: this.container,
+      config: sidebarConfig,
+      onUserSelect: (selection) => this.handleSidebarUserSelection(selection)
     });
+    await this.sidebarController.init();
   }
 
-  resolvePanelIdFromLevel(level) {
-    const normalizedLevel = String(Number(level ?? 0));
-    const hasNumericPanel = (this.sidebarConfig?.panels || []).some((panel) => panel?.id === normalizedLevel);
-    if (hasNumericPanel) {
-      return normalizedLevel;
-    }
-
-    const legacyMap = {
-      '4': 'critical',
-      '3': 'relevant',
-      '2': 'important',
-      '1': 'operational',
-      '0': 'informative'
-    };
-
-    return legacyMap[normalizedLevel] || '0';
-  }
-
-  resetSidebarPanels() {
-    (this.sidebarConfig?.panels || []).forEach((panel) => {
-      const bindings = getPanelDomBindings(panel.id);
-      const listElement = this.container?.querySelector(`#${bindings.listId}`);
-      const pendingElement = this.container?.querySelector(`#${bindings.pendingId}`);
-      const badgeElement = bindings.countBadgeId
-        ? this.container?.querySelector(`#${bindings.countBadgeId}`)
-        : null;
-
-      if (listElement) {
-        listElement.innerHTML = '';
-      }
-
-      if (pendingElement) {
-        pendingElement.textContent = '0';
-      }
-
-      if (badgeElement) {
-        badgeElement.textContent = '0';
-        badgeElement.classList.add('uk-hidden');
-      }
-    });
-  }
-
-  setSidebarLoading(isLoading) {
-    const panelLoader = this.container?.querySelector('#supervisionSidebarLoader');
-    const leftPanel = this.container?.querySelector('.supervision2-panel--left');
-
-    if (panelLoader) {
-      panelLoader.classList.toggle('uk-hidden', !isLoading);
-      panelLoader.setAttribute('aria-hidden', String(!isLoading));
-    }
-
-    if (leftPanel) {
-      leftPanel.classList.toggle('supervision2-panel--loading', isLoading);
-    }
-
-    const loader = this.container?.querySelector('#loaderGralSupNiveles');
-    if (!loader) {
-      return;
-    }
-
-    loader.innerHTML = '';
-  }
-
-  compareIncidenciasByFechaDesc(left, right) {
-    return this.parseIncidenciaDate(right?.FECHA) - this.parseIncidenciaDate(left?.FECHA);
-  }
-
-  parseIncidenciaDate(rawValue) {
-    const safeValue = String(rawValue || '').trim();
-    const match = safeValue.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
-
-    if (!match) {
-      return 0;
-    }
-
-    const [, day, month, year, hours = '00', minutes = '00', seconds = '00'] = match;
-    return new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hours),
-      Number(minutes),
-      Number(seconds)
-    ).getTime();
-  }
-
-  updateWeekInfo(selectedDate) {
-    const weekInfo = this.container?.querySelector('#weekInfo');
-    // const title = this.container?.querySelector('#heatmapTitle');
-    if (weekInfo) {
-      weekInfo.textContent = `Fecha seleccionada: ${selectedDate}`;
-      weekInfo.classList.add('uk-hidden');
-    }
-
-    // if (title) {
-    //   title.textContent = selectedDate;
-    //   title.classList.remove('uk-hidden');
-    // }
-  }
-
-  renderSidebarMessage(message) {
-    const messageNode = this.container?.querySelector('#msgContentsPanels');
-    if (!messageNode) {
-      return;
-    }
-
-    if (!message) {
-      messageNode.innerHTML = '';
-      return;
-    }
-
-    messageNode.innerHTML = `<div class="uk-alert-warning uk-border-rounded uk-margin-small-top" uk-alert>${message}</div>`;
-  }
-
-  handleUserSelection(event) {
-    const trigger = event.target?.closest('[data-supervision-user-id]');
-    if (!trigger) {
-      return;
-    }
-
-    const userId = Number(trigger.getAttribute('data-supervision-user-id') || 0);
-    const userName = trigger.getAttribute('data-supervision-user-name') || '';
-    const selectedUserInput = this.container?.querySelector('#idSupervisorSeleccionado');
-    const detailPanel = this.container?.querySelector('#panelDerechoListIncidencias');
-
-    if (selectedUserInput) {
-      selectedUserInput.value = String(userId);
-    }
-
-    if (detailPanel) {
-      detailPanel.innerHTML = `
-        <div class="uk-alert-primary uk-border-rounded" uk-alert>
-          Usuario seleccionado: <strong>${userName}</strong> (${userId})
-        </div>
-      `;
-    }
+  handleSidebarUserSelection(selection) {
+    this.detailPanel?.showSelection(selection);
 
     window.dispatchEvent(new CustomEvent('supervision:user-selected', {
       detail: {
-        userId,
-        userName,
-        selectedDate: this.dateInputElement?.value || ''
+        ...selection
       }
     }));
   }
@@ -390,10 +132,10 @@ export default class Supervision {
   }
 
   destroy() {
-    this.dateInputElement?.removeEventListener('change', this.boundHandleDateChange);
-    this.container
-      ?.querySelector('.supervision2-panel--left')
-      ?.removeEventListener('click', this.boundHandleUserSelection);
+    this.sidebarController?.destroy?.();
+    this.detailPanel?.destroy?.();
+    this.sidebarController = null;
+    this.detailPanel = null;
     this.removeParentCardClass();
     this.removeTitleHiddenClass();
   }

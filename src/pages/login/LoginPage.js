@@ -135,6 +135,7 @@ export default class LoginPage {
 
     setUser(userData);
     storageService.setSessionItem('user', userData);
+    storageService.setSessionItem('ci', userValidation.CLI || '');
     storageService.setItem('logoCliente', userValidation.logoCliente || '');
     storageService.setItem('logoEmpresa', userValidation.logoEmpresa || '');
     storageService.setItem('fotoPerfil', userData.foto_perfil);

@@ -1,69 +1,68 @@
 # Supervisión - Sidebar configurable
 
-Fecha de referencia: 2026-06-28
+Fecha de referencia: 2026-07-02
 
 ## Propósito
 
-Este documento describe la primera fase del refactor del panel izquierdo de `supervision`.
+Este documento describe la arquitectura actual del sidebar de `supervision` y su relación con el panel derecho.
 
 Objetivo actual:
 
-- sacar la estructura del sidebar de `supervision.js`
-- leerla desde configuración externa por cliente
-- normalizarla antes de renderizar
-- mantener el mismo layout visual base
+- mantener `supervision.js` como orquestador liviano
+- resolver la configuración del sidebar por cliente
+- separar render estático, runtime del sidebar y detalle derecho
+- conservar el layout base de 2 paneles
 
-Fuera de alcance en esta fase:
+## Estado actual
 
-- consulta real de incidencias por fecha
-- recarga por cambio de fecha
-- conteos reales de pendientes
-- detalle dinámico real por panel
-- edición del schema desde UI de configuración
+La página ya no concentra todo el runtime en `supervision.js`.
+
+Ahora la arquitectura está separada en estas capas:
+
+1. resolución de configuración por cliente
+2. normalización del contrato
+3. render estático del sidebar
+4. runtime del sidebar
+5. componente desacoplado del panel derecho
+6. view model para distribución de incidencias
 
 ## Archivos involucrados
 
 ### Configuración externa
 
-- `doctosSupervision/1/supervision-sidebar.json`
+- `doctosSupervision/<ID_CLIENTE>/supervision-sidebar.json`
 
 ### Orquestación de página
 
 - `src/pages/supervision/supervision.js`
 
-### Servicios de lectura y normalización
+### Servicios de lectura, defaults y normalización
 
 - `src/pages/supervision/services/supervision-sidebar-config.service.js`
 - `src/pages/supervision/services/supervision-sidebar-config.normalizer.js`
-
-### Contratos internos
-
 - `src/pages/supervision/config/supervision-sidebar.defaults.js`
 - `src/pages/supervision/config/supervision-detail.registry.js`
 
-### Componentes compartidos
+### Render compartido del sidebar
 
 - `src/components/supervision-sidebar/supervision-sidebar.js`
 - `src/components/supervision-sidebar/supervision-query-panel.js`
 - `src/components/supervision-sidebar/supervision-accordion-item.js`
 
-## Flujo completo hasta pintar en pantalla
+### Runtime y referencias del sidebar
 
-La configuración pasa por estas fases:
+- `src/components/supervision-sidebar/supervision-sidebar.controller.js`
+- `src/components/supervision-sidebar/supervision-sidebar.dom.js`
+- `src/components/supervision-sidebar/supervision-user-summary-card.js`
+- `src/pages/supervision/services/supervision-sidebar.viewmodel.js`
 
-### Fase 1. Fuente de configuración por cliente
+### Panel derecho desacoplado
 
-Archivo:
+- `src/components/supervision-detail/supervision-detail-panel.js`
 
-- `doctosSupervision/1/supervision-sidebar.json`
+## Flujo completo actual
 
-Responsabilidad:
-
-- declarar la estructura visible del sidebar izquierdo
-- definir `queryPanel`
-- definir el orden y metadatos de `panels`
-
-### Fase 2. Resolución de la ruta física
+### Fase 1. Resolución del cliente activo
 
 Archivo:
 
@@ -71,17 +70,45 @@ Archivo:
 
 Responsabilidad:
 
-- resolver la ruta `/doctosSupervision/1/supervision-sidebar.json`
+- leer `ci` desde `sessionStorage`
+- decodificar `ci` desde base64
+- usar el valor decodificado como `ID_CLIENTE`
+
+Regla actual:
+
+- si se recibe un `workspaceId` explícito, se usa ese valor
+- si no se recibe, se intenta resolver desde `sessionStorage.ci`
+- si `ci` no existe o es inválido, se usa fallback técnico a `workspaceId = "1"`
+
+### Fase 2. Lectura del archivo de configuración
+
+Archivo:
+
+- `src/pages/supervision/services/supervision-sidebar-config.service.js`
+
+Responsabilidad:
+
+- construir la ruta `/doctosSupervision/<ID_CLIENTE>/supervision-sidebar.json`
 - leer el JSON con `fetch`
-- entregar el contenido al normalizador
-- aplicar fallback a defaults si la carga falla
+- enviarlo al normalizador
 
-Observación:
+### Fase 3. Fallback cuando el archivo no existe
 
-- en esta fase el cliente está fijo en `1`
-- la resolución dinámica de cliente queda para una fase posterior
+Archivo:
 
-### Fase 3. Normalización del contrato
+- `src/pages/supervision/config/supervision-sidebar.defaults.js`
+
+Responsabilidad:
+
+- exponer defaults completos
+- exponer fallback reducido para clientes sin archivo
+
+Fallback actual:
+
+- conserva el panel `Herramientas`
+- deja un único panel de nivel con `id: "0"`
+
+### Fase 4. Normalización del contrato
 
 Archivo:
 
@@ -95,91 +122,95 @@ Responsabilidad:
 - filtrar paneles inválidos
 - descartar duplicados por `id`
 - ordenar `panels` por `order`
-- asegurar que `detailSlot` exista en el registry
+- validar `detailSlot` contra el registry
 
 Salida:
 
-- un objeto limpio, estable y listo para render
+- un objeto limpio y estable listo para render
 
-La salida del normalizador no incluye runtime vivo.
+### Fase 5. Render estático del sidebar
 
-No incluye todavía:
-
-- `pendingCount`
-- `records`
-- `selectedDate`
-- `isLoading`
-- `error`
-- `activePanelId`
-
-### Fase 4. Render del sidebar compartido
-
-Archivo:
+Archivos:
 
 - `src/components/supervision-sidebar/supervision-sidebar.js`
-
-Responsabilidad:
-
-- construir el `<ul class="uk-accordion">`
-- renderizar `queryPanel`
-- iterar `panels`
-- delegar cada bloque a su componente correspondiente
-
-### Fase 5. Render del panel de consulta
-
-Archivo:
-
 - `src/components/supervision-sidebar/supervision-query-panel.js`
-
-Responsabilidad:
-
-- pintar el primer `li` del acordeón
-- renderizar el título "Herramientas"
-- renderizar el icono `calendar`
-- renderizar el control `date`
-- renderizar el texto helper
-- preservar IDs ya existentes del DOM
-
-IDs preservados:
-
-- `loaderGralSupNiveles`
-- `datePickerMapHot`
-- `heatmapTitle`
-- `weekInfo`
-- `msgContentsPanels`
-- `idSupervisorSeleccionado`
-- `contenedorSupervisioresSup_v0`
-- `user-list-supervisores`
-
-### Fase 6. Render de cada nivel configurable
-
-Archivo:
-
 - `src/components/supervision-sidebar/supervision-accordion-item.js`
 
 Responsabilidad:
 
-- pintar cada `li` configurable
-- usar `indicatorColor` como color visual del indicador
-- armar el texto visible con `label + subtitle + slaLabel`
-- renderizar el badge `Pendientes: 0`
-- dejar el contenedor interno listo para datos futuros
+- construir el acordeón UIkit
+- pintar el panel `Herramientas`
+- pintar los paneles configurables
+- preservar IDs de DOM compatibles con el runtime
 
-IDs preservados por compatibilidad:
+### Fase 6. Runtime del sidebar
 
-- `user-list-4`
-- `user-list-3`
-- `user-list-2`
-- `user-list-1`
-- `user-list`
-- `pendientes-user-list-4`
-- `pendientes-user-list-3`
-- `pendientes-user-list-2`
-- `pendientes-user-list-1`
-- `pendientes-user-list`
-- `user-count`
+Archivo:
 
-### Fase 7. Integración en la página
+- `src/components/supervision-sidebar/supervision-sidebar.controller.js`
+
+Responsabilidad:
+
+- inicializar listeners
+- resolver fecha inicial
+- ejecutar carga inicial si `fetchOnInitialLoad = true`
+- refrescar al cambiar la fecha si `fetchOnChange = true`
+- coordinar fetch de incidencias y usuarios
+- resetear y repintar contadores, listas y mensajes
+- emitir selección de usuario hacia la página
+
+API actual del controlador:
+
+- `init()`
+- `refreshAll({ selectedDate })`
+- `updatePanels(viewModel)`
+- `setLoading(isLoading)`
+- `setMessage(message)`
+- `destroy()`
+
+### Fase 7. View model del sidebar
+
+Archivo:
+
+- `src/pages/supervision/services/supervision-sidebar.viewmodel.js`
+
+Responsabilidad:
+
+- enriquecer incidencias con datos de usuario
+- agrupar incidencias por panel
+- calcular conteos y pendientes
+- entregar una estructura lista para render
+
+Salida lógica:
+
+- `panelId`
+- `detailSlot`
+- `count`
+- `pendingTotal`
+- `records`
+
+### Fase 8. Panel derecho desacoplado
+
+Archivo:
+
+- `src/components/supervision-detail/supervision-detail-panel.js`
+
+Responsabilidad:
+
+- renderizar el contenedor del lado derecho
+- manejar estados base del detalle
+- mostrar `empty state`
+- mostrar selección de usuario
+
+API actual:
+
+- `init()`
+- `showEmptyState()`
+- `showLoading()`
+- `showSelection({ userId, userName, selectedDate })`
+- `destroy()`
+
+### Fase 9. Orquestación final de la página
 
 Archivo:
 
@@ -187,42 +218,40 @@ Archivo:
 
 Responsabilidad:
 
-- mantener el layout de 2 columnas
-- dejar el panel derecho intacto
-- cargar la configuración normalizada
-- insertar el sidebar ya construido en el panel izquierdo
+- montar layout de 2 columnas
+- cargar la configuración del sidebar
+- insertar sidebar y detail panel
+- inicializar el runtime del sidebar
+- reenviar la selección del sidebar al panel derecho
 
 ## Responsabilidades por capa
 
-### `supervision-sidebar.json`
+### `supervision.js`
 
 Define:
 
-- estructura visible
-- orden de paneles
-- color del indicador
-- etiquetas y metadatos del panel
-- flags de apertura y visibilidad
+- composición general de la página
+- inicialización de sidebar y detail panel
+- coordinación entre panel izquierdo y derecho
 
 No define:
 
-- HTML
-- imports
-- clases CSS arbitrarias
-- runtime de incidencias
-- lógica de fetch
+- fetch directo de incidencias
+- mapeo de registros por panel
+- listeners internos del sidebar
 
 ### `supervision-sidebar-config.service.js`
 
 Define:
 
-- cómo se obtiene la configuración
+- cómo se resuelve el cliente activo
+- cómo se construye la ruta del JSON
+- cuándo cae a fallback
 
 No define:
 
 - reglas de render
-- lógica de layout
-- detalle por panel
+- lógica del panel derecho
 
 ### `supervision-sidebar-config.normalizer.js`
 
@@ -232,27 +261,36 @@ Define:
 
 No define:
 
-- datos de negocio vivos
-- comportamiento de consulta real
+- runtime de incidencias
+- estado visual vivo
 
-### `supervision-sidebar.js`
+### `supervision-sidebar.controller.js`
 
 Define:
 
-- composición visual del acordeón
+- runtime del panel izquierdo
 
 No define:
 
-- origen de la configuración
-- fetch de datos
+- layout de página
+- detalle funcional complejo del lado derecho
 
-## Contrato actual del objeto normalizado
+### `supervision-detail-panel.js`
 
-La salida esperada tiene esta forma lógica:
+Define:
+
+- estados base del lado derecho
+
+No define:
+
+- consulta compleja de detalle por usuario
+- resolución avanzada por `detailSlot`
+
+## Contrato lógico del objeto normalizado
 
 ```json
 {
-  "workspaceId": "1",
+  "workspaceId": "768",
   "schemaVersion": 1,
   "accordion": {
     "multipleOpen": true
@@ -309,6 +347,11 @@ Defaults base:
 - `panel.initialOpen = false`
 - `panel.detailSlot = "incidents-list"`
 
+Fallback reducido:
+
+- conserva `queryPanel`
+- deja solo el panel `id = "0"`
+
 ## Registry actual de detalle
 
 Archivo:
@@ -319,13 +362,9 @@ Estado actual:
 
 - solo registra `incidents-list`
 
-Uso en esta fase:
+Uso actual:
 
 - validar que el `detailSlot` configurado sea aceptado
-
-No monta todavía:
-
-- componentes de detalle reales
 
 ## Criterio de mantenimiento
 
@@ -336,15 +375,30 @@ Si cambia alguno de estos elementos:
 - `order`
 - `enabled`
 
-el sidebar debe cambiar sin tocar `src/pages/supervision/supervision.js`.
+el primer lugar a revisar debe ser:
 
-## Siguiente fase prevista
+- `doctosSupervision/<ID_CLIENTE>/supervision-sidebar.json`
 
-La siguiente fase deberá conectar:
+Si el cambio es de comportamiento del panel izquierdo, revisar:
 
-- fecha inicial del `queryPanel`
-- fetch inicial por fecha
-- recarga al cambiar la fecha
-- distribución de incidencias por `dataSourceKey`
-- runtime real de `pendingCount`
+- `src/components/supervision-sidebar/supervision-sidebar.controller.js`
 
+Si el cambio es del panel derecho, revisar:
+
+- `src/components/supervision-detail/supervision-detail-panel.js`
+
+## Estado de crecimiento previsto
+
+La base actual ya soporta:
+
+- configuración dinámica por cliente
+- fallback cuando no existe archivo del cliente
+- runtime desacoplado del sidebar
+- panel derecho desacoplado
+
+Una siguiente fase puede conectar:
+
+- detalle real por usuario
+- resolución funcional por `detailSlot`
+- refresco programado del sidebar
+- actualización parcial de contadores o paneles

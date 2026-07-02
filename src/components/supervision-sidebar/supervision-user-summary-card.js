@@ -24,6 +24,8 @@ export function renderSupervisionUserSummaryCard(userSummary) {
   const pending = Number(userSummary?.NO_LEIDOS ?? 0);
   const unread = Number(userSummary?.NO_LEIDOS ?? 0);
   const read = Number(userSummary?.LEIDOS ?? 0);
+  const panelId = escapeHtml(userSummary?.PANEL_ID || '');
+  const detailSlot = escapeHtml(userSummary?.DETAIL_SLOT || '');
   const photoUrl = String(userSummary?.URL_FOTO_PERFIL || '').trim();
   const initials = escapeHtml(buildInitials(userSummary?.USUARIO));
   const photoMarkup = photoUrl
@@ -36,6 +38,8 @@ export function renderSupervisionUserSummaryCard(userSummary) {
       class="supervision2-user-summary uk-button uk-button-default uk-text-left"
       data-supervision-user-id="${userId}"
       data-supervision-user-name="${userName}"
+      data-supervision-panel-id="${panelId}"
+      data-supervision-detail-slot="${detailSlot}"
     >
       <span class="supervision2-user-summary__avatar">
         ${photoMarkup}

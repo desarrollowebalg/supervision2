@@ -146,7 +146,8 @@
 				'MMCP'=>$verificacionUL[1]["mostrarMensajeCambioPass"],
 				'DVCP'=>$verificacionUL[1]["diasVencimientoPass"],
 				'foto_perfil'=>$verificacionUL[0]["URL_FOTO_PERFIL"],
-				'nombre_completo'=>$verificacionUL[0]["NOMBRE_COMPLETO"]
+				'nombre_completo'=>$verificacionUL[0]["NOMBRE_COMPLETO"],
+				'CLI' => base64_encode($verificacionUL[0]["ID_CLIENTE"]),
 			);
 
 			// echo "<pre>";
