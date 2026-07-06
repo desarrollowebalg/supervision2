@@ -417,16 +417,16 @@ class apiIncidencias{
 
     switch((string)$fieldDefinition["transform"]){
       case "date_ymd_start_of_day":
-        return $this->formatearFechaIso($value, "00:00:01");
+        return $this->formatearFechaIso($value, "00:00:01", "Y-m-d H:i:s");
       case "date_ymd_end_of_day":
-        return $this->formatearFechaIso($value, "23:59:59");
+        return $this->formatearFechaIso($value, "23:59:59", "Y-m-d H:i:s");
       default:
         $this->erroresApi(300, "Transformacion de payload API no soportada");
         return false;
     }
   }
 
-  private function formatearFechaIso($value, $timeSuffix){
+  private function formatearFechaIso($value, $timeSuffix, $outputFormat = "Y-m-d H:i:s"){
     $date = DateTime::createFromFormat("Y-m-d H:i:s", trim((string)$value)." ".$timeSuffix);
     $errors = DateTime::getLastErrors();
     $hasErrors = $errors !== false && (($errors["warning_count"] ?? 0) > 0 || ($errors["error_count"] ?? 0) > 0);
@@ -436,7 +436,7 @@ class apiIncidencias{
       return false;
     }
 
-    return $date->format("Y-m-d H:i:s");
+    return $date->format($outputFormat);
   }
 
   private function normalizarResultadoApi($resultMode, $decoded){
