@@ -1,4 +1,4 @@
-import { fetchIncidenciasByDate } from '../../core/services/apis-me/incidencias.service.js';
+import { getIncidenciasByDate } from '../../core/services/apis-me/incidencias.service.js';
 import { syncClientUsers } from '../../core/services/apis-me/usuarios.service.js';
 import {
   buildSidebarPanelsViewModel,
@@ -125,7 +125,7 @@ export function createSupervisionSidebarController({
 
     try {
       const [incidenciasResult, usersCatalogResult] = await Promise.allSettled([
-        fetchIncidenciasByDate(safeDate),
+        getIncidenciasByDate(safeDate),
         syncClientUsers()
       ]);
 
@@ -136,7 +136,7 @@ export function createSupervisionSidebarController({
       const usersById = buildUsersByIdMap(
         usersCatalogResult.status === 'fulfilled' ? usersCatalogResult.value : { data: [] }
       );
-      const enrichedRecords = enrichIncidenciasWithUsers(incidenciasResult.value, usersById);
+      const enrichedRecords = enrichIncidenciasWithUsers(incidenciasResult.value?.data, usersById);
       const viewModel = buildSidebarPanelsViewModel(enrichedRecords, panelConfig);
 
       updatePanels(viewModel);
