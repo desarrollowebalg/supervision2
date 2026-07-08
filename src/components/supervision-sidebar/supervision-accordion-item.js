@@ -21,6 +21,11 @@ function renderCountBadge(bindings) {
   return `<span class="uk-badge uk-margin-small-left uk-hidden" id="${bindings.countBadgeId}">0</span>`;
 }
 
+export function buildSupervisionPanelTitle(panel) {
+  const labelParts = [panel?.label, panel?.meta?.subtitle, panel?.meta?.slaLabel].filter(Boolean);
+  return labelParts.join(' → ');
+}
+
 export function renderSupervisionAccordionItem(panel) {
   if (!panel?.enabled) {
     return '';
@@ -28,8 +33,7 @@ export function renderSupervisionAccordionItem(panel) {
 
   const bindings = getPanelDomBindings(panel.id);
   const openClass = panel.initialOpen ? 'uk-open ' : '';
-  const labelParts = [panel.label, panel.meta?.subtitle, panel.meta?.slaLabel].filter(Boolean);
-  const title = escapeHtml(labelParts.join(' → '));
+  const title = escapeHtml(buildSupervisionPanelTitle(panel));
 
   return `
     <li class="${openClass}supervision2-card supervision2-card--${escapeHtml(panel.id)}">

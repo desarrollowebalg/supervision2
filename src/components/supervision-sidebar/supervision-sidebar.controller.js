@@ -1,5 +1,6 @@
 import { getIncidenciasByDate } from '../../core/services/apis-me/incidencias.service.js';
 import { syncClientUsers } from '../../core/services/apis-me/usuarios.service.js';
+import supervisionDateRangeService from '../../core/services/supervision-date-range.service.js';
 import {
   buildSidebarPanelsViewModel,
   buildUsersByIdMap,
@@ -119,6 +120,7 @@ export function createSupervisionSidebarController({
       domRefs.dateInput.value = safeDate;
     }
 
+    supervisionDateRangeService.updateSessionRange(safeDate);
     setLoading(true);
     updateWeekInfo(safeDate);
     resetPanels();
@@ -172,7 +174,9 @@ export function createSupervisionSidebarController({
       userName: trigger.getAttribute('data-supervision-user-name') || '',
       selectedDate: domRefs?.dateInput?.value || '',
       panelId: trigger.getAttribute('data-supervision-panel-id') || '',
-      detailSlot: trigger.getAttribute('data-supervision-detail-slot') || ''
+      detailSlot: trigger.getAttribute('data-supervision-detail-slot') || '',
+      panelTitle: trigger.getAttribute('data-supervision-panel-title') || '',
+      photoUrl: trigger.getAttribute('data-supervision-photo-url') || ''
     };
 
     if (domRefs?.selectedUserInput) {

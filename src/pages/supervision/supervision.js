@@ -1,3 +1,4 @@
+import '../../components/userAvatar.js';
 import { renderSupervisionSidebar } from '../../components/supervision-sidebar/supervision-sidebar.js';
 import { createSupervisionDetailPanel, renderSupervisionDetailPanel } from '../../components/supervision-detail/supervision-detail-panel.js';
 import { createSupervisionSidebarController } from '../../components/supervision-sidebar/supervision-sidebar.controller.js';
@@ -212,6 +213,33 @@ export default class Supervision {
         background: var(--supervision2-surface);
         padding: 0.75rem;
         min-height: 100%;
+      }
+
+      .supervision2-detail-origin {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0.85rem 1rem;
+        background: var(--supervision2-surface-muted);
+        color: var(--supervision2-text);
+        border: 1px solid var(--supervision2-border);
+      }
+
+      .supervision2-level-indicator--detail {
+        width: 0.9rem;
+        height: 0.9rem;
+        background: color-mix(in srgb, var(--supervision2-surface-elevated) 78%, var(--supervision2-border-strong) 22%);
+        box-shadow: inset 0 0 0 1px var(--supervision2-border);
+      }
+
+      .supervision2-detail-user-card {
+        border: 1px solid var(--supervision2-border);
+        box-shadow: var(--supervision2-shadow-soft);
+      }
+
+      .supervision2-detail-user-card__title {
+        color: var(--supervision2-text);
       }
 
       .supervision2-panel .uk-accordion > :nth-child(n + 2) {

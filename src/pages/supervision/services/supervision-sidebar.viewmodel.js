@@ -1,3 +1,5 @@
+import { buildSupervisionPanelTitle } from '../../../components/supervision-sidebar/supervision-accordion-item.js';
+
 function parseIncidenciaDate(rawValue) {
   const safeValue = String(rawValue || '').trim();
   const match = safeValue.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/);
@@ -94,7 +96,8 @@ export function buildSidebarPanelsViewModel(records, panels) {
       records: panelRecords.map((record) => ({
         ...record,
         PANEL_ID: panelId,
-        DETAIL_SLOT: panel?.detailSlot || ''
+        DETAIL_SLOT: panel?.detailSlot || '',
+        PANEL_TITLE: buildSupervisionPanelTitle(panel)
       }))
     };
   });

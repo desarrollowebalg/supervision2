@@ -6,6 +6,29 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;');
 }
 
+function renderUserPhoto({ userName, photoUrl }) {
+  return `
+    <user-avatar-enhanced
+      url="${escapeHtml(photoUrl)}"
+      nombre="${escapeHtml(userName)}"
+      size="84px"
+      shape="circle"
+    ></user-avatar-enhanced>
+  `;
+}
+
+function formatSelectionDate(rawValue) {
+  const safeValue = String(rawValue || '').trim();
+  const match = safeValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) {
+    return escapeHtml(safeValue);
+  }
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year.slice(-2)}`;
+}
+
 export function renderSupervisionDetailPanel() {
   return `
     <div class="supervision2-detail-panel">
@@ -46,18 +69,43 @@ export function createSupervisionDetailPanel({ container }) {
     }
   }
 
-  function showSelection({ userId, userName, selectedDate }) {
+  function showSelection({
+    userId,
+    userName,
+    selectedDate,
+    panelTitle = '',
+    photoUrl = ''
+  }) {
     clearLoader();
 
     const dateMarkup = selectedDate
-      ? `<p class="uk-margin-small-top uk-margin-remove-bottom uk-text-meta">Fecha: ${escapeHtml(selectedDate)}</p>`
+      ? `<p class="uk-margin-small-top uk-margin-remove-bottom uk-text-meta">Fecha: ${formatSelectionDate(selectedDate)}</p>`
+      : '';
+    const originMarkup = panelTitle
+      ? `
+        <div class="uk-alert-muted uk-border-rounded uk-margin-small-bottom supervision2-detail-origin">
+          <span class="supervision2-level-indicator supervision2-level-indicator--detail" aria-hidden="true"></span>
+          <strong class="uk-text-small">Origen:</strong>
+          <span class="uk-text-small">${escapeHtml(panelTitle)}</span>
+        </div>
+      `
       : '';
 
     renderContent(`
-      <div class="uk-alert-primary uk-border-rounded" uk-alert>
-        <strong>${escapeHtml(userName)}</strong> (${Number(userId || 0)})
-        ${dateMarkup}
-      </div>
+      ${originMarkup}
+      <section class="uk-card uk-card-default uk-card-body supervision2-detail-user-card">
+        <div class="uk-flex uk-flex-middle uk-grid-small" uk-grid>
+          <div class="uk-width-auto">
+            ${renderUserPhoto({ userName, photoUrl })}
+          </div>
+          <div class="uk-width-expand">
+            <h2 class="uk-card-title uk-margin-remove-bottom supervision2-detail-user-card__title">
+              ${escapeHtml(userName)}
+            </h2>
+            ${dateMarkup}
+          </div>
+        </div>
+      </section>
     `);
   }
 

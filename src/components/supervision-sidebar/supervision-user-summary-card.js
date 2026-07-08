@@ -26,6 +26,7 @@ export function renderSupervisionUserSummaryCard(userSummary) {
   const read = Number(userSummary?.LEIDOS ?? 0);
   const panelId = escapeHtml(userSummary?.PANEL_ID || '');
   const detailSlot = escapeHtml(userSummary?.DETAIL_SLOT || '');
+  const panelTitle = escapeHtml(userSummary?.PANEL_TITLE || '');
   const photoUrl = String(userSummary?.URL_FOTO_PERFIL || '').trim();
   const initials = escapeHtml(buildInitials(userSummary?.USUARIO));
   const photoMarkup = photoUrl
@@ -40,6 +41,8 @@ export function renderSupervisionUserSummaryCard(userSummary) {
       data-supervision-user-name="${userName}"
       data-supervision-panel-id="${panelId}"
       data-supervision-detail-slot="${detailSlot}"
+      data-supervision-panel-title="${panelTitle}"
+      data-supervision-photo-url="${escapeHtml(photoUrl)}"
     >
       <span class="supervision2-user-summary__avatar">
         ${photoMarkup}

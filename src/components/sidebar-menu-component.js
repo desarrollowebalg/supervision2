@@ -64,9 +64,9 @@ class SidebarMenuComponent extends HTMLElement {
     const nextThemeIcon = effectiveTheme === 'dark' ? 'sun' : 'moon';
 
     return [
-      { path: '/settings', label: 'Configuración', icon: 'settings' },
-      { action: 'toggle-theme', label: nextThemeLabel, icon: nextThemeIcon }
+      { path: '/settings', label: 'Configuración', icon: 'settings' },      
     ];
+    // { action: 'toggle-theme', label: nextThemeLabel, icon: nextThemeIcon }
   }
 
   get collapsed() {
@@ -339,7 +339,7 @@ class SidebarMenuComponent extends HTMLElement {
           </ul>
         </div>
 
-        <div class="uk-margin-small-top sidebar-menu-compornent-padding">
+        <div class="uk-margin-remove-top sidebar-menu-compornent-padding">
           <div class="uk-margin-small-bottom uk-padding-small-left" data-role="section-title">Preferencias</div>
           <ul class="uk-nav uk-nav-default uk-margin-remove" data-role="nav-list">
             ${this.preferenceItems.map((item) => item.path
@@ -362,7 +362,7 @@ class SidebarMenuComponent extends HTMLElement {
           </ul>
         </div>
 
-        <div class="uk-margin-medium-top sidebar-menu-compornent-padding">
+        <div class="uk-margin-remove-top sidebar-menu-compornent-padding">
           <div class="uk-margin-small-bottom uk-padding-small-left" data-role="section-title">Enviados</div>
           <ul class="uk-nav uk-nav-default uk-margin-remove" data-role="nav-list">
             ${this.sentItems.map((item) => `
