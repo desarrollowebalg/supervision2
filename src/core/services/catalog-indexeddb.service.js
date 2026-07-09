@@ -46,7 +46,7 @@ class CatalogIndexedDbService {
         id,
         catalogKey,
         contextKey,
-        data: Array.isArray(data) ? data : [],
+        data,
         version,
         updatedAt: now,
         expiresAt: now + ttlMs
@@ -79,7 +79,7 @@ class CatalogIndexedDbService {
 
     if (!forceRefresh && cached && isFresh) {
       return {
-        data: Array.isArray(cached.data) ? cached.data : [],
+        data: cached.data,
         source: 'cache',
         stale: false
       };
@@ -87,7 +87,7 @@ class CatalogIndexedDbService {
 
     try {
       const networkData = await fetcher();
-      const normalizedData = Array.isArray(networkData) ? networkData : [];
+      const normalizedData = networkData;
 
       await this.saveCatalog({
         catalogKey,
@@ -104,7 +104,7 @@ class CatalogIndexedDbService {
     } catch (error) {
       if (cached) {
         return {
-          data: Array.isArray(cached.data) ? cached.data : [],
+          data: cached.data,
           source: 'stale-cache',
           stale: true,
           error

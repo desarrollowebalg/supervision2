@@ -154,9 +154,13 @@ class SidebarMenuComponent extends HTMLElement {
       }
 
       sidebar-menu-component [data-role='panel'] {
+        display: flex;
+        flex-direction: column;
         height: 100%;
         background: var(--app-sidebar-bg, #f3f4f6);
         color: var(--app-text, #1f2937);
+        overflow-y: auto;
+        overflow-x: hidden;
       }
 
       sidebar-menu-component [data-role='brand-icon'] {

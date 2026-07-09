@@ -23,11 +23,14 @@ body,document,html{
   --sidebar-max: 16rem;
   --sidebar-min: 4rem;
   --sidebar-current: var(--sidebar-max);
+  --inicio-header-height: 4rem;
   min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   /* background: #eef0f4; */
   background: var(--app-bg);
+  overflow: hidden;
 }
 
 .inicio-shell.is-sidebar-collapsed {
@@ -39,18 +42,19 @@ body,document,html{
   flex-wrap: nowrap;
   align-items: stretch;
   flex: 1 1 auto;
-  min-height: calc(100vh - 68px);
+  min-height: 0;
+  height: 100%;
   position: relative;
   width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .inicio-sidebar {
   display: inline-block;
-  height: calc(100vh - 23px);
-  margin: 10px;
+  height: 100vh;
+  margin: 0;
   position: fixed;
-  top: 10p  /* x; */  
+  top: 0;
   left: 0;
   z-index: 35;
   width: min(18rem, calc(100vw - 20px));
@@ -59,17 +63,26 @@ body,document,html{
   transition: transform 0.2s ease;
   border-right: 1px solid #e5e7eb;
   border-right: 1px solid var(--app-border);
+  overflow: hidden;
 }
 
 .inicio-main {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  /* min-height: calc(100vh - 68px); */
   min-width: 0;
+  min-height: 0;
   max-width: 100%;
   width: 100%;
-  padding: 0 0 24px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.inicio-main-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .inicio-shell.is-sidebar-open .inicio-sidebar {
@@ -97,15 +110,12 @@ body,document,html{
 @media (min-width: 1200px) {
   .inicio-body {
     align-items: flex-start;
-    min-height: calc(100vh - 84px);
+    min-height: 0;
   }
 
   .inicio-sidebar {
     position: fixed;
-    /*top: 78px;*/
-    /* left: 10px; */
     z-index: 10;
-    /* height: calc(100vh - 23px); */
     height: 100vh;
     width: var(--sidebar-current);
     min-width: var(--sidebar-min);
@@ -118,11 +128,9 @@ body,document,html{
 
   .inicio-main {
     min-width: 0 !important;
-    min-height: calc(100vh - 84px);
+    min-height: 0;
     width: auto;
-    /* padding: 10px 10px 24px 0; */
     flex: 1 1 auto;
-    /* margin-left: calc(var(--sidebar-current) + 20px); */
     margin-left: calc(var(--sidebar-current) + 1px);
   }
 

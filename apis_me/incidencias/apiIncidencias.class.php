@@ -252,6 +252,16 @@ class apiIncidencias{
     }
   }
 
+  public function postProcessActionResult($actionName){
+    switch((string)$actionName){
+      case "detalle":
+        $this->registros = $this->buildDetalleIncidenciasResponse($this->registros);
+      break;
+      default:
+      break;
+    }
+  }
+
   private function executeDefinedQuery($executionDefinition){
     if(!isset($executionDefinition["sql"]) || trim((string)$executionDefinition["sql"]) === ""){
       $this->erroresApi(300, "Consulta no definida");
@@ -482,6 +492,224 @@ class apiIncidencias{
     }
 
     return array_keys($value) === range(0, count($value) - 1);
+  }
+
+  private function buildDetalleIncidenciasResponse($result){
+    $rows = $this->extractDetalleBodyRows($result);
+    $statistics = $this->buildDetalleStatisticsTemplate();
+    $unknownStatistics = array();
+    $incidencias = array();
+
+    foreach($rows as $row){
+      if(!is_array($row)){
+        continue;
+      }
+
+      $normalizedRow = $this->normalizeDetalleRow($row);
+      $statusMeta = $this->resolveDetalleStatusMeta($normalizedRow["STT"]);
+
+      $normalizedRow["STT_DESC"] = $statusMeta["label"];
+      $normalizedRow["IDE"] = $this->extractDetalleEvidenceId(isset($normalizedRow["IDR"]) ? $normalizedRow["IDR"] : "");
+      $normalizedRow["TURNO"] = $this->resolveDetalleShift(isset($normalizedRow["HORA"]) ? $normalizedRow["HORA"] : "");
+
+      $statusCode = $statusMeta["code"];
+      if(isset($statistics[$statusCode])){
+        $statistics[$statusCode]["total"]++;
+      } else {
+        if(!isset($unknownStatistics[$statusCode])){
+          $unknownStatistics[$statusCode] = array(
+            "code" => $statusCode,
+            "label" => $statusMeta["label"],
+            "total" => 0,
+          );
+        }
+
+        $unknownStatistics[$statusCode]["total"]++;
+      }
+
+      $incidencias[] = $normalizedRow;
+    }
+
+    return array(
+      "estadistica" => array_values(array_merge($statistics, $unknownStatistics)),
+      "incidencias" => $incidencias,
+    );
+  }
+
+  private function extractDetalleBodyRows($result){
+    if(!is_array($result)){
+      return array();
+    }
+
+    if(isset($result["body"]) && is_array($result["body"])){
+      return $result["body"];
+    }
+
+    $rows = array();
+    foreach($result as $entry){
+      if(!is_array($entry)){
+        continue;
+      }
+
+      if(isset($entry["body"]) && is_array($entry["body"])){
+        $rows = array_merge($rows, $entry["body"]);
+      }
+    }
+
+    return $rows;
+  }
+
+  private function buildDetalleStatisticsTemplate(){
+    return array(
+      "NL" => array(
+        "code" => "NL",
+        "label" => "No leída",
+        "total" => 0,
+      ),
+      "L" => array(
+        "code" => "L",
+        "label" => "Leída",
+        "total" => 0,
+      ),
+      "A" => array(
+        "code" => "A",
+        "label" => "Atendida",
+        "total" => 0,
+      ),
+      "C" => array(
+        "code" => "C",
+        "label" => "Cerrada",
+        "total" => 0,
+      ),
+      "AP" => array(
+        "code" => "AP",
+        "label" => "Aprobada",
+        "total" => 0,
+      ),
+      "R" => array(
+        "code" => "R",
+        "label" => "Rechazada",
+        "total" => 0,
+      ),
+      "RE" => array(
+        "code" => "RE",
+        "label" => "Reasignada",
+        "total" => 0,
+      ),
+      "NL_NVL" => array(
+        "code" => "NL_NVL",
+        "label" => "No leída *",
+        "total" => 0,
+      ),
+      "X" => array(
+        "code" => "X",
+        "label" => "Abierta",
+        "total" => 0,
+      ),
+    );
+  }
+
+  private function normalizeDetalleRow($row){
+    $normalized = $row;
+
+    if(!isset($normalized["STT"])){
+      $normalized["STT"] = null;
+    }
+
+    return $normalized;
+  }
+
+  private function resolveDetalleStatusMeta($rawStatus){
+    if($rawStatus === null){
+      return array(
+        "code" => "X",
+        "label" => "Abierta",
+      );
+    }
+
+    $status = trim((string)$rawStatus);
+    if($status === ""){
+      return array(
+        "code" => "X",
+        "label" => "Abierta",
+      );
+    }
+
+    $knownStatuses = array(
+      "0" => array(
+        "code" => "L",
+        "label" => "Leída",
+      ),
+      "1" => array(
+        "code" => "A",
+        "label" => "Atendida",
+      ),
+      "2" => array(
+        "code" => "C",
+        "label" => "Cerrada",
+      ),
+      "3" => array(
+        "code" => "AP",
+        "label" => "Aprobada",
+      ),
+      "4" => array(
+        "code" => "R",
+        "label" => "Rechazada",
+      ),
+      "5" => array(
+        "code" => "RE",
+        "label" => "Reasignada",
+      ),
+      "-1" => array(
+        "code" => "NL_NVL",
+        "label" => "No leída *",
+      ),
+      "NL" => array(
+        "code" => "NL",
+        "label" => "No leída",
+      ),
+    );
+
+    if(isset($knownStatuses[$status])){
+      return $knownStatuses[$status];
+    }
+
+    return array(
+      "code" => $status,
+      "label" => "Desconocido (".$status.")",
+    );
+  }
+
+  private function extractDetalleEvidenceId($value){
+    $rawValue = trim((string)$value);
+    if($rawValue === ""){
+      return "";
+    }
+
+    $parts = explode("|", $rawValue, 2);
+    return trim((string)$parts[0]);
+  }
+
+  private function resolveDetalleShift($rawHour){
+    $hour = trim((string)$rawHour);
+    if(!preg_match('/^(\d{2}):(\d{2})(?::(\d{2}))?$/', $hour, $matches)){
+      return "";
+    }
+
+    $hours = (int)$matches[1];
+    $minutes = (int)$matches[2];
+    $seconds = isset($matches[3]) ? (int)$matches[3] : 0;
+    $totalSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
+
+    if($totalSeconds >= 21600 && $totalSeconds < 50400){
+      return "T1";
+    }
+
+    if($totalSeconds >= 50400 && $totalSeconds < 79200){
+      return "T2";
+    }
+
+    return "T3";
   }
 
   public function numeroRegistros($result){

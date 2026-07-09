@@ -43,6 +43,7 @@
   hidratarPropiedadesAccion($incidenciasApi, $actionDefinition, $resolvedParams);
 
   $incidenciasApi->executeDefinedAction($actionDefinition);
+  $incidenciasApi->postProcessActionResult($actionName);
   $resultado = $incidenciasApi->__get("registros");
 
   if(isset($resultado["Error"])){

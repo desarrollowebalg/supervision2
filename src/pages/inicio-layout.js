@@ -133,7 +133,7 @@ export function renderInicioLayout(container, options = {}) {
           <sidebar-menu-component collapsed="false"></sidebar-menu-component>
         </aside>
 
-        <main class="inicio-main uk-padding-small">
+        <main class="inicio-main">
           <header-component
             nombre-cliente="SVG - Supervisión"
             razon-social="BD Dynamics"
@@ -142,13 +142,15 @@ export function renderInicioLayout(container, options = {}) {
             avatar-url="${userState.foto_perfil || 'https://app.movilizandome.net/public/images/userDesc.png'}"
             notificaciones-count="3">
           </header-component>
-          <div class="uk-container uk-container-expand uk-width-1-1 background-app">
-            <div class="uk-card uk-card-body uk-width-1-1 uk-padding-remove-left uk-padding-remove-right inicio-padding-card">
-              <h1 class="uk-card-title">${title}</h1>
-              ${description ? `<p>${description}</p>` : ''}
-              ${contentHtml}
+          <section class="inicio-main-content uk-padding-small">
+            <div class="uk-container uk-container-expand uk-width-1-1 background-app">
+              <div class="uk-card uk-card-body uk-width-1-1 uk-padding-remove-left uk-padding-remove-right inicio-padding-card">
+                <h1 class="uk-card-title">${title}</h1>
+                ${description ? `<p>${description}</p>` : ''}
+                ${contentHtml}
+              </div>
             </div>
-          </div>
+          </section>
         </main>
       </div>
 

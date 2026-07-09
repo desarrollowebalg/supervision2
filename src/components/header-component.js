@@ -78,8 +78,10 @@ class HeaderComponent extends HTMLElement {
         display: block;
         width: 100%;
         height: 4rem;
-        position: relative;
-        z-index: 30;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        flex: 0 0 auto;
       }
 
       header-component .header-wrapper {        

@@ -165,12 +165,13 @@ export default class Supervision {
         --supervision2-badge-bg: color-mix(in srgb, var(--app-surface-elevated) 70%, var(--app-border) 30%);
         --supervision2-badge-text: var(--app-text-muted);
         height: 100%;
-        top: -20px;
+        min-height: 100%;
         position: relative;
       }
 
       .${Supervision.PARENT_CARD_CLASS} {
-        height: calc(100vh - 200px);
+        height: 100%;
+        overflow: hidden;
       }
 
       .${Supervision.PARENT_CARD_CLASS} > .supervision2-page {
@@ -179,15 +180,17 @@ export default class Supervision {
 
       .supervision2-shell {
         width: 100%;
-        height: calc(100vh - 100px);
+        height: 100%;
+        min-height: 100%;
       }
 
       .supervision2-layout {
         display: grid;
         grid-template-columns: minmax(300px, 26%) 1fr;
         gap: 0.75rem;
-        align-items: start;
+        align-items: stretch;
         height: 100%;
+        min-height: 0;
       }
 
       .supervision2-panel {
@@ -202,6 +205,7 @@ export default class Supervision {
         background: var(--supervision2-surface-muted);
         padding: 0.5rem;
         height: 100%;
+        min-height: 0;
         overflow-y: auto;
       }
 
@@ -212,7 +216,9 @@ export default class Supervision {
       .supervision2-panel--right {
         background: var(--supervision2-surface);
         padding: 0.75rem;
-        min-height: 100%;
+        min-height: 0;
+        height: 100%;
+        overflow-y: auto;
       }
 
       .supervision2-detail-origin {
@@ -240,6 +246,97 @@ export default class Supervision {
 
       .supervision2-detail-user-card__title {
         color: var(--supervision2-text);
+      }
+
+      .supervision2-detail-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .supervision2-detail-stat {
+        border: 1px solid var(--supervision2-border);
+        box-shadow: var(--supervision2-shadow-soft);
+      }
+
+      .supervision2-detail-stat__total {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--supervision2-text);
+      }
+
+      .supervision2-detail-table-card {
+        border: 1px solid var(--supervision2-border);
+        box-shadow: var(--supervision2-shadow-soft);
+      }
+
+      .supervision2-detail-search {
+        min-width: min(240px, 72vw);
+      }
+
+      .supervision2-detail-search .uk-input,
+      .supervision2-detail-filter-grid .uk-input {
+        background: var(--supervision2-surface-elevated);
+        color: var(--supervision2-text);
+        border-color: var(--supervision2-border);
+      }
+
+      .supervision2-detail-search .uk-input:focus,
+      .supervision2-detail-filter-grid .uk-input:focus {
+        border-color: var(--supervision2-primary);
+      }
+
+      .supervision2-detail-dropdown {
+        min-width: 220px;
+        border: 1px solid var(--supervision2-border);
+        box-shadow: var(--supervision2-shadow-soft);
+      }
+
+      .supervision2-detail-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+      }
+
+      .supervision2-detail-table {
+        margin-bottom: 0;
+      }
+
+      .supervision2-detail-table th {
+        color: var(--supervision2-text);
+        white-space: nowrap;
+      }
+
+      .supervision2-detail-table td {
+        vertical-align: top;
+        color: var(--supervision2-text);
+      }
+
+      .supervision2-detail-table .uk-table-hover tbody tr:hover {
+        background: color-mix(in srgb, var(--supervision2-primary-soft) 22%, transparent);
+      }
+
+      .supervision2-detail-sort-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--supervision2-text);
+      }
+
+      .supervision2-detail-sort-button.is-active {
+        color: var(--supervision2-primary);
+      }
+
+      .supervision2-detail-description,
+      .supervision2-detail-truncate {
+        display: inline-block;
+        max-width: 100%;
+      }
+
+      .supervision2-detail-status-badge {
+        background: color-mix(in srgb, var(--supervision2-primary-soft) 50%, var(--supervision2-surface-elevated) 50%);
+        color: var(--supervision2-text);
+        border: 1px solid var(--supervision2-border);
       }
 
       .supervision2-panel .uk-accordion > :nth-child(n + 2) {
@@ -494,6 +591,10 @@ export default class Supervision {
 
         .supervision2-panel--left {
           max-height: 50vh;
+        }
+
+        .supervision2-detail-filter-grid {
+          grid-template-columns: 1fr;
         }
       }
     `;
