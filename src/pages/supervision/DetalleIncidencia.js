@@ -1,4 +1,5 @@
 import { renderInicioLayout } from '../inicio-layout.js';
+import { navigate } from '../../core/router.js';
 
 export default class DetalleIncidencia {
   static instancia = null;
@@ -10,6 +11,7 @@ export default class DetalleIncidencia {
     }
 
     this.navigationContext = navigationContext;
+    this.handleBackClick = null;
     DetalleIncidencia.instancia = this;
   }
 
@@ -18,6 +20,7 @@ export default class DetalleIncidencia {
     this.params = params;
 
     const ide = String(params?.ide || '').trim();
+    const previousLabel = this.navigationContext?.state?.previousLabel || 'Supervisión';
 
     renderInicioLayout(container, {
       title: '',
@@ -25,6 +28,16 @@ export default class DetalleIncidencia {
       contentHtml: `
         <section class="uk-section uk-section-small uk-padding-remove-top">
           <div class="uk-card uk-card-default uk-card-body uk-border-rounded">
+            <div class="uk-margin-small-bottom">
+              <button
+                class="uk-button uk-button-default uk-button-small uk-border-rounded"
+                type="button"
+                data-detail-back="true"
+              >
+                <span uk-icon="icon: arrow-left; ratio: 0.85"></span>
+                Volver a ${this.escapeHtml(previousLabel)}
+              </button>
+            </div>
             <p class="uk-text-meta uk-margin-remove-bottom">Detalle de incidencia</p>
             <h1 class="uk-card-title uk-margin-small-top uk-margin-remove-bottom">
               Incidencia ${this.escapeHtml(ide || 'sin identificador')}
@@ -40,6 +53,38 @@ export default class DetalleIncidencia {
     });
 
     container.querySelector('.inicio-padding-card > h1.uk-card-title')?.remove();
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    const backButton = this.container?.querySelector('[data-detail-back="true"]');
+    if (!backButton) {
+      return;
+    }
+
+    if (this.handleBackClick) {
+      backButton.removeEventListener('click', this.handleBackClick);
+    }
+
+    this.handleBackClick = () => {
+      const fallbackRoute = this.navigationContext?.state?.from || '/supervision';
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      navigate(fallbackRoute, { replace: true });
+    };
+
+    backButton.addEventListener('click', this.handleBackClick);
+  }
+
+  destroy() {
+    const backButton = this.container?.querySelector('[data-detail-back="true"]');
+    if (backButton && this.handleBackClick) {
+      backButton.removeEventListener('click', this.handleBackClick);
+    }
+    this.handleBackClick = null;
   }
 
   escapeHtml(value) {

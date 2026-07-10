@@ -1,4 +1,4 @@
-import { navigate } from '../../core/router.js';
+import { getCurrentPath, navigate } from '../../core/router.js';
 import { getIncidenciasDetalle } from '../../core/services/apis-me/incidencias.service.js';
 import { storageService } from '../../core/services/storage.service.js';
 
@@ -12,6 +12,19 @@ const DETAIL_COLUMNS = [
   { key: 'TURNO', label: 'Turno', sortable: true, searchable: true, visible: true },
   { key: 'ACCIONES', label: 'Acciones', sortable: false, searchable: false, visible: true },
 ];
+const ALL_STATUS_FILTER = 'ALL';
+const STATUS_COLOR_MAP = {
+  ALL: '#1e87f0',
+  NL: '#ff9800',
+  NL_NVL: '#ff9800',
+  L: '#9e9e9e',
+  A: '#009688',
+  AP: '#4caf50',
+  C: '#78909c',
+  R: '#f44336',
+  RE: '#9c27b0',
+  X: '#1e87f0'
+};
 
 function escapeHtml(value) {
   return String(value || '')
@@ -163,13 +176,58 @@ function getRangeFromSession(selectedDate) {
   };
 }
 
-function renderStatistics(stats = []) {
+function resolveStatusFilterKey(value) {
+  const normalized = normalizeSearchValue(value)
+    .replace(/\*/g, '')
+    .replace(/[^\p{L}\p{N}]+/gu, '_')
+    .replace(/^_+|_+$/g, '')
+    .toUpperCase();
+
+  const aliases = {
+    TODAS: ALL_STATUS_FILTER,
+    ALL: ALL_STATUS_FILTER,
+    NL: 'NL',
+    NO_LEIDA: 'NL',
+    NO_LEIDAS: 'NL',
+    NO_LEIDOS: 'NL',
+    L: 'L',
+    LEIDA: 'L',
+    LEIDAS: 'L',
+    A: 'A',
+    ATENDIDA: 'A',
+    ATENDIDAS: 'A',
+    AP: 'AP',
+    APROBADA: 'AP',
+    APROBADAS: 'AP',
+    C: 'C',
+    CERRADA: 'C',
+    CERRADAS: 'C',
+    R: 'R',
+    RECHAZADA: 'R',
+    RECHAZADAS: 'R',
+    RE: 'RE',
+    REASIGNADA: 'RE',
+    REASIGNADAS: 'RE',
+    NL_NVL: 'NL_NVL',
+    X: 'X',
+    ABIERTA: 'X',
+    ABIERTAS: 'X'
+  };
+
+  return aliases[normalized] || normalized || ALL_STATUS_FILTER;
+}
+
+function resolveStatusColor(filterKey) {
+  return STATUS_COLOR_MAP[filterKey] || 'var(--supervision2-primary)';
+}
+
+function toStatusModifier(filterKey) {
+  return String(filterKey || ALL_STATUS_FILTER).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
+function buildStatisticsModel(stats = []) {
   if (!Array.isArray(stats) || stats.length === 0) {
-    return `
-      <div class="uk-alert-muted uk-border-rounded uk-margin-small-bottom">
-        <p class="uk-margin-remove uk-text-small">No hay estadística disponible para este usuario.</p>
-      </div>
-    `;
+    return [];
   }
 
   const visibleStats = stats.filter((entry) => Number(entry?.total ?? 0) > 0);
@@ -178,20 +236,79 @@ function renderStatistics(stats = []) {
   ), 0);
   const statsToRender = [
     {
-      code: 'ALL',
+      code: ALL_STATUS_FILTER,
       label: 'Todas',
       total: totalIncidencias
     },
     ...visibleStats
   ];
 
+  return statsToRender.map((entry) => {
+    const filterKey = resolveStatusFilterKey(entry?.code || entry?.label || '');
+    return {
+      ...entry,
+      filterKey,
+      total: Number(entry?.total ?? 0),
+      color: resolveStatusColor(filterKey),
+      modifier: toStatusModifier(filterKey)
+    };
+  });
+}
+
+function resolveRecordStatusFilterKey(record = {}) {
+  const rawStatus = String(record?.STT ?? '').trim();
+  const statusByCode = {
+    '-1': 'NL_NVL',
+    '0': 'L',
+    '1': 'A',
+    '2': 'C',
+    '3': 'AP',
+    '4': 'R',
+    '5': 'RE'
+  };
+
+  if (statusByCode[rawStatus]) {
+    return statusByCode[rawStatus];
+  }
+
+  if (rawStatus.toUpperCase() === 'NL') {
+    return 'NL';
+  }
+
+  return resolveStatusFilterKey(record?.STT_DESC || rawStatus || '');
+}
+
+function getStatusBadgeClassName(record = {}) {
+  return `supervision2-detail-status-badge--${toStatusModifier(resolveRecordStatusFilterKey(record))}`;
+}
+
+function resolveSelectionLevel(selection) {
+  const numericLevel = Number(selection?.panelId);
+  return Number.isFinite(numericLevel) ? numericLevel : null;
+}
+
+function renderStatistics(stats = [], activeStatusFilter = ALL_STATUS_FILTER) {
+  const statsToRender = buildStatisticsModel(stats);
+  if (statsToRender.length === 0) {
+    return `
+      <div class="uk-alert-muted uk-border-rounded uk-margin-small-bottom">
+        <p class="uk-margin-remove uk-text-small">No hay estadística disponible para este usuario.</p>
+      </div>
+    `;
+  }
+
   return `
     <div class="supervision2-detail-stats uk-margin-small-bottom">
       ${statsToRender.map((entry) => `
-        <div class="uk-card uk-card-default uk-card-small uk-card-body supervision2-detail-stat">
-          <p class="uk-text-meta uk-margin-remove-bottom">${escapeHtml(entry?.label || entry?.code || 'Estatus')}</p>
-          <p class="uk-margin-small-top uk-margin-remove-bottom supervision2-detail-stat__total">${Number(entry?.total ?? 0)}</p>
-        </div>
+        <button
+          type="button"
+          class="supervision2-detail-stat supervision2-detail-stat--${escapeHtml(entry.modifier)} ${entry.filterKey === activeStatusFilter ? 'is-active' : ''}"
+          data-status-filter="${escapeHtml(entry.filterKey)}"
+          aria-pressed="${entry.filterKey === activeStatusFilter ? 'true' : 'false'}"
+        >
+          <span class="supervision2-detail-stat__label">${escapeHtml(entry?.label || entry?.code || 'Estatus')}</span>
+          <span class="supervision2-detail-stat__total">${entry.total}</span>
+        </button>
       `).join('')}
     </div>
   `;
@@ -238,6 +355,7 @@ function renderTableShell({
   statistics,
   records,
   filters,
+  activeStatusFilter,
   sort,
   columnVisibility,
   page,
@@ -245,8 +363,18 @@ function renderTableShell({
 }) {
   const activeColumns = DETAIL_COLUMNS.filter((column) => columnVisibility[column.key]);
   const normalizedGeneralFilter = normalizeSearchValue(filters.__general__);
+  const normalizedActiveStatus = activeStatusFilter === ALL_STATUS_FILTER
+    ? ''
+    : normalizeSearchValue(activeStatusFilter);
 
   const filteredRecords = (records || []).filter((record) => {
+    if (normalizedActiveStatus) {
+      const recordStatus = resolveRecordStatusFilterKey(record);
+      if (normalizeSearchValue(recordStatus) !== normalizedActiveStatus) {
+        return false;
+      }
+    }
+
     if (normalizedGeneralFilter) {
       const matchesGeneral = DETAIL_COLUMNS
         .filter((column) => column.searchable)
@@ -327,7 +455,7 @@ function renderTableShell({
       </div>
     </section>
 
-    ${renderStatistics(statistics)}
+    ${renderStatistics(statistics, activeStatusFilter)}
     ${renderCacheNotice(cacheNotice)}
 
     <section class="uk-card uk-card-default uk-card-body supervision2-detail-table-card">
@@ -441,7 +569,7 @@ function renderTableShell({
                     case 'STT_DESC':
                       return `
                         <td>
-                          <span class="uk-label supervision2-detail-status-badge">${escapeHtml(record.STT_DESC || 'Sin estado')}</span>
+                          <span class="uk-label supervision2-detail-status-badge ${escapeHtml(getStatusBadgeClassName(record))}">${escapeHtml(record.STT_DESC || 'Sin estado')}</span>
                         </td>
                       `;
                     case 'TURNO':
@@ -449,14 +577,15 @@ function renderTableShell({
                     case 'ACCIONES':
                       return `
                         <td>
-                          <div class="uk-flex uk-flex-middle uk-flex-wrap uk-gap-small">
+                          <div class="supervision2-panel-detai-tbl-actions">
                             <button
-                              class="uk-button uk-button-default uk-button-small uk-border-rounded"
+                              class="uk-icon-button"
                               type="button"
                               data-open-detail-page="${escapeHtml(record.IDE)}"
+                              aria-label="Ver detalle ${escapeHtml(record.IDE)}"
+                              title="Ver detalle"
                             >
-                              <span uk-icon="icon: file-text; ratio: 0.85"></span>
-                              Ver detalle
+                              <span uk-icon="icon: file-text; ratio: 0.9"></span>
                             </button>
                             <a
                               class="uk-icon-button"
@@ -556,6 +685,7 @@ export function createSupervisionDetailPanel({ container }) {
     key: '',
     direction: 'asc'
   };
+  let activeStatusFilter = ALL_STATUS_FILTER;
   let columnVisibility = getDefaultColumnVisibility();
   let filters = {
     __general__: '',
@@ -586,6 +716,7 @@ export function createSupervisionDetailPanel({ container }) {
       statistics: currentStatistics,
       records: currentRecords,
       filters,
+      activeStatusFilter,
       sort: currentSort,
       columnVisibility,
       page: currentPage,
@@ -621,6 +752,7 @@ export function createSupervisionDetailPanel({ container }) {
           statistics: [],
           records: [],
           filters,
+          activeStatusFilter,
           sort: currentSort,
           columnVisibility,
           page: 1,
@@ -650,6 +782,7 @@ export function createSupervisionDetailPanel({ container }) {
         fechaInicio,
         fechaFin,
         usuario: selection.userId,
+        nivel: resolveSelectionLevel(selection),
         selectedDate: selection?.selectedDate || ''
       });
 
@@ -676,6 +809,7 @@ export function createSupervisionDetailPanel({ container }) {
       key: '',
       direction: 'asc'
     };
+    activeStatusFilter = ALL_STATUS_FILTER;
     filters = {
       __general__: '',
       FECHA: '',
@@ -722,6 +856,14 @@ export function createSupervisionDetailPanel({ container }) {
       return;
     }
 
+    const statusFilterTrigger = event.target?.closest('[data-status-filter]');
+    if (statusFilterTrigger) {
+      activeStatusFilter = statusFilterTrigger.getAttribute('data-status-filter') || ALL_STATUS_FILTER;
+      currentPage = 1;
+      renderCurrentView();
+      return;
+    }
+
     const pageTrigger = event.target?.closest('[data-page]');
     if (pageTrigger) {
       const nextPage = Number(pageTrigger.getAttribute('data-page') || 1);
@@ -734,6 +876,7 @@ export function createSupervisionDetailPanel({ container }) {
 
     const clearTrigger = event.target?.closest('[data-clear-filters]');
     if (clearTrigger) {
+      activeStatusFilter = ALL_STATUS_FILTER;
       filters = {
         __general__: '',
         FECHA: '',
@@ -752,7 +895,12 @@ export function createSupervisionDetailPanel({ container }) {
     if (openDetailTrigger) {
       const ide = openDetailTrigger.getAttribute('data-open-detail-page') || '';
       notifyOpenDetailPage();
-      navigate(`/detalle-incidencia/${encodeURIComponent(ide)}`);
+      navigate(`/detalle-incidencia/${encodeURIComponent(ide)}`, {
+        state: {
+          from: getCurrentPath(),
+          previousLabel: currentSelection?.panelTitle || 'Supervisión'
+        }
+      });
     }
   }
 

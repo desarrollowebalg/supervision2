@@ -11,6 +11,17 @@ const INCIDENCIAS_HISTORICAL_CACHE_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 const INCIDENCIAS_DETALLE_CURRENT_TTL_MS = 30 * 60 * 1000;
 const INCIDENCIAS_DETALLE_TODAY_TTL_MS = 5 * 60 * 1000;
 const INCIDENCIAS_DETALLE_HISTORICAL_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
+const DETAIL_STATUS_META_BY_CODE = {
+  L: { code: 'L', label: 'Leida' },
+  A: { code: 'A', label: 'Atendida' },
+  C: { code: 'C', label: 'Cerrada' },
+  AP: { code: 'AP', label: 'Aprobada' },
+  R: { code: 'R', label: 'Rechazada' },
+  RE: { code: 'RE', label: 'Reasignada' },
+  NL_NVL: { code: 'NL_NVL', label: 'No leida *' },
+  NL: { code: 'NL', label: 'No leida' },
+  X: { code: 'X', label: 'Abierta' }
+};
 
 function extractBodyRows(payload) {
   if (!Array.isArray(payload)) {
@@ -46,6 +57,11 @@ function normalizeStatisticEntry(entry) {
   };
 }
 
+function normalizeDetalleNivelValue(value) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
+
 function normalizeDetalleIncidencia(row) {
   return {
     ...row,
@@ -57,7 +73,8 @@ function normalizeDetalleIncidencia(row) {
     STT_DESC: String(row?.STT_DESC || '').trim(),
     TURNO: String(row?.TURNO || '').trim(),
     IDE: String(row?.IDE || '').trim(),
-    IDR: String(row?.IDR || '').trim()
+    IDR: String(row?.IDR || '').trim(),
+    NVL: normalizeDetalleNivelValue(row?.NVL)
   };
 }
 
@@ -69,8 +86,16 @@ function buildDetalleCatalogKey(date) {
   return `detalle_${String(date || '').trim()}`;
 }
 
+function buildDetalleNivelCatalogKey(date) {
+  return `detalle_nivel_${String(date || '').trim()}`;
+}
+
 function buildDetalleContextKey(baseContextKey, { fechaInicio, fechaFin, usuario }) {
   return `${baseContextKey}:semana_${fechaInicio}_${fechaFin}:usuario_${usuario}`;
+}
+
+function buildDetalleNivelContextKey(baseContextKey, { fechaInicio, fechaFin, usuario, nivel }) {
+  return `${baseContextKey}:semana_${fechaInicio}_${fechaFin}:usuario_${usuario}:nivel_${nivel}`;
 }
 
 function getTodayDateValue() {
@@ -127,6 +152,109 @@ function normalizeDetallePayload(payload) {
   };
 }
 
+function resolveDetalleStatusMeta(rawStatus, statusLabel = '') {
+  const safeStatus = String(rawStatus ?? '').trim();
+  const safeLabel = String(statusLabel || '').trim();
+  const normalizedLabel = safeLabel
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+  const knownStatuses = {
+    '0': DETAIL_STATUS_META_BY_CODE.L,
+    '1': DETAIL_STATUS_META_BY_CODE.A,
+    '2': DETAIL_STATUS_META_BY_CODE.C,
+    '3': DETAIL_STATUS_META_BY_CODE.AP,
+    '4': DETAIL_STATUS_META_BY_CODE.R,
+    '5': DETAIL_STATUS_META_BY_CODE.RE,
+    '-1': DETAIL_STATUS_META_BY_CODE.NL_NVL,
+    NL: DETAIL_STATUS_META_BY_CODE.NL,
+    L: DETAIL_STATUS_META_BY_CODE.L,
+    A: DETAIL_STATUS_META_BY_CODE.A,
+    C: DETAIL_STATUS_META_BY_CODE.C,
+    AP: DETAIL_STATUS_META_BY_CODE.AP,
+    R: DETAIL_STATUS_META_BY_CODE.R,
+    RE: DETAIL_STATUS_META_BY_CODE.RE,
+    NL_NVL: DETAIL_STATUS_META_BY_CODE.NL_NVL,
+    X: DETAIL_STATUS_META_BY_CODE.X
+  };
+  const labelAliases = {
+    LEIDA: DETAIL_STATUS_META_BY_CODE.L,
+    ATENDIDA: DETAIL_STATUS_META_BY_CODE.A,
+    CERRADA: DETAIL_STATUS_META_BY_CODE.C,
+    APROBADA: DETAIL_STATUS_META_BY_CODE.AP,
+    RECHAZADA: DETAIL_STATUS_META_BY_CODE.R,
+    REASIGNADA: DETAIL_STATUS_META_BY_CODE.RE,
+    NO_LEIDA: DETAIL_STATUS_META_BY_CODE.NL,
+    NO_LEIDA_: DETAIL_STATUS_META_BY_CODE.NL_NVL,
+    ABIERTA: DETAIL_STATUS_META_BY_CODE.X
+  };
+
+  if (knownStatuses[safeStatus]) {
+    return knownStatuses[safeStatus];
+  }
+
+  if (labelAliases[normalizedLabel]) {
+    return labelAliases[normalizedLabel];
+  }
+
+  return {
+    code: safeStatus || 'X',
+    label: safeLabel || 'Abierta'
+  };
+}
+
+function buildDetalleStatistics(records = []) {
+  const statisticsMap = new Map([
+    ['NL', { ...DETAIL_STATUS_META_BY_CODE.NL, total: 0 }],
+    ['L', { ...DETAIL_STATUS_META_BY_CODE.L, total: 0 }],
+    ['A', { ...DETAIL_STATUS_META_BY_CODE.A, total: 0 }],
+    ['C', { ...DETAIL_STATUS_META_BY_CODE.C, total: 0 }],
+    ['AP', { ...DETAIL_STATUS_META_BY_CODE.AP, total: 0 }],
+    ['R', { ...DETAIL_STATUS_META_BY_CODE.R, total: 0 }],
+    ['RE', { ...DETAIL_STATUS_META_BY_CODE.RE, total: 0 }],
+    ['NL_NVL', { ...DETAIL_STATUS_META_BY_CODE.NL_NVL, total: 0 }],
+    ['X', { ...DETAIL_STATUS_META_BY_CODE.X, total: 0 }]
+  ]);
+
+  (Array.isArray(records) ? records : []).forEach((record) => {
+    const statusMeta = resolveDetalleStatusMeta(record?.STT, record?.STT_DESC);
+    const current = statisticsMap.get(statusMeta.code) || {
+      code: statusMeta.code,
+      label: statusMeta.label,
+      total: 0
+    };
+    current.total += 1;
+    statisticsMap.set(statusMeta.code, current);
+  });
+
+  return Array.from(statisticsMap.values());
+}
+
+function filterDetallePayloadByNivel(payload, nivel) {
+  const normalizedNivel = normalizeDetalleNivelValue(nivel);
+  if (normalizedNivel === null) {
+    return normalizeDetallePayload(payload);
+  }
+
+  const normalizedPayload = normalizeDetallePayload(payload);
+  const filteredIncidencias = normalizedPayload.incidencias.filter((record) => (
+    normalizeDetalleNivelValue(record?.NVL) === normalizedNivel
+  ));
+
+  return {
+    estadistica: buildDetalleStatistics(filteredIncidencias),
+    incidencias: filteredIncidencias
+  };
+}
+
+function resolveDetalleTtlMs({ historicalWeek, isTodaySelection }) {
+  if (historicalWeek) {
+    return INCIDENCIAS_DETALLE_HISTORICAL_TTL_MS;
+  }
+
+  return isTodaySelection ? INCIDENCIAS_DETALLE_TODAY_TTL_MS : INCIDENCIAS_DETALLE_CURRENT_TTL_MS;
+}
+
 export async function fetchIncidenciasByDate(date) {
   const safeDate = String(date || '').trim();
   if (!safeDate) {
@@ -160,12 +288,14 @@ export async function getIncidenciasDetalle({
   fechaInicio,
   fechaFin,
   usuario,
+  nivel = null,
   selectedDate = '',
   forceRefresh = false
 }) {
   const safeFechaInicio = String(fechaInicio || '').trim();
   const safeFechaFin = String(fechaFin || '').trim();
   const safeUsuario = String(usuario || '').trim();
+  const safeNivel = normalizeDetalleNivelValue(nivel);
   const safeSelectedDate = String(selectedDate || '').trim();
   const catalogDate = safeSelectedDate || safeFechaInicio;
   const isTodaySelection = catalogDate === getTodayDateValue();
@@ -182,70 +312,156 @@ export async function getIncidenciasDetalle({
   }
 
   const { contextKey, hasStableIdentity } = getSessionCatalogContext();
-  const catalogKey = buildDetalleCatalogKey(catalogDate);
-  const catalogContextKey = buildDetalleContextKey(contextKey, {
+  const baseCatalogKey = buildDetalleCatalogKey(catalogDate);
+  const baseCatalogContextKey = buildDetalleContextKey(contextKey, {
     fechaInicio: safeFechaInicio,
     fechaFin: safeFechaFin,
     usuario: safeUsuario
   });
+  const derivedCatalogKey = buildDetalleNivelCatalogKey(catalogDate);
+  const derivedCatalogContextKey = safeNivel === null
+    ? null
+    : buildDetalleNivelContextKey(contextKey, {
+        fechaInicio: safeFechaInicio,
+        fechaFin: safeFechaFin,
+        usuario: safeUsuario,
+        nivel: safeNivel
+      });
 
   const cacheNotice = isTodaySelection
     ? 'La información consultada corresponde a hoy y puede actualizarse. Esta vista usa una vigencia máxima de 5 minutos, pero no se actualizará automáticamente; primero se te notificará.'
     : null;
+  const ttlMs = resolveDetalleTtlMs({ historicalWeek, isTodaySelection });
 
-  if (!hasStableIdentity) {
-    const cached = await catalogIndexedDbService.getCatalog({
-      catalogKey,
-      contextKey: catalogContextKey
+  const saveDerivedCatalog = async (payload) => {
+    if (safeNivel === null || !derivedCatalogContextKey) {
+      return;
+    }
+
+    await catalogIndexedDbService.saveCatalog({
+      catalogKey: derivedCatalogKey,
+      contextKey: derivedCatalogContextKey,
+      data: payload,
+      ttlMs
+    });
+  };
+
+  const buildResponse = (payload, source, stale = false, extra = {}) => ({
+    ...normalizeDetallePayload(payload),
+    source,
+    stale,
+    cacheNotice,
+    ...extra
+  });
+
+  const getBaseCatalog = async () => {
+    if (!hasStableIdentity) {
+      const cached = await catalogIndexedDbService.getCatalog({
+        catalogKey: baseCatalogKey,
+        contextKey: baseCatalogContextKey
+      });
+
+      return {
+        payload: normalizeDetallePayload(cached?.data),
+        source: cached ? 'cache' : 'empty',
+        stale: Boolean(cached) && Number(cached.expiresAt || 0) <= Date.now(),
+        cachedData: cached?.data || null
+      };
+    }
+
+    if (historicalWeek && !forceRefresh) {
+      const cached = await catalogIndexedDbService.getCatalog({
+        catalogKey: baseCatalogKey,
+        contextKey: baseCatalogContextKey
+      });
+
+      if (cached) {
+        return {
+          payload: normalizeDetallePayload(cached.data),
+          source: 'cache',
+          stale: false,
+          cachedData: cached.data
+        };
+      }
+    }
+
+    const result = await catalogIndexedDbService.getOrSyncCatalog({
+      catalogKey: baseCatalogKey,
+      contextKey: baseCatalogContextKey,
+      ttlMs,
+      forceRefresh,
+      fetcher: async () => fetchIncidenciasDetalle({
+        fechaInicio: safeFechaInicio,
+        fechaFin: safeFechaFin,
+        usuario: safeUsuario
+      })
     });
 
     return {
-      ...normalizeDetallePayload(cached?.data),
-      ...buildMissingUserSyncResult(cached?.data),
-      source: cached ? 'cache' : 'empty',
-      stale: Boolean(cached) && Number(cached.expiresAt || 0) <= Date.now(),
-      cacheNotice
+      payload: normalizeDetallePayload(result?.data),
+      source: result?.source || 'network',
+      stale: Boolean(result?.stale),
+      cachedData: result?.data || null
     };
-  }
+  };
 
-  if (historicalWeek && !forceRefresh) {
-    const cached = await catalogIndexedDbService.getCatalog({
-      catalogKey,
-      contextKey: catalogContextKey
+  const getDerivedFromBase = async () => {
+    const baseResult = await getBaseCatalog();
+    const derivedPayload = filterDetallePayloadByNivel(baseResult.payload, safeNivel);
+    await saveDerivedCatalog(derivedPayload);
+    return buildResponse(derivedPayload, baseResult.source, baseResult.stale);
+  };
+
+  if (safeNivel !== null && derivedCatalogContextKey) {
+    const cachedDerived = await catalogIndexedDbService.getCatalog({
+      catalogKey: derivedCatalogKey,
+      contextKey: derivedCatalogContextKey
     });
+    const isDerivedFresh = Boolean(cachedDerived) && Number(cachedDerived.expiresAt || 0) > Date.now();
 
-    if (cached) {
+    if (!forceRefresh && cachedDerived && (isDerivedFresh || historicalWeek || !hasStableIdentity)) {
+      const baseMissingUserMeta = !hasStableIdentity
+        ? buildMissingUserSyncResult(cachedDerived.data)
+        : {};
       return {
-        ...normalizeDetallePayload(cached?.data),
-        source: 'cache',
-        stale: false,
-        cacheNotice
+        ...buildResponse(cachedDerived.data, 'cache', !isDerivedFresh && !historicalWeek),
+        ...baseMissingUserMeta
       };
     }
   }
 
-  const ttlMs = historicalWeek
-    ? INCIDENCIAS_DETALLE_HISTORICAL_TTL_MS
-    : (isTodaySelection ? INCIDENCIAS_DETALLE_TODAY_TTL_MS : INCIDENCIAS_DETALLE_CURRENT_TTL_MS);
+  if (historicalWeek && !forceRefresh) {
+    if (safeNivel !== null) {
+      return getDerivedFromBase();
+    }
+  }
 
-  const result = await catalogIndexedDbService.getOrSyncCatalog({
-    catalogKey,
-    contextKey: catalogContextKey,
-    ttlMs,
-    forceRefresh,
-    fetcher: async () => fetchIncidenciasDetalle({
-      fechaInicio: safeFechaInicio,
-      fechaFin: safeFechaFin,
-      usuario: safeUsuario
-    })
-  });
+  if (!hasStableIdentity) {
+    if (safeNivel !== null) {
+      const response = await getDerivedFromBase();
+      return {
+        ...response,
+        ...buildMissingUserSyncResult(response)
+      };
+    }
 
-  return {
-    ...normalizeDetallePayload(result?.data),
-    source: result?.source || 'network',
-    stale: Boolean(result?.stale),
-    cacheNotice
-  };
+    const cached = await catalogIndexedDbService.getCatalog({
+      catalogKey: baseCatalogKey,
+      contextKey: baseCatalogContextKey
+    });
+
+    return {
+      ...buildResponse(cached?.data, cached ? 'cache' : 'empty', Boolean(cached) && Number(cached.expiresAt || 0) <= Date.now()),
+      ...buildMissingUserSyncResult(cached?.data)
+    };
+  }
+
+  if (safeNivel !== null) {
+    return getDerivedFromBase();
+  }
+
+  const baseResult = await getBaseCatalog();
+  return buildResponse(baseResult.payload, baseResult.source, baseResult.stale);
 }
 
 export async function getIncidenciasByDate(date, { forceRefresh = false } = {}) {

@@ -8,6 +8,7 @@ import { loadSupervisionSidebarConfig } from './services/supervision-sidebar-con
 export default class Supervision {
   static instancia = null;
   static PARENT_CARD_CLASS = 'supervision-page-parent-card';
+  static MAIN_SCROLL_LOCK_CLASS = 'supervision2-main-content-lock';
 
   constructor() {
     if (Supervision.instancia) {
@@ -21,6 +22,9 @@ export default class Supervision {
     this.sidebarConfig = null;
     this.sidebarController = null;
     this.detailPanel = null;
+    this.viewportSyncHandler = null;
+    this.viewportScrollContainer = null;
+    this.mainScrollContainer = null;
   }
 
   async inicializar(container) {
@@ -67,6 +71,7 @@ export default class Supervision {
     });
 
     this.syncParentCardClass(container);
+    this.bindViewportHeightSync(container);
     const detailContainer = this.container?.querySelector('.supervision2-panel--right');
     this.detailPanel?.destroy?.();
     this.detailPanel = createSupervisionDetailPanel({
@@ -132,11 +137,68 @@ export default class Supervision {
     this.titleElement = null;
   }
 
+  bindViewportHeightSync(container) {
+    this.unbindViewportHeightSync();
+
+    const supervisionRoot = container?.querySelector('.supervision2-page');
+    const scrollContainer = container?.querySelector('.inicio-main-content');
+    if (!supervisionRoot) {
+      return;
+    }
+
+    this.lockMainScroll(scrollContainer);
+
+    const syncViewportHeight = () => {
+      const rootRect = supervisionRoot.getBoundingClientRect();
+      const availableHeight = Math.max(320, window.innerHeight - rootRect.top - 12);
+      supervisionRoot.style.setProperty('--supervision2-viewport-height', `${availableHeight}px`);
+    };
+
+    this.viewportSyncHandler = () => window.requestAnimationFrame(syncViewportHeight);
+    this.viewportScrollContainer = scrollContainer || null;
+
+    window.addEventListener('resize', this.viewportSyncHandler);
+    this.viewportScrollContainer?.addEventListener('scroll', this.viewportSyncHandler, { passive: true });
+    syncViewportHeight();
+  }
+
+  unbindViewportHeightSync() {
+    if (this.viewportSyncHandler) {
+      window.removeEventListener('resize', this.viewportSyncHandler);
+      this.viewportScrollContainer?.removeEventListener('scroll', this.viewportSyncHandler);
+    }
+
+    this.viewportSyncHandler = null;
+    this.viewportScrollContainer = null;
+  }
+
+  lockMainScroll(scrollContainer) {
+    this.unlockMainScroll();
+
+    if (!scrollContainer) {
+      return;
+    }
+
+    scrollContainer.classList.add(Supervision.MAIN_SCROLL_LOCK_CLASS);
+    this.mainScrollContainer = scrollContainer;
+  }
+
+  unlockMainScroll() {
+    if (!this.mainScrollContainer) {
+      return;
+    }
+
+    this.mainScrollContainer.classList.remove(Supervision.MAIN_SCROLL_LOCK_CLASS);
+    this.mainScrollContainer = null;
+  }
+
   destroy() {
     this.sidebarController?.destroy?.();
     this.detailPanel?.destroy?.();
     this.sidebarController = null;
     this.detailPanel = null;
+    this.unbindViewportHeightSync();
+    this.unlockMainScroll();
     this.removeParentCardClass();
     this.removeTitleHiddenClass();
   }
@@ -164,24 +226,33 @@ export default class Supervision {
         --supervision2-shadow-soft: var(--app-shadow-soft);
         --supervision2-badge-bg: color-mix(in srgb, var(--app-surface-elevated) 70%, var(--app-border) 30%);
         --supervision2-badge-text: var(--app-text-muted);
-        height: 100%;
-        min-height: 100%;
+        --supervision2-page-lift: 0.75rem;
+        height: var(--supervision2-viewport-height, auto);
+        min-height: var(--supervision2-viewport-height, auto);
+        margin-top: calc(var(--supervision2-page-lift) * -1);
         position: relative;
       }
 
       .${Supervision.PARENT_CARD_CLASS} {
+        display: flex;
+        flex-direction: column;
         height: 100%;
         overflow: hidden;
       }
 
       .${Supervision.PARENT_CARD_CLASS} > .supervision2-page {
-        height: 100%;
+        flex: 1 1 auto;
+      }
+
+      .inicio-main-content.${Supervision.MAIN_SCROLL_LOCK_CLASS} {
+        overflow: hidden;
       }
 
       .supervision2-shell {
         width: 100%;
         height: 100%;
         min-height: 100%;
+        overflow: hidden;
       }
 
       .supervision2-layout {
@@ -198,6 +269,9 @@ export default class Supervision {
         border-radius: 12px;
         box-shadow: var(--supervision2-shadow);
         color: var(--supervision2-text);
+        min-height: 0;
+        max-height: 100%;
+        overflow: hidden;
       }
 
       .supervision2-panel--left {
@@ -215,6 +289,8 @@ export default class Supervision {
 
       .supervision2-panel--right {
         background: var(--supervision2-surface);
+        display: flex;
+        flex-direction: column;
         padding: 0.75rem;
         min-height: 0;
         height: 100%;
@@ -249,25 +325,104 @@ export default class Supervision {
       }
 
       .supervision2-detail-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: 0.75rem;
       }
 
       .supervision2-detail-stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 0.8rem;
         border: 1px solid var(--supervision2-border);
-        box-shadow: var(--supervision2-shadow-soft);
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--supervision2-surface-elevated) 90%, var(--supervision2-surface) 10%);
+        box-shadow: none;
+        color: var(--supervision2-text-muted);
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      }
+
+      .supervision2-detail-stat:hover,
+      .supervision2-detail-stat:focus-visible {
+        border-color: color-mix(in srgb, var(--supervision2-detail-stat-color, var(--supervision2-primary)) 50%, var(--supervision2-border) 50%);
+        color: var(--supervision2-text);
+        text-decoration: none;
+        outline: none;
+      }
+
+      .supervision2-detail-stat.is-active {
+        background: color-mix(in srgb, var(--supervision2-detail-stat-color, var(--supervision2-primary)) 14%, var(--supervision2-surface) 86%);
+        border-color: color-mix(in srgb, var(--supervision2-detail-stat-color, var(--supervision2-primary)) 55%, var(--supervision2-border) 45%);
+        color: var(--supervision2-text);
+      }
+
+      .supervision2-detail-stat__label {
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.2;
       }
 
       .supervision2-detail-stat__total {
-        font-size: 1.35rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2rem;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: var(--supervision2-detail-stat-color, var(--supervision2-primary));
+        color: #fff;
+        font-size: 0.95rem;
         font-weight: 700;
-        color: var(--supervision2-text);
+        line-height: 1.1;
+      }
+
+      .supervision2-detail-stat--all {
+        --supervision2-detail-stat-color: #1e87f0;
+      }
+
+      .supervision2-detail-stat--nl {
+        --supervision2-detail-stat-color: #ff9800;
+      }
+
+      .supervision2-detail-stat--nl-nvl {
+        --supervision2-detail-stat-color: #ff9800;
+      }
+
+      .supervision2-detail-stat--l {
+        --supervision2-detail-stat-color: #9e9e9e;
+      }
+
+      .supervision2-detail-stat--a {
+        --supervision2-detail-stat-color: #009688;
+      }
+
+      .supervision2-detail-stat--ap {
+        --supervision2-detail-stat-color: #4caf50;
+      }
+
+      .supervision2-detail-stat--c {
+        --supervision2-detail-stat-color: #78909c;
+      }
+
+      .supervision2-detail-stat--r {
+        --supervision2-detail-stat-color: #f44336;
+      }
+
+      .supervision2-detail-stat--re {
+        --supervision2-detail-stat-color: #9c27b0;
+      }
+
+      .supervision2-detail-stat--x {
+        --supervision2-detail-stat-color: #1e87f0;
       }
 
       .supervision2-detail-table-card {
         border: 1px solid var(--supervision2-border);
         box-shadow: var(--supervision2-shadow-soft);
+        padding-left: 10px;
+        padding-right: 10px;
       }
 
       .supervision2-detail-search {
@@ -313,7 +468,12 @@ export default class Supervision {
       }
 
       .supervision2-detail-table .uk-table-hover tbody tr:hover {
-        background: color-mix(in srgb, var(--supervision2-primary-soft) 22%, transparent);
+        background: var(--supervision2-table-row-hover, color-mix(in srgb, var(--supervision2-primary-soft) 32%, var(--supervision2-surface) 68%));
+      }
+
+      .supervision2-detail-table.uk-table-hover tbody tr:hover td,
+      .supervision2-detail-table.uk-table-hover tbody tr:hover th {
+        background: var(--supervision2-table-row-hover, color-mix(in srgb, var(--supervision2-primary-soft) 32%, var(--supervision2-surface) 68%));
       }
 
       .supervision2-detail-sort-button {
@@ -334,9 +494,57 @@ export default class Supervision {
       }
 
       .supervision2-detail-status-badge {
-        background: color-mix(in srgb, var(--supervision2-primary-soft) 50%, var(--supervision2-surface-elevated) 50%);
-        color: var(--supervision2-text);
-        border: 1px solid var(--supervision2-border);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 5.5rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        background: var(--supervision2-detail-status-color, var(--supervision2-primary));
+        color: #fff;
+        border: 0;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .supervision2-detail-status-badge--all {
+        --supervision2-detail-status-color: #1e87f0;
+      }
+
+      .supervision2-detail-status-badge--nl {
+        --supervision2-detail-status-color: #ff9800;
+      }
+
+      .supervision2-detail-status-badge--nl-nvl {
+        --supervision2-detail-status-color: #ff9800;
+      }
+
+      .supervision2-detail-status-badge--l {
+        --supervision2-detail-status-color: #9e9e9e;
+      }
+
+      .supervision2-detail-status-badge--a {
+        --supervision2-detail-status-color: #009688;
+      }
+
+      .supervision2-detail-status-badge--ap {
+        --supervision2-detail-status-color: #4caf50;
+      }
+
+      .supervision2-detail-status-badge--c {
+        --supervision2-detail-status-color: #78909c;
+      }
+
+      .supervision2-detail-status-badge--r {
+        --supervision2-detail-status-color: #f44336;
+      }
+
+      .supervision2-detail-status-badge--re {
+        --supervision2-detail-status-color: #9c27b0;
+      }
+
+      .supervision2-detail-status-badge--x {
+        --supervision2-detail-status-color: #1e87f0;
       }
 
       .supervision2-panel .uk-accordion > :nth-child(n + 2) {
@@ -566,6 +774,10 @@ export default class Supervision {
       html[data-theme='dark'] .supervision2-page {
         --supervision2-badge-bg: color-mix(in srgb, var(--app-surface-elevated) 82%, var(--app-border) 18%);
       }
+      
+      .supervision2-panel-detai-tbl-actions {
+        width: 100px;
+      }
 
       @media (max-width: 1200px) {
         .supervision2-layout {
@@ -580,8 +792,20 @@ export default class Supervision {
       }
 
       @media (max-width: 768px) {
+        .inicio-main-content.${Supervision.MAIN_SCROLL_LOCK_CLASS} {
+          overflow-y: auto;
+        }
+
+        .supervision2-page {
+          --supervision2-page-lift: 0;
+          height: auto;
+          min-height: auto;
+          margin-top: 0;
+        }
+
         .supervision2-shell {
           min-height: auto;
+          overflow: visible;
         }
 
         .supervision2-layout {
