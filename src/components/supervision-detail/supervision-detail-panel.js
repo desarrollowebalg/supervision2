@@ -3,6 +3,7 @@ import { getIncidenciasDetalle } from '../../core/services/apis-me/incidencias.s
 import { storageService } from '../../core/services/storage.service.js';
 
 const DETAIL_PAGE_SIZE = 30;
+const DETAIL_FILTER_MODAL_ID = 'supervision2-detail-filter-modal';
 const DETAIL_COLUMNS = [
   { key: 'FECHA', label: 'Fecha', sortable: true, searchable: true, visible: true },
   { key: 'HORA', label: 'Hora', sortable: true, searchable: true, visible: true },
@@ -25,6 +26,7 @@ const STATUS_COLOR_MAP = {
   RE: '#9c27b0',
   X: '#1e87f0'
 };
+const MULTI_SELECT_FILTER_KEYS = new Set(['STT_DESC', 'TURNO']);
 
 function escapeHtml(value) {
   return String(value || '')
@@ -40,6 +42,10 @@ function normalizeSearchValue(value) {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+function isMultiSelectFilterKey(key) {
+  return MULTI_SELECT_FILTER_KEYS.has(String(key || '').trim());
 }
 
 function truncateText(value, limit = 58) {
@@ -137,6 +143,51 @@ function getDefaultColumnVisibility() {
     accumulator[column.key] = Boolean(column.visible);
     return accumulator;
   }, {});
+}
+
+function createInitialFilters() {
+  return {
+    __general__: '',
+    FECHA: '',
+    HORA: '',
+    PDR: '',
+    OBS: '',
+    STT_DESC: [],
+    TURNO: []
+  };
+}
+
+function countActiveColumnFilters(filters = {}) {
+  return DETAIL_COLUMNS
+    .filter((column) => column.searchable && column.key !== 'ACCIONES')
+    .reduce((accumulator, column) => {
+      const value = filters[column.key];
+      if (Array.isArray(value)) {
+        return accumulator + (value.length > 0 ? 1 : 0);
+      }
+
+      return accumulator + (String(value || '').trim() ? 1 : 0);
+    }, 0);
+}
+
+function getUniqueFilterOptions(records = [], key) {
+  const optionMap = new Map();
+
+  (records || []).forEach((record) => {
+    const rawValue = String(record?.[key] || '').trim();
+    if (!rawValue) {
+      return;
+    }
+
+    const normalizedValue = normalizeSearchValue(rawValue);
+    if (!optionMap.has(normalizedValue)) {
+      optionMap.set(normalizedValue, rawValue);
+    }
+  });
+
+  return [...optionMap.entries()]
+    .sort((leftEntry, rightEntry) => leftEntry[0].localeCompare(rightEntry[0], 'es'))
+    .map(([, value]) => value);
 }
 
 function resolveFilterableValue(record, key) {
@@ -349,6 +400,120 @@ function renderColumnVisibilityMenu(columnVisibility) {
   `;
 }
 
+function renderFilterField(column, filters, records) {
+  if (isMultiSelectFilterKey(column.key)) {
+    const options = getUniqueFilterOptions(records, column.key);
+    const selectedValues = Array.isArray(filters[column.key]) ? filters[column.key] : [];
+    const selectedSet = new Set(selectedValues.map((value) => normalizeSearchValue(value)));
+
+    return `
+      <label class="uk-form-stacked">
+        <span class="uk-form-label uk-text-meta">${escapeHtml(column.label)}</span>
+        <select
+          class="uk-select uk-border-rounded supervision2-detail-filter-select"
+          name="filter-${escapeHtml(column.key)}"
+          multiple
+          size="${Math.min(Math.max(options.length, 4), 6)}"
+          aria-describedby="filter-help-${escapeHtml(column.key)}"
+        >
+          ${options.map((value) => `
+            <option
+              value="${escapeHtml(value)}"
+              ${selectedSet.has(normalizeSearchValue(value)) ? 'selected' : ''}
+            >
+              ${escapeHtml(value)}
+            </option>
+          `).join('')}
+        </select>
+        <span id="filter-help-${escapeHtml(column.key)}" class="uk-text-meta supervision2-detail-filter-help">
+          Puedes seleccionar más de un elemento en ${escapeHtml(column.label.toLowerCase())}.
+        </span>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="uk-form-stacked">
+      <span class="uk-form-label uk-text-meta">${escapeHtml(column.label)}</span>
+      <input
+        class="uk-input uk-form-small uk-border-rounded"
+        type="search"
+        name="filter-${escapeHtml(column.key)}"
+        placeholder="Buscar ${escapeHtml(column.label.toLowerCase())}"
+        value="${escapeHtml(filters[column.key] || '')}"
+      >
+    </label>
+  `;
+}
+
+function renderFilterModal({ filters, records, activeFilterCount }) {
+  return `
+    <div id="${DETAIL_FILTER_MODAL_ID}" uk-modal>
+      <div class="uk-modal-dialog uk-modal-body uk-border-rounded supervision2-detail-filter-modal">
+        <button class="uk-modal-close-default" type="button" uk-close aria-label="Cerrar filtros"></button>
+        <h4 class="uk-modal-title">Filtrar incidencias</h4>
+        <p class="uk-text-meta uk-margin-small-top">
+          Ajusta los filtros por columna. Estado y Turno permiten seleccionar más de un valor.
+        </p>
+        <div data-filter-form="true">
+          <div class="supervision2-detail-filter-grid uk-margin-medium-top">
+            ${DETAIL_COLUMNS
+              .filter((column) => column.searchable)
+              .map((column) => renderFilterField(column, filters, records))
+              .join('')}
+          </div>
+          <div class="uk-flex uk-flex-between uk-flex-middle uk-flex-wrap uk-gap-small uk-margin-medium-top">
+            <p class="uk-text-meta uk-margin-remove">Filtros activos: ${activeFilterCount}</p>
+            <div class="uk-flex uk-flex-middle uk-flex-wrap uk-gap-small">
+              <button
+                class="uk-button uk-button-default uk-button-small uk-border-rounded"
+                type="button"
+                data-clear-modal-filters="true"
+              >
+                Limpiar filtros
+              </button>
+              <button
+                class="uk-button uk-button-primary uk-button-small uk-border-rounded"
+                type="button"
+                data-apply-modal-filters="true"
+              >
+                Aplicar filtros
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function collectFiltersFromForm(formElement, currentFilters) {
+  const nextFilters = {
+    ...currentFilters
+  };
+
+  DETAIL_COLUMNS
+    .filter((column) => column.searchable && column.key !== 'ACCIONES')
+    .forEach((column) => {
+      const fieldName = `filter-${column.key}`;
+      const fieldElement = formElement?.querySelector?.(`[name="${fieldName}"]`);
+
+      if (!fieldElement) {
+        nextFilters[column.key] = isMultiSelectFilterKey(column.key) ? [] : '';
+        return;
+      }
+
+      if (isMultiSelectFilterKey(column.key)) {
+        nextFilters[column.key] = [...fieldElement.selectedOptions].map((option) => option.value || '');
+        return;
+      }
+
+      nextFilters[column.key] = fieldElement.value || '';
+    });
+
+  return nextFilters;
+}
+
 function renderTableShell({
   selection,
   cacheNotice,
@@ -366,6 +531,7 @@ function renderTableShell({
   const normalizedActiveStatus = activeStatusFilter === ALL_STATUS_FILTER
     ? ''
     : normalizeSearchValue(activeStatusFilter);
+  const activeFilterCount = countActiveColumnFilters(filters);
 
   const filteredRecords = (records || []).filter((record) => {
     if (normalizedActiveStatus) {
@@ -388,7 +554,18 @@ function renderTableShell({
     return DETAIL_COLUMNS
       .filter((column) => column.searchable && column.key !== 'ACCIONES')
       .every((column) => {
-        const normalizedFilter = normalizeSearchValue(filters[column.key]);
+        const filterValue = filters[column.key];
+
+        if (Array.isArray(filterValue)) {
+          if (filterValue.length === 0) {
+            return true;
+          }
+
+          const normalizedRecordValue = normalizeSearchValue(resolveFilterableValue(record, column.key));
+          return filterValue.some((selectedValue) => normalizedRecordValue === normalizeSearchValue(selectedValue));
+        }
+
+        const normalizedFilter = normalizeSearchValue(filterValue);
         if (!normalizedFilter) {
           return true;
         }
@@ -484,6 +661,13 @@ function renderTableShell({
             ${renderColumnVisibilityMenu(columnVisibility)}
           </div>
           <button
+            class="uk-button uk-button-default uk-button-small uk-border-rounded supervision2-detail-filter-button"
+            type="button"
+            uk-toggle="target: #${DETAIL_FILTER_MODAL_ID}"
+          >
+            Filtrar${activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          </button>
+          <button
             class="uk-button uk-button-default uk-button-small uk-border-rounded"
             type="button"
             data-clear-filters="true"
@@ -491,23 +675,6 @@ function renderTableShell({
             Limpiar filtros
           </button>
         </div>
-      </div>
-
-      <div class="supervision2-detail-filter-grid uk-margin-small-bottom">
-        ${DETAIL_COLUMNS
-          .filter((column) => column.searchable && columnVisibility[column.key])
-          .map((column) => `
-            <label>
-              <span class="uk-form-label uk-text-meta">${escapeHtml(column.label)}</span>
-              <input
-                class="uk-input uk-form-small uk-border-rounded"
-                type="search"
-                placeholder="Buscar ${escapeHtml(column.label.toLowerCase())}"
-                value="${escapeHtml(filters[column.key] || '')}"
-                data-filter-key="${escapeHtml(column.key)}"
-              >
-            </label>
-          `).join('')}
       </div>
 
       <div class="uk-overflow-auto">
@@ -660,6 +827,7 @@ function renderTableShell({
           </li>
         </ul>
       </div>
+
     </section>
   `;
 }
@@ -669,6 +837,7 @@ export function renderSupervisionDetailPanel() {
     <div class="supervision2-detail-panel">
       <span id="loaderDetalleIncidencias"></span>
       <section id="panelDerechoListIncidencias"></section>
+      <div id="panelDerechoListIncidenciasModal"></div>
     </div>
   `;
 }
@@ -676,6 +845,8 @@ export function renderSupervisionDetailPanel() {
 export function createSupervisionDetailPanel({ container }) {
   let contentElement = null;
   let loaderElement = null;
+  let modalHostElement = null;
+  let modalElement = null;
   let currentSelection = null;
   let currentStatistics = [];
   let currentRecords = [];
@@ -687,20 +858,29 @@ export function createSupervisionDetailPanel({ container }) {
   };
   let activeStatusFilter = ALL_STATUS_FILTER;
   let columnVisibility = getDefaultColumnVisibility();
-  let filters = {
-    __general__: '',
-    FECHA: '',
-    HORA: '',
-    PDR: '',
-    OBS: '',
-    STT_DESC: '',
-    TURNO: ''
-  };
+  let filters = createInitialFilters();
 
   function renderContent(html) {
     if (contentElement) {
       contentElement.innerHTML = html;
     }
+  }
+
+  function renderModal(html) {
+    if (modalHostElement) {
+      modalHostElement.innerHTML = html;
+    }
+
+    bindModalEvents();
+  }
+
+  function bindModalEvents() {
+    if (modalElement) {
+      modalElement.removeEventListener('click', handleModalClick);
+    }
+
+    modalElement = document.getElementById(DETAIL_FILTER_MODAL_ID);
+    modalElement?.addEventListener('click', handleModalClick);
   }
 
   function clearLoader() {
@@ -722,6 +902,12 @@ export function createSupervisionDetailPanel({ container }) {
       page: currentPage,
       pageSize: DETAIL_PAGE_SIZE
     }));
+
+    renderModal(renderFilterModal({
+      filters,
+      records: currentRecords,
+      activeFilterCount: countActiveColumnFilters(filters)
+    }));
   }
 
   function showEmptyState() {
@@ -735,6 +921,7 @@ export function createSupervisionDetailPanel({ container }) {
         Da clic en un usuario con incidencias para mostrar el detalle de las mismas.
       </p>
     `);
+    renderModal('');
   }
 
   function showLoading() {
@@ -766,6 +953,12 @@ export function createSupervisionDetailPanel({ container }) {
         <p class="uk-margin-remove">${escapeHtml(message)}</p>
       </div>
     `);
+
+    renderModal(renderFilterModal({
+      filters,
+      records: currentRecords,
+      activeFilterCount: countActiveColumnFilters(filters)
+    }));
   }
 
   async function loadSelectionDetail(selection) {
@@ -810,15 +1003,7 @@ export function createSupervisionDetailPanel({ container }) {
       direction: 'asc'
     };
     activeStatusFilter = ALL_STATUS_FILTER;
-    filters = {
-      __general__: '',
-      FECHA: '',
-      HORA: '',
-      PDR: '',
-      OBS: '',
-      STT_DESC: '',
-      TURNO: ''
-    };
+    filters = createInitialFilters();
     columnVisibility = getDefaultColumnVisibility();
 
     renderCurrentView();
@@ -877,15 +1062,7 @@ export function createSupervisionDetailPanel({ container }) {
     const clearTrigger = event.target?.closest('[data-clear-filters]');
     if (clearTrigger) {
       activeStatusFilter = ALL_STATUS_FILTER;
-      filters = {
-        __general__: '',
-        FECHA: '',
-        HORA: '',
-        PDR: '',
-        OBS: '',
-        STT_DESC: '',
-        TURNO: ''
-      };
+      filters = createInitialFilters();
       currentPage = 1;
       renderCurrentView();
       return;
@@ -915,6 +1092,46 @@ export function createSupervisionDetailPanel({ container }) {
     renderCurrentView();
   }
 
+  function applyModalFilters(filterForm) {
+    if (!filterForm) {
+      return;
+    }
+
+    filters = collectFiltersFromForm(filterForm, filters);
+    currentPage = 1;
+
+    const modalElement = filterForm.closest('.uk-modal');
+    if (window.UIkit?.modal && modalElement) {
+      window.UIkit.modal(modalElement).hide();
+    }
+
+    renderCurrentView();
+  }
+
+  function handleModalClick(event) {
+    const applyModalTrigger = event.target?.closest('[data-apply-modal-filters]');
+    if (applyModalTrigger) {
+      const filterForm = applyModalTrigger.closest('[data-filter-form]');
+      applyModalFilters(filterForm);
+      return;
+    }
+
+    const clearModalTrigger = event.target?.closest('[data-clear-modal-filters]');
+    if (!clearModalTrigger) {
+      return;
+    }
+
+    const modalElement = clearModalTrigger.closest('.uk-modal');
+    if (window.UIkit?.modal && modalElement) {
+      window.UIkit.modal(modalElement).hide();
+    }
+
+    activeStatusFilter = ALL_STATUS_FILTER;
+    filters = createInitialFilters();
+    currentPage = 1;
+    renderCurrentView();
+  }
+
   function handlePanelChange(event) {
     const columnKey = event.target?.getAttribute('data-column-toggle');
     if (!columnKey) {
@@ -929,6 +1146,7 @@ export function createSupervisionDetailPanel({ container }) {
   function init() {
     contentElement = container?.querySelector('#panelDerechoListIncidencias') || null;
     loaderElement = container?.querySelector('#loaderDetalleIncidencias') || null;
+    modalHostElement = container?.querySelector('#panelDerechoListIncidenciasModal') || null;
     contentElement?.removeEventListener('click', handlePanelClick);
     contentElement?.removeEventListener('input', handlePanelInput);
     contentElement?.removeEventListener('change', handlePanelChange);
@@ -944,8 +1162,11 @@ export function createSupervisionDetailPanel({ container }) {
     contentElement?.removeEventListener('click', handlePanelClick);
     contentElement?.removeEventListener('input', handlePanelInput);
     contentElement?.removeEventListener('change', handlePanelChange);
+    modalElement?.removeEventListener('click', handleModalClick);
     contentElement = null;
     loaderElement = null;
+    modalHostElement = null;
+    modalElement = null;
   }
 
   const api = {

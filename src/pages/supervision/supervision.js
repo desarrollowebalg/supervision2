@@ -46,7 +46,7 @@ export default class Supervision {
       title: '',
       description: '',
       contentHtml: `
-        <section class="supervision2-page uk-section uk-section-small uk-padding-remove-top uk-padding-remove-bottom">
+        <section class="supervision2-page uk-section uk-section-small uk-padding-remove-top uk-padding-remove-bottom" style="top: -25px;">
           <div class="supervision2-shell">
             <div class="supervision2-layout">
               <aside class="supervision2-panel supervision2-panel--left">
@@ -430,14 +430,16 @@ export default class Supervision {
       }
 
       .supervision2-detail-search .uk-input,
-      .supervision2-detail-filter-grid .uk-input {
+      .supervision2-detail-filter-grid .uk-input,
+      .supervision2-detail-filter-grid .uk-select {
         background: var(--supervision2-surface-elevated);
         color: var(--supervision2-text);
         border-color: var(--supervision2-border);
       }
 
       .supervision2-detail-search .uk-input:focus,
-      .supervision2-detail-filter-grid .uk-input:focus {
+      .supervision2-detail-filter-grid .uk-input:focus,
+      .supervision2-detail-filter-grid .uk-select:focus {
         border-color: var(--supervision2-primary);
       }
 
@@ -447,10 +449,31 @@ export default class Supervision {
         box-shadow: var(--supervision2-shadow-soft);
       }
 
+      .supervision2-detail-filter-button {
+        white-space: nowrap;
+      }
+
+      .uk-modal-dialog.supervision2-detail-filter-modal {
+        background-color: var(--app-surface, #ffffff);
+        color: var(--app-text, #111827);
+        border: 1px solid var(--app-border, #d1d5db);
+        box-shadow: var(--app-shadow-soft, 0 10px 30px rgba(15, 23, 42, 0.18));
+        opacity: 1;
+      }
+
       .supervision2-detail-filter-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 0.75rem;
+      }
+
+      .supervision2-detail-filter-select {
+        min-height: 8.5rem;
+      }
+
+      .supervision2-detail-filter-help {
+        display: inline-block;
+        margin-top: 0.35rem;
       }
 
       .supervision2-detail-table {
