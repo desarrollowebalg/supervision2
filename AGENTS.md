@@ -1,8 +1,8 @@
 # AGENTS.md
 
-## ES - Prop?sito
-Este documento define una estructura m?nima de trabajo con agentes para este proyecto.
-Incluye qu? hace cada agente, qu? s? puede hacer, qu? no puede hacer sin aprobaci?n, y el flujo operativo base.
+## ES - Propósito
+Este documento define una estructura mínima de trabajo con agentes para este proyecto.
+Incluye qué hace cada agente, qué sí puede hacer, qué no puede hacer sin aprobación, y el flujo operativo base.
 
 ## EN - Purpose
 This document defines a minimal agent workflow structure for this project.
@@ -24,8 +24,8 @@ It includes what each agent does, what each one can do, what cannot be done with
 
 ## ES - Agente de Soporte
 - `security-review-agent`
-  - Uso: auditorias, revisiones de seguridad y backlog de endurecimiento.
-  - Estado: disponible en `agents/`, pero no forma parte de la asignacion por defecto salvo que la tarea sea de seguridad.
+  - Uso: auditorías, revisiones de seguridad y backlog de endurecimiento.
+  - Estado: disponible en `agents/`, pero no forma parte de la asignación por defecto salvo que la tarea sea de seguridad.
 
 ## EN - Support Agent
 - `security-review-agent`
@@ -33,13 +33,13 @@ It includes what each agent does, what each one can do, what cannot be done with
   - Status: available in `agents/`, but not part of the default assignment path unless the task is security-focused.
 
 ## ES - Modelo Operativo de Agentes
-- Los archivos dentro de `agents/` funcionan como contratos operativos y guias de ejecucion para trabajo humano y asistido por IA.
-- No existe actualmente un cargador automatico del proyecto que descubra o ejecute `agents/*.md`.
+- Los archivos dentro de `agents/` funcionan como contratos operativos y guías de ejecución para trabajo humano y asistido por IA.
+- No existe actualmente un cargador automático del proyecto que descubra o ejecute `agents/*.md`.
 - Para que un agente "funcione" operativamente, su archivo debe mantenerse alineado con:
   - la estructura real del repositorio,
   - este `AGENTS.md`,
-  - y `notas/BUILD.md` como referencia de validacion.
-- El indice operativo de agentes vive en `agents/README.md`.
+  - y `notas/BUILD.md` como referencia de validación.
+- El índice operativo de agentes vive en `agents/README.md`.
 
 ## EN - Agent Operating Model
 - Files inside `agents/` act as operational contracts and execution guides for human and AI-assisted work.
@@ -50,22 +50,22 @@ It includes what each agent does, what each one can do, what cannot be done with
   - and `notas/BUILD.md` as the validation baseline.
 - The operational agent index lives in `agents/README.md`.
 
-## ES - Librer?a UI Principal
-- La librer?a principal de interfaz del proyecto es **UIkit CSS**, tomando como referencia base su documentaci?n oficial de introducci?n:
+## ES - Librería UI Principal
+- La librería principal de interfaz del proyecto es **UIkit CSS**, tomando como referencia base su documentación oficial de introducción:
   - https://getuikit.com/docs/introduction
 - Los componentes, vistas y layouts nuevos o modificados deben construirse usando la estructura, clases utilitarias y comportamiento esperados por UIkit.
-- Se permite escribir **CSS personalizado** cuando se requieran ajustes espec?ficos de presentaci?n, espaciado, adaptaci?n visual o correcciones puntuales.
-- El CSS personalizado debe complementar a UIkit y no sustituir la base estructural del componente salvo que exista una raz?n t?cnica clara.
-- Mientras Tailwind CSS no forme parte oficial del est?ndar del proyecto, los componentes y layouts no deben usar reglas, utilidades, clases ni patrones de otros frameworks CSS.
-- La futura integraci?n con Tailwind CSS no autoriza adelantar mezcla de convenciones en el c?digo actual.
+- Se permite escribir **CSS personalizado** cuando se requieran ajustes específicos de presentación, espaciado, adaptación visual o correcciones puntuales.
+- El CSS personalizado debe complementar a UIkit y no sustituir la base estructural del componente salvo que exista una razón técnica clara.
+- Mientras Tailwind CSS no forme parte oficial del estándar del proyecto, los componentes y layouts no deben usar reglas, utilidades, clases ni patrones de otros frameworks CSS.
+- La futura integración con Tailwind CSS no autoriza adelantar mezcla de convenciones en el código actual.
 
 Politica estricta global (obligatoria):
 - Todo estilo nuevo debe partir de clases `uk-*` y utilidades oficiales de UIkit.
 - No introducir reglas visuales custom si existe equivalente UIkit para el mismo objetivo.
 - No mezclar convenciones de otros frameworks CSS.
-- Cualquier CSS custom debe incluir justificacion tecnica breve cuando UIkit no cubra el caso.
-- Priorizar tipografia y componentes de UIkit (`uk-text-*`, `uk-heading-*`, `uk-card`, `uk-button`, `uk-input`, etc.) sobre estilos manuales.
-- Evitar `style=""` inline para presentacion (colores, bordes, espaciado, tipografia) cuando pueda resolverse con UIkit.
+- Cualquier CSS custom debe incluir justificación técnica breve cuando UIkit no cubra el caso.
+- Priorizar tipografía y componentes de UIkit (`uk-text-*`, `uk-heading-*`, `uk-card`, `uk-button`, `uk-input`, etc.) sobre estilos manuales.
+- Evitar `style=""` inline para presentación (colores, bordes, espaciado, tipografía) cuando pueda resolverse con UIkit.
 - Evitar `!important` en UI salvo compatibilidad puntual heredada y documentada.
 
 ## EN - Primary UI Library
@@ -87,11 +87,11 @@ Strict global policy (mandatory):
 - Avoid `!important` in UI except for documented inherited compatibility cases.
 
 ## ES - Checklist Global de Estilos UI (Obligatorio)
-1. ?El layout base usa clases UIkit?
-2. ?Tipografia y textos usan clases UIkit antes que `font-size` manual?
-3. ?No hay `style=""` o `!important` innecesario?
-4. ?El CSS custom restante est? justificado por limitaci?n real de UIkit?
-5. ?Desktop y mobile mantienen consistencia con patrones UIkit?
+1. ¿El layout base usa clases UIkit?
+2. ¿Tipografía y textos usan clases UIkit antes que `font-size` manual?
+3. ¿No hay `style=""` o `!important` innecesario?
+4. ¿El CSS custom restante está justificado por limitación real de UIkit?
+5. ¿Desktop y mobile mantienen consistencia con patrones UIkit?
 
 ## EN - Global UI Style Checklist (Mandatory)
 1. Does the base layout use UIkit classes?
@@ -100,18 +100,18 @@ Strict global policy (mandatory):
 4. Is remaining custom CSS justified by a real UIkit limitation?
 5. Do desktop and mobile stay consistent with UIkit patterns?
 
-## ES - Patr?n Reutilizable para P?ginas de Listado
-- Cuando una p?gina frontend comparta el patr?n:
-  - t?tulo
-  - subt?tulo
+## ES - Patrón Reutilizable para Páginas de Listado
+- Cuando una página frontend comparta el patrón:
+  - título
+  - subtítulo
   - buscador
   - barra de columnas
   - contenido en lista
   debe reutilizarse la base `src/pages/shared/catalog-list-page.base.js`.
-- Esta base existe para evitar duplicaci?n de estilos y mantener consistencia visual entre `light/dark`.
+- Esta base existe para evitar duplicación de estilos y mantener consistencia visual entre `light/dark`.
 - El hover de items y los colores de superficie deben depender de tokens globales (`--app-*`) definidos por tema, no de colores fijos.
-- `src/pages/puntosInteres/PuntosInteres.js` queda como referencia operativa del patr?n.
-- Si una p?gina nueva necesita este mismo estilo, extender la base y limitar el CSS custom a necesidades del dominio que UIkit o la base compartida no cubran.
+- `src/pages/puntosInteres/PuntosInteres.js` queda como referencia operativa del patrón.
+- Si una página nueva necesita este mismo estilo, extender la base y limitar el CSS custom a necesidades del dominio que UIkit o la base compartida no cubran.
 
 ## EN - Reusable Pattern for List Pages
 - When a frontend page shares this pattern:
@@ -176,10 +176,10 @@ const app = new App();
 app.inicializar();
 ```
 
-## ES - Centralizaci?n de APIs del Navegador (Obligatoria)
-- Todo acceso a APIs del navegador con potencial de reutilizaci?n debe centralizarse en `src/core/services/` como servicio reusable con patr?n Singleton.
-- Ejemplos: conectividad (`navigator.onLine`, `online/offline`), `localStorage`/`sessionStorage`, Notification API, geolocalizaci?n, permisos, background sync y APIs equivalentes.
-- Antes de agregar nuevas verificaciones en componentes o p?ginas, primero validar si ya existe servicio compartido; si no existe, crearlo y consumirlo desde la capa de vista.
+## ES - Centralización de APIs del Navegador (Obligatoria)
+- Todo acceso a APIs del navegador con potencial de reutilización debe centralizarse en `src/core/services/` como servicio reusable con patrón Singleton.
+- Ejemplos: conectividad (`navigator.onLine`, `online/offline`), `localStorage`/`sessionStorage`, Notification API, geolocalización, permisos, background sync y APIs equivalentes.
+- Antes de agregar nuevas verificaciones en componentes o páginas, primero validar si ya existe servicio compartido; si no existe, crearlo y consumirlo desde la capa de vista.
 - Evitar listeners o verificaciones duplicadas por archivo cuando el comportamiento sea transversal.
 
 ## EN - Browser API Centralization (Mandatory)
@@ -190,16 +190,16 @@ app.inicializar();
 
 ## ES - Form Engine Frontend (Schema Renderer)
 - El detalle de formularios en `#/formularios/:indicator` debe resolver `CLV` para consultar `apis_me/form-engine`.
-- Prioridad de resolucion de `CLV`:
+- Prioridad de resolución de `CLV`:
   1. Query param `clv` en la ruta hash.
-  2. Fallback por catalogo local de formularios (`ITEM_NUMBER -> CLV`).
-- Configuracion visual de temas para listado de formularios:
+  2. Fallback por catálogo local de formularios (`ITEM_NUMBER -> CLV`).
+- Configuración visual de temas para listado de formularios:
   - Archivo externo editable: `/config/form-themes.json` (fuera de `src/`).
-  - Relacion: `TEMA` del formulario contra `ID_TEMA`.
+  - Relación: `TEMA` del formulario contra `ID_TEMA`.
   - Colores aplicados por item: `BARRA` (fondo) y `LETRA` (texto).
 - El render del schema debe mantenerse modular por tipo de campo (un componente por tipo) bajo `src/pages/formularios/schema-renderer/components/`.
 - El orquestador/factory de render debe permanecer en `src/pages/formularios/schema-renderer/schema-form.renderer.js`.
-- Los tipos no soportados no deben romper la vista: se omiten visualmente y se registran para diagnostico.
+- Los tipos no soportados no deben romper la vista: se omiten visualmente y se registran para diagnóstico.
 
 ## EN - Form Engine Frontend (Schema Renderer)
 - Form detail at `#/formularios/:indicator` must resolve `CLV` to query `apis_me/form-engine`.
@@ -214,14 +214,14 @@ app.inicializar();
 - The render orchestrator/factory should remain in `src/pages/formularios/schema-renderer/schema-form.renderer.js`.
 - Unsupported types must not break the page: hide in UI and log for diagnostics.
 
-## ES - Tipo de Almacenamiento para Catalogos (Frontend)
-- El almacenamiento local oficial para catalogos en frontend es **IndexedDB** con **Dexie.js**.
-- Implementacion base obligatoria: `src/core/services/catalog-indexeddb.service.js`.
-- Integracion actual de referencia: `src/core/services/apis-me/forms.service.js`.
-- La consulta debe usar estrategia cache-first y la actualizacion debe usar sincronizacion forzada (`forceRefresh`) cuando aplique.
-- Regla de identidad para sincronizacion remota: si no existe `user.id`, solo se permite lectura local de cache; no se debe llamar red.
-- Cuando exista `user.id`, se permite sincronizacion remota y se debe limpiar cache anonima heredada (`user_anon:*`) en catalogos sincronizables.
-- Documentacion tecnica y contrato de uso:
+## ES - Tipo de Almacenamiento para Catálogos (Frontend)
+- El almacenamiento local oficial para catálogos en frontend es **IndexedDB** con **Dexie.js**.
+- Implementación base obligatoria: `src/core/services/catalog-indexeddb.service.js`.
+- Integración actual de referencia: `src/core/services/apis-me/forms.service.js`.
+- La consulta debe usar estrategia cache-first y la actualización debe usar sincronización forzada (`forceRefresh`) cuando aplique.
+- Regla de identidad para sincronización remota: si no existe `user.id`, solo se permite lectura local de cache; no se debe llamar red.
+- Cuando exista `user.id`, se permite sincronización remota y se debe limpiar cache anónima heredada (`user_anon:*`) en catálogos sincronizables.
+- Documentación técnica y contrato de uso:
   - Ver [src/core/services/CATALOG_STORAGE_INDEXEDDB.md](src/core/services/CATALOG_STORAGE_INDEXEDDB.md)
 
 ## EN - Catalog Storage Type (Frontend)
@@ -234,14 +234,14 @@ app.inicializar();
 - Technical documentation and usage contract:
   - See [src/core/services/CATALOG_STORAGE_INDEXEDDB.md](src/core/services/CATALOG_STORAGE_INDEXEDDB.md)
 
-## ES - Flujo de Trabajo (M?nimo)
+## ES - Flujo de Trabajo (Mínimo)
 1. Plan
-2. Ejecuci?n
-3. Validaci?n
+2. Ejecución
+3. Validación
 
-Regla de validaci?n:
+Regla de validación:
 - Si los cambios son en `src/`, ejecutar al menos `npm run build`.
-- Si los cambios son fuera de `src/`, la validaci?n se ejecutar? en la URL/entorno que indique el responsable del proyecto (actualmente en contenedor Docker).
+- Si los cambios son fuera de `src/`, la validación se ejecutará en la URL/entorno que indique el responsable del proyecto (actualmente en contenedor Docker).
 
 Referencia:
 - Ver [notas/BUILD.md](notas/BUILD.md).
@@ -259,15 +259,15 @@ Reference:
 - See [notas/BUILD.md](notas/BUILD.md).
 
 ## ES - Aprobaciones Obligatorias
-Todos los cambios de c?digo y configuraci?n requieren aprobaci?n humana antes de confirmar/integrar cambios.
+Todos los cambios de código y configuración requieren aprobación humana antes de confirmar/integrar cambios.
 
 Incluye, entre otros:
-- C?digo: `PHP`, `JS`, `CSS`, `HTML`.
-- Configuraci?n: archivos como `vite.config.js`, `package.json` y equivalentes.
+- Código: `PHP`, `JS`, `CSS`, `HTML`.
+- Configuración: archivos como `vite.config.js`, `package.json` y equivalentes.
 
 Regla operativa:
 - Se puede preparar y dejar listo el cambio.
-- Se debe esperar confirmaci?n expl?cita antes de cierre/integraci?n.
+- Se debe esperar confirmación explícita antes de cierre/integración.
 
 ## EN - Mandatory Approvals
 All code and configuration changes require human approval before confirming/integrating changes.
@@ -288,10 +288,10 @@ Se permite crear:
 
 Alcance:
 - Dentro de `src/`.
-- Tambi?n fuera de `src/` (temporalmente habilitado; se ajustar? despu?s).
+- También fuera de `src/` (temporalmente habilitado; se ajustará después).
 
 Nota:
-- Aunque estas acciones est?n habilitadas, siguen sujetas a la regla de aprobaci?n antes de integraci?n.
+- Aunque estas acciones están habilitadas, siguen sujetas a la regla de aprobación antes de integración.
 
 ## EN - Allowed Actions Without Asking (Current Scope)
 The following can be created:
@@ -308,9 +308,9 @@ Note:
 
 ## ES - Estrategia de Ramas
 - Crear una rama por problema.
-- Convenci?n de nombre recomendada: `codex/<tipo>-<id-o-resumen-corto>`.
+- Convención de nombre recomendada: `codex/<tipo>-<id-o-resumen-corto>`.
 - Ejemplo: `codex/fix-login-timeout`.
-- La rama `test` ser? la rama de integraci?n cuando exista.
+- La rama `test` será la rama de integración cuando exista.
 
 ## EN - Branching Strategy
 - Create one branch per issue/problem.
@@ -319,20 +319,20 @@ Note:
 - `test` will be the integration branch once it exists.
 
 ## ES - Pruebas
-- Ejecutar `build` como prueba m?nima cuando aplique.
+- Ejecutar `build` como prueba mínima cuando aplique.
 - Ejecutar pruebas de funcionamiento en funciones consideradas necesarias.
-- Preferencia: pruebas automatizadas cuando existan; validaci?n manual cuando no existan.
+- Preferencia: pruebas automatizadas cuando existan; validación manual cuando no existan.
 
 ## EN - Testing
 - Run `build` as the minimum test when applicable.
 - Run functional checks on functions considered necessary.
 - Preference: automated tests when available; manual validation when not available.
 
-## ES - Incidentes y Rollback (M?nimo)
-Si una integraci?n causa incidencia:
+## ES - Incidentes y Rollback (Mínimo)
+Si una integración causa incidencia:
 1. Revertir el merge de la rama del problema.
-2. Ejecutar validaci?n de build correspondiente.
-3. Confirmar recuperaci?n del flujo base.
+2. Ejecutar validación de build correspondiente.
+3. Confirmar recuperación del flujo base.
 
 ## EN - Incidents and Rollback (Minimum)
 If an integration causes an incident:
@@ -340,13 +340,23 @@ If an integration causes an incident:
 2. Run the corresponding build validation.
 3. Confirm base flow recovery.
 
-## ES - Pendiente de Definici?n
+## ES - Pendiente de Definición
 - Roles y responsabilidades detalladas por agente.
-- Qu? s? y qu? no espec?fico por rol.
-- Est?ndares de calidad.
+- Qué sí y qué no específico por rol.
+- Estándares de calidad.
 - Formato de commits.
-- Reglas de PR/revisi?n.
+- Reglas de PR/revisión.
 - Formato de reportes de avance.
+
+## ES - Regla para Notas y Documentación Operativa
+- Toda nota nueva debe crearse dentro del directorio `notas/`.
+- Cuando el tema lo amerite para mejorar comprensión y mantenimiento, las notas deben organizarse en subdirectorios temáticos dentro de `notas/` (por ejemplo: `notas/supervision/`).
+- Evitar crear notas operativas nuevas fuera de `notas/` salvo que exista una razón técnica excepcional y explícita.
+
+## EN - Rule for Notes and Operational Documentation
+- Every new note must be created inside the `notas/` directory.
+- When it improves clarity and maintenance, notes should be organized into thematic subdirectories inside `notas/` (for example: `notas/supervision/`).
+- Avoid creating new operational notes outside `notas/` unless there is an explicit exceptional technical reason.
 
 ## EN - Pending Definition
 - Detailed roles and responsibilities per agent.
@@ -356,16 +366,16 @@ If an integration causes an incident:
 - PR/review rules.
 - Progress reporting format.
 
-## ES - Regla de Asignaci?n de Agente (Obligatoria)
+## ES - Regla de Asignación de Agente (Obligatoria)
 - Toda tarea debe iniciar indicando el agente responsable.
 - Si no se indica agente:
   - Usar `frontend-agent` por defecto para cambios en `src/`.
   - Usar `backend-agent` por defecto para cambios en `PHP`, rutas o controladores fuera de `src/`.
-- Si la tarea es crear o actualizar acciones modulares dentro de `apis_me/<modulo>/`:
+- Si la tarea es crear o actualizar acciones modulares dentro de `apis_me/<módulo>/`:
   - Usar `api-action-agent`.
 - Si la tarea combina estructura frontend y desarrollo visual:
   - Primero `frontend-structure-agent`.
-  - Despu?s `frontend-agent`.
+  - Después `frontend-agent`.
 - Si la tarea es documental:
   - Usar `documentation-agent`.
 
@@ -403,15 +413,15 @@ If an integration causes an incident:
 - Cuando un formulario se abre desde tareas (`source=task`), al completar `save-text` con `ID_RC` se debe ejecutar cierre de tarea.
 - Endpoint oficial de cierre:
   - `/apis_me/tareas/close/<ID_TAREA>/<CLV_CAPTURA>/<ESTATUS>/<ID_RC>/`
-- Orden obligatorio de parametros:
+- Orden obligatorio de parámetros:
   1. `ID_TAREA`
   2. `CLV_CAPTURA`
   3. `ESTATUS`
   4. `ID_RC`
-- `ID_USUARIO` no debe viajar en la ruta de `close`; se resuelve desde `session_context` del modulo `tareas`.
-- Despues de cerrar tarea correctamente:
-  - Actualizar catalogo local de `tareas`.
-  - Registrar tarea en catalogo local de terminadas.
+- `ID_USUARIO` no debe viajar en la ruta de `close`; se resuelve desde `session_context` del módulo `tareas`.
+- Después de cerrar tarea correctamente:
+  - Actualizar catálogo local de `tareas`.
+  - Registrar tarea en catálogo local de terminadas.
   - Sincronizar listado de tareas del usuario.
   - Redirigir flujo a `#/tareas` para reinicio operativo.
 
@@ -431,14 +441,14 @@ If an integration causes an incident:
   - Sync user task list.
   - Redirect to `#/tareas` to restart the operational flow.
 
-## ES - Endurecimiento de Sesion por Ruta (Frontend + Backend)
-- Toda ruta privada en hash del modulo app debe validar sesion activa contra PHP (fuente de verdad), no solo estado local.
-- Las rutas privadas registradas con `meta.requiresAuth` deben estar protegidas por guard global en `beforeEach` y verificacion de `getUser`.
-- Si una sesion expira durante navegacion:
-  - Mostrar aviso/modal de sesion expirada.
-  - Limpiar estado sensible local (usuario + formulario activo + caches de sesion en storage).
+## ES - Endurecimiento de Sesión por Ruta (Frontend + Backend)
+- Toda ruta privada en hash del módulo app debe validar sesión activa contra PHP (fuente de verdad), no solo estado local.
+- Las rutas privadas registradas con `meta.requiresAuth` deben estar protegidas por guard global en `beforeEach` y verificación de `getUser`.
+- Si una sesión expira durante navegación:
+  - Mostrar aviso/modal de sesión expirada.
+  - Limpiar estado sensible local (usuario + formulario activo + caches de sesión en storage).
   - Redirigir a `/login/default`.
-- Evitar loops de redireccion usando bandera de control de logout en progreso.
+- Evitar loops de redirección usando bandera de control de logout en progreso.
 
 ## EN - Route Session Hardening (Frontend + Backend)
 - Every private hash route in the app module must validate active session against PHP (source of truth), not only local state.
@@ -449,8 +459,8 @@ If an integration causes an incident:
   - Redirect to `/login/default`.
 - Prevent redirect loops with an in-progress logout/session-expired flag.
 
-## ES - Contrato de Sesion Expirada en API
-- El endpoint `apis_me/form-engine/index.php` debe responder JSON uniforme cuando no exista sesion valida:
+## ES - Contrato de Sesión Expirada en API
+- El endpoint `apis_me/form-engine/index.php` debe responder JSON uniforme cuando no exista sesión válida:
   - `success: false`
   - `code: "SESSION_EXPIRED"`
   - HTTP `401`

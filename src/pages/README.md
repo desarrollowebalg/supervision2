@@ -1,130 +1,91 @@
-# Páginas - Documentación
+# Páginas SPA
 
-Este directorio contiene las páginas de la SPA y sus entrypoints activos.
+Este directorio contiene las páginas activas de la aplicación y sus bases compartidas.
 
 ## Entrypoints
 
-- `src/pages/login/main.js`: inicializa login.
-- `src/pages/inicio/main.js`: inicializa shell post-login y registro de rutas hash.
+- `src/pages/login/main.js`: login y acceso inicial.
+- `src/pages/inicio/main.js`: shell post-login, registro de rutas y guard global.
 
-## Rutas activas registradas en inicio
+## Registro real de rutas
+
+Fuente de verdad:
+
+- `src/pages/inicio/main.js`
+
+Rutas actuales:
 
 - `#/inicio` -> `src/pages/Inicio.js`
+- `#/profile` -> `src/pages/profile/Profile.js`
+- `#/settings` -> `src/pages/settings.js`
 - `#/formularios` -> `src/pages/formularios/formularios.js`
 - `#/formularios/:indicator` -> `src/pages/formularios/form-evidencia.js`
+- `#/cuadrantes` -> `src/pages/cuadrantes/Cuadrantes.js`
 - `#/puntos-interes` -> `src/pages/puntosInteres/PuntosInteres.js`
+- `#/supervision` -> `src/pages/supervision/supervision.js`
+- `#/detalle-incidencia/:ide` -> `src/pages/supervision/DetalleIncidencia.js`
 - `#/tareas` -> `src/pages/tareas/Tareas.js`
+- `#/tareas/:taskId` -> `src/pages/tareas/TareaDetalle.js`
 - `#/timeline` -> `src/pages/evidencias/Timeline.js`
 
-## Detalle de formularios (schema dinámico)
+## Guard de sesión
 
-- La vista `#/formularios/:indicator` resuelve el formulario por:
-  1. Query param `clv` en hash (ej: `#/formularios/QST164127?clv=11770`).
-  2. Fallback por catálogo local usando `indicator` (`ITEM_NUMBER`) para recuperar `CLV`.
-- El detalle consume `GET /apis_me/form-engine/index.php?idformulario=<CLV>`.
-- El cuerpo del formulario se renderiza por componentes desde:
-  - `src/pages/formularios/schema-renderer/schema-form.renderer.js`
-  - `src/pages/formularios/schema-renderer/components/`
-- Tipos no soportados (`unsupported`) no bloquean la vista: se omiten en UI y se registran en consola.
+La SPA no confía solo en estado local.
+
+- Las rutas privadas se registran con `meta.requiresAuth: true`.
+- El `beforeEach` global de `src/pages/inicio/main.js` valida sesión real contra PHP usando `getUser()`.
+- Si la sesión expiró:
+  - limpia estado de usuario
+  - ejecuta `handleSessionExpired(...)`
+  - redirige a `/login/default`
 
 ## Layout compartido
 
-- `src/pages/inicio-layout.js` centraliza el shell (`header`, `sidebar`, `main`) y eventos comunes de navegación/logout.
-- Las páginas de `/inicio` reutilizan `renderInicioLayout(...)` para mantener consistencia visual y funcional.
+- `src/pages/inicio-layout.js` centraliza shell, header, sidebar y eventos comunes.
+- Las páginas autenticadas deben mantener consistencia con este layout.
 
 ## Patrón base para páginas de listado
 
-- Para páginas con estructura `título + subtítulo + buscador + barra de columnas + lista`, reutilizar `src/pages/shared/catalog-list-page.base.js`.
-- Esta base ya resuelve:
-  - integración con `renderInicioLayout(...)`
-  - buscador responsive con toggle en mobile
-  - barra de cabecera para columnas
-  - badge de conteo
-  - estilos compatibles con `light/dark`
-  - hover de filas conectado a tokens globales de tema
-- Referencia activa:
-  - `src/pages/puntosInteres/PuntosInteres.js`
-  - `src/pages/formularios/formularios.js`
-- Diagrama y flujo de creación:
-  - `src/pages/shared/CATALOG_LIST_PAGE_FLOW.md`
+Cuando una vista comparta este patrón:
 
-### Cómo crear una nueva página basada en este patrón
+- título
+- subtítulo
+- buscador
+- barra de columnas
+- lista
 
-1. Crear una clase Singleton en `src/pages/<modulo>/<Pagina>.js`.
-2. Extender `CatalogListPageBase`.
-3. Llamar `renderCatalogListPage(...)` dentro de `render(...)`.
-4. Conectar `bindCatalogMobileSearchToggle(container)` si hay buscador.
-5. Renderizar items con `renderCatalogList(...)`.
-6. Mantener cualquier ajuste visual extra como complemento, no como reemplazo del patrón.
+debe reutilizar:
 
-Ejemplo base:
+- `src/pages/shared/catalog-list-page.base.js`
 
-```js
-import { CatalogListPageBase } from '../shared/catalog-list-page.base.js';
+Referencias activas:
 
-export default class MiListado extends CatalogListPageBase {
-  static instancia = null;
+- `src/pages/puntosInteres/PuntosInteres.js`
+- `src/pages/formularios/formularios.js`
 
-  constructor() {
-    if (MiListado.instancia) {
-      return MiListado.instancia;
-    }
+Guías:
 
-    super();
-    this.items = [];
-    MiListado.instancia = this;
-  }
+- `src/pages/shared/CATALOG_LIST_PAGE_FLOW.md`
+- `notas/COMO_CREAR_PAGINA_DESDE_CERO.md`
 
-  async inicializar(container) {
-    if (container) {
-      this.render(container);
-    }
-    return this;
-  }
+## Cómo crear una página nueva
 
-  render(container) {
-    this.renderCatalogListPage(container, {
-      title: 'Mi listado',
-      description: 'Consulta elementos disponibles.',
-      searchPlaceholder: 'Buscar por nombre',
-      searchInputId: 'miListadoSearchInput',
-      stateContainerId: 'miListadoStateContainer'
-    });
+Guía operativa completa:
 
-    this.bindCatalogMobileSearchToggle(container);
-    this.renderItems(container.querySelector('#miListadoStateContainer'));
-  }
+- `notas/COMO_CREAR_PAGINA_DESDE_CERO.md`
 
-  renderItems(stateContainer) {
-    this.renderCatalogList(stateContainer, {
-      items: this.items,
-      emptyMessage: 'No hay elementos para mostrar.',
-      mobileCounterLabel: 'Total de resultados',
-      desktopHeaderLabel: 'Nombre / Clave',
-      renderMobileItem: (item) => `
-        <li class="catalog-list__item">
-          <article class="catalog-row catalog-row--mobile uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-small">
-            <h3 class="uk-margin-remove-bottom uk-text-bold catalog-row__title">${this.escapeHtml(item.nombre)}</h3>
-            <p class="uk-margin-small-top uk-margin-remove-bottom catalog-row__meta">Clave: ${this.escapeHtml(item.clave)}</p>
-          </article>
-        </li>
-      `,
-      renderDesktopItem: (item) => `
-        <li class="catalog-list__item uk-padding-small uk-padding-remove-top uk-padding-remove-bottom">
-          <article class="catalog-row catalog-row--desktop uk-border-rounded uk-padding-small">
-            <h3 class="uk-margin-remove-bottom catalog-row__title">${this.escapeHtml(item.nombre)}</h3>
-            <p class="uk-margin-small-top uk-margin-remove-bottom catalog-row__meta">Clave: ${this.escapeHtml(item.clave)}</p>
-          </article>
-        </li>
-      `
-    });
-  }
-}
-```
+Esa nota cubre:
 
-## Convención de clases de página (Singleton)
+- decisión de patrón
+- clase base Singleton
+- registro de ruta
+- conexión con sidebar o vista origen
+- casos especiales como `supervision`
+- validación final
 
-Las clases nuevas o modificadas en `src/pages/**` deben seguir estructura Singleton como base:
+## Convención de clase de página
+
+Base recomendada:
 
 ```js
 export default class MiPagina {
@@ -139,15 +100,7 @@ export default class MiPagina {
     MiPagina.instancia = this;
   }
 
-  async inicializar(container, params = {}) {
-    if (container) {
-      this.render(container, params);
-    }
-
-    return this;
-  }
-
-  render(container, params = {}) {
+  render(container, params = {}, query = {}) {
     container.innerHTML = '<div>Contenido</div>';
   }
 
@@ -157,28 +110,54 @@ export default class MiPagina {
 }
 ```
 
-## Flujo de autenticación
+## Formularios
 
-1. Login en `/login/default`.
-2. Si autentica, redirección a `/inicio/default`.
-3. La SPA continúa en rutas hash (`#/...`).
+### Resolución de detalle
 
-## Persistencia local en formulario activo (autosave)
+- Ruta: `#/formularios/:indicator`
+- Prioridad de `CLV`:
+  1. query param `clv`
+  2. catálogo local `ITEM_NUMBER -> CLV`
 
-- La vista `#/formularios/:indicator` registra referencia activa por formulario usando `indicator + CLV`.
-- Se guarda un snapshot del `schema` y respuestas en `localStorage` por formulario activo.
-- El autosave se dispara al perder foco (`focusout`) y en cambios (`change`) para cubrir inputs visuales.
-- Debajo del título del formulario se muestra estado pequeño de guardado automático con hora.
+### Renderer modular
 
-## Submit actual
+- Orquestador:
+  - `src/pages/formularios/schema-renderer/schema-form.renderer.js`
+- Componentes por tipo:
+  - `src/pages/formularios/schema-renderer/components/`
 
-- Al enviar, se consume `POST /apis_me/evidences/save-text` para respuestas no visuales.
-- Los campos visuales `photo`, `gallery` y `signature` se suben al momento de captura via `POST /apis_me/evidences/save-photos`.
-- El valor persistido en `input[type=file]` + `input[type=hidden]` para esos campos es la referencia devuelta por backend (`s3Name`), no base64.
+### Reglas de evidencia
 
-## Componentes HTML visuales
+- `photo`, `gallery`, `signature` siguen siendo preguntas del formulario.
+- Se suben primero a `save-photos`.
+- En `save-text` solo viaja la referencia S3 persistida.
 
-- `photo` y `gallery` mantienen `input[type=file]` + `input[type=hidden]` y boton para seleccionar de nuevo.
-- `signature` mantiene canvas, boton `Limpiar` y reintento manual de envio.
-- Cada campo visual muestra estado discreto no bloqueante: `idle`, `uploading`, `uploaded`, `error`.
-- En error de subida se habilita reintento manual por campo.
+## Tareas
+
+Cuando un formulario viene de tareas (`source=task`):
+
+1. Se envía `save-text`.
+2. Si regresa `ID_RC`, se ejecuta:
+   - `/apis_me/tareas/close/<ID_TAREA>/<CLV_CAPTURA>/<ESTATUS>/<ID_RC>/`
+3. Se actualizan catálogos locales.
+4. Se redirige a `#/tareas`.
+
+Referencia detallada:
+
+- `src/pages/tareas/README.md`
+
+## Supervisión
+
+El sidebar izquierdo no es hardcoded por página para cambios declarativos.
+
+- Configuración por cliente:
+  - `doctosSupervision/<clienteId>/supervision-sidebar.json`
+- Servicio de lectura:
+  - `src/pages/supervision/services/supervision-sidebar-config.service.js`
+- Normalización:
+  - `src/pages/supervision/services/supervision-sidebar-config.normalizer.js`
+
+Referencias:
+
+- `src/pages/supervision/SUPERVISION_SIDEBAR_CONFIG.md`
+- `doctosSupervision/1/README.md`

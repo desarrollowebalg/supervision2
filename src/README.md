@@ -1,79 +1,156 @@
-# Frontend - Directorio src/
+# Frontend `src/`
 
-Arquitectura frontend basada en **Vanilla JavaScript (ES Modules)**, **Vite** y **UIKit**.
+Arquitectura frontend actual basada en:
 
-## Estructura
+- Vanilla JavaScript con ES Modules
+- Vite
+- UIkit CSS como base obligatoria de UI
+- SPA con hash routing montada dentro de `/inicio/default`
+
+## Estructura real
 
 ```text
 src/
+├── components/                  # Web Components y piezas reutilizables
 ├── core/
-│   ├── bootstrap.js
-│   ├── router.js
-│   ├── store.js
-│   ├── ui.js
-│   └── services/
+│   ├── bootstrap.js             # Hidratación inicial de sesión/tema
+│   ├── router.js                # Router hash de la SPA
+│   ├── store.js                 # Estado global simple del usuario
+│   └── services/                # Servicios singleton y acceso a APIs
 ├── pages/
-│   ├── login/
-│   │   ├── main.js
-│   │   ├── LoginPage.js
-│   │   └── login.css
-│   ├── inicio/
-│   │   └── main.js
-│   ├── Inicio.js
-│   ├── Dashboard.js
-│   ├── Users.js
-│   ├── UserDetail.js
-│   └── SearchResults.js
-├── components/
-├── styles/
-└── utils/
+│   ├── login/                   # Entry/login page
+│   ├── inicio/                  # Entry de la SPA post-login
+│   ├── formularios/
+│   ├── supervision/
+│   ├── tareas/
+│   ├── puntosInteres/
+│   ├── cuadrantes/
+│   ├── evidencias/
+│   └── shared/                  # Bases compartidas de páginas
+├── styles/                      # Tokens y estilos globales
+└── utils/                       # Utilidades de runtime
 ```
 
-## Flujo de aplicación
+## Flujo general de aplicación
 
 1. Usuario entra a `/login/default`.
-2. PHP carga el entrypoint `src/pages/login/main.js`.
-3. Login valida usuario y autentica contra backend.
-4. Si el login es correcto, redirige a `/inicio/default`.
-5. `src/pages/inicio/main.js` monta el shell SPA y router hash (`#/inicio`, `#/dashboard`, etc).
+2. PHP resuelve el entrypoint `src/pages/login/main.js`.
+3. Si el login es exitoso, se redirige a `/inicio/default`.
+4. `src/pages/inicio/main.js` inicializa la shell SPA.
+5. Dentro de `/inicio/default`, la navegación continúa vía hash: `#/inicio`, `#/formularios`, `#/supervision`, etc.
 
-## Routing
+## Entrypoints activos
 
-- Base híbrida PHP + SPA hash routing.
-- Ejemplo URL: `/inicio/default#/dashboard`.
-- Registro de rutas en `src/pages/inicio/main.js`.
-- Las rutas privadas (`meta.requiresAuth`) se validan en guard global contra sesion PHP (via `getUser`), no solo por estado local.
-- Si la sesion expira durante navegacion, se activa flujo central: aviso, limpieza de estado sensible y redireccion a `/login/default`.
+- `src/pages/login/main.js`
+- `src/pages/inicio/main.js`
 
-## Estado y servicios
+## Rutas activas registradas hoy
 
-- `src/core/store.js`: estado global simple (usuario).
-- `src/core/services/authService.js`: login/logout/getUser.
-- `src/core/services/api.js`: wrapper de `fetch` con credenciales de sesión.
-- `src/core/services/session-expiration.service.js`: manejo centralizado de sesion expirada (evita loops y limpia estado local sensible).
-- `src/core/services/storage.service.js`: utilidades local/session storage.
+Archivo de referencia:
 
-## PWA
+- `src/pages/inicio/main.js`
 
-- La generación del service worker/manifest sigue en `vite-plugin-pwa`.
-- El registro en runtime se hace con vanilla JS en `src/utils/pwa-register.js` usando `navigator.serviceWorker`.
+Rutas:
 
-## Build
+- `#/inicio`
+- `#/profile`
+- `#/settings`
+- `#/formularios`
+- `#/formularios/:indicator`
+- `#/cuadrantes`
+- `#/puntos-interes`
+- `#/supervision`
+- `#/detalle-incidencia/:ide`
+- `#/tareas`
+- `#/tareas/:taskId`
+- `#/timeline`
+
+## Layout base
+
+- `src/pages/inicio-layout.js` monta la shell autenticada:
+  - `header-component`
+  - `sidebar-menu-component`
+  - contenedor principal de contenido
+- Las páginas autenticadas deben apoyarse en esta shell directa o indirectamente.
+
+## Convenciones vigentes
+
+### UI
+
+- Todo layout nuevo debe partir de clases `uk-*`.
+- Priorizar componentes y utilidades UIkit antes que CSS custom.
+- Evitar `style=""`, convenciones de otros frameworks y `!important` salvo compatibilidad puntual documentada.
+
+### Clases de frontend
+
+- Las clases nuevas o modificadas deben seguir patrón Singleton.
+- La forma habitual de página sigue `constructor()` + `render(container, params, query)` y `destroy()` opcional.
+
+### Servicios y APIs del navegador
+
+- Toda API del navegador reutilizable debe centralizarse en `src/core/services/`.
+- Ejemplos activos:
+  - `connectivity.service.js`
+  - `storage.service.js`
+  - `theme.service.js`
+  - `geolocation.service.js`
+
+### Catálogos frontend
+
+- El almacenamiento local oficial es IndexedDB con Dexie.
+- Base obligatoria:
+  - `src/core/services/catalog-indexeddb.service.js`
+- Referencia principal:
+  - `src/core/services/apis-me/forms.service.js`
+
+## Patrones de páginas
+
+### Página general
+
+- Crear clase en `src/pages/<modulo>/<Pagina>.js`
+- Registrar ruta en `src/pages/inicio/main.js`
+- Conectar navegación desde sidebar o vista origen según aplique
+
+### Página tipo listado
+
+Si la vista comparte patrón:
+
+- título
+- subtítulo
+- buscador
+- barra de columnas
+- lista
+
+entonces debe reutilizar:
+
+- `src/pages/shared/catalog-list-page.base.js`
+
+Referencias:
+
+- `src/pages/puntosInteres/PuntosInteres.js`
+- `src/pages/formularios/formularios.js`
+- `src/pages/shared/CATALOG_LIST_PAGE_FLOW.md`
+- `notas/COMO_CREAR_PAGINA_DESDE_CERO.md`
+
+## Módulos especiales
+
+### Formularios
+
+- `#/formularios/:indicator` resuelve `CLV` por query `clv` o catálogo local.
+- El schema renderer vive en:
+  - `src/pages/formularios/schema-renderer/schema-form.renderer.js`
+  - `src/pages/formularios/schema-renderer/components/`
+
+### Supervisión
+
+- El sidebar de `supervision` depende de configuración externa por cliente:
+  - `doctosSupervision/<clienteId>/supervision-sidebar.json`
+- Si un cambio es solo de nombre, color, orden o visibilidad del sidebar, se modifica primero el JSON del cliente, no la página.
+
+## Validación mínima
+
+Si se toca `src/`, ejecutar al menos:
 
 ```bash
-npm run dev
 npm run build
 ```
-
-Entradas en `vite.config.js`:
-
-- `login`: `src/pages/login/main.js`
-- `inicio`: `src/pages/inicio/main.js`
-
-## Convenciones
-
-- Componentes/páginas: clases ES6 con `render(container)`.
-- Navegación programática: `navigate('/ruta')`.
-- Lazy loading para páginas secundarias cuando conviene.
-- Estilos globales en `src/styles`, estilos de feature junto a su página.
-- Base visual y tipografica debe apoyarse en UIkit (`uk-*`), minimizando `font-size` inline y overrides tipograficos globales.

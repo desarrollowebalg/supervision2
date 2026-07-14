@@ -1,233 +1,135 @@
-# Servicios - Documentación
+# Servicios Core
 
-## Estructura Actual
+`src/core/services/` concentra servicios reutilizables del frontend.
 
-La aplicación utiliza una arquitectura de servicios en dos niveles:
+Regla vigente:
 
-### 1. Servicios Core (`src/core/services/`)
+- cualquier acceso reutilizable a APIs del navegador debe centralizarse aquí
+- la implementación debe favorecer patrón Singleton
+- la capa de vista consume servicios; no duplica listeners o chequeos transversales por archivo
 
-**Propósito:** Servicios de infraestructura y utilidades base que son transversales a toda la aplicación.
+## Mapa real de servicios
 
-**Ubicación:** `src/core/services/`
+### Infraestructura base
 
-**Servicios actuales:**
+- `api.js`
+  - cliente HTTP compartido
+  - envío con credenciales y normalización de respuestas/error
 
-- **`api.js`** - Cliente HTTP genérico (wrapper de fetch)
-  - Manejo de peticiones HTTP (GET, POST, PUT, DELETE)
-  - Configuración de headers
-  - Manejo básico de errores de red
-  - Base para todos los servicios que consumen APIs
+- `authService.js`
+  - `validarUsername`
+  - `login`
+  - `logoutApp`
+  - `getUser`
 
-- **`authService.js`** - Servicios de autenticación
-  - `login(username, password)` - Iniciar sesión
-  - `logout()` - Cerrar sesión
-  - `getUser()` - Obtener datos del usuario actual
-  - Integración con el store de usuario
+- `storage.service.js`
+  - acceso central a `localStorage` y `sessionStorage`
 
-- **`storage.service.js`** - Abstracción de almacenamiento local
-  - Implementación Singleton
-  - API dual: localStorage + sessionStorage
-  - `setItem()`, `getItem()`, `removeItem()`, `clear()`
-  - `setSessionItem()`, `getSessionItem()`, etc.
+- `session-expiration.service.js`
+  - flujo central de sesión expirada
+  - evita loops y limpia estado sensible
 
-**Características:**
-- ✅ No dependen de lógica de negocio específica
-- ✅ Reutilizables en cualquier módulo
-- ✅ Abstracciones de bajo nivel
+- `theme.service.js`
+  - preferencia de tema
+  - sincronización light/dark
 
-### 2. Servicios de Dominio (`src/services/`) - FUTURO
+- `connectivity.service.js`
+  - estado online/offline y suscripción centralizada
 
-**Propósito:** Servicios específicos de lógica de negocio y dominios de la aplicación.
+- `geolocation.service.js`
+  - acceso reusable a geolocalización
 
-**Ubicación:** `src/services/` (se creará cuando sea necesario)
+### Persistencia local
 
-**Ejemplos de servicios futuros:**
+- `catalog-indexeddb.service.js`
+  - base oficial de catálogos con IndexedDB + Dexie
 
-- `userService.js` - Lógica de negocio de usuarios
-  - CRUD de usuarios
-  - Validaciones específicas de usuarios
-  - Transformación de datos de usuario
+- `evidence-indexeddb.service.js`
+  - almacenamiento local relacionado con evidencias
 
-- `notificationService.js` - Gestión de notificaciones
-  - Envío de notificaciones
-  - Historial de notificaciones
-  - Preferencias de notificación
+### Servicios frontend de soporte funcional
 
-- `dashboardService.js` - Lógica del dashboard
-  - Obtención de métricas
-  - Cálculos y agregaciones
-  - Integración de datos de múltiples fuentes
+- `photo-upload.service.js`
+  - subida inmediata de evidencias visuales
 
-**Características futuras:**
-- ⏳ Encapsulan lógica de negocio específica
-- ⏳ Pueden usar servicios core como dependencias
-- ⏳ Específicos a features/módulos de la aplicación
+- `form-themes.service.js`
+  - lectura de `/config/form-themes.json`
 
-## Diferencias Clave
+- `supervision-date-range.service.js`
+  - resolución de rangos/fechas para supervisión
 
-| Aspecto | Core Services | Domain Services |
-|---------|--------------|-----------------|
-| **Ubicación** | `src/core/services/` | `src/services/` |
-| **Propósito** | Infraestructura base | Lógica de negocio |
-| **Dependencias** | Ninguna o mínimas | Pueden usar core services |
-| **Ejemplos** | HTTP, Auth, Storage | Users, Products, Orders |
-| **Reutilización** | En toda la aplicación | En módulos específicos |
-| **Abstracción** | Bajo nivel (técnica) | Alto nivel (negocio) |
+## Servicios `apis-me`
 
-## Patrones de Uso
+Subdirectorio:
 
-### Uso de Servicios Core
+- `src/core/services/apis-me/`
 
-```javascript
-// Desde cualquier componente o módulo
-import api from '../../core/services/api.js';
-import { login, logout } from '../../core/services/authService.js';
-import StorageService from '../../core/services/storage.service.js';
+Aquí vive la integración modular con backend y catálogos del dominio.
 
-// Uso directo
-const response = await api('/endpoint', { method: 'POST', body: data });
-await login(username, password);
-StorageService.getInstance().setItem('key', 'value');
-```
+Archivos actuales:
 
-### Uso de Servicios de Dominio (Futuro)
+- `client.js`
+- `catalog-sync.service.js`
+- `session-catalog-context.service.js`
+- `payloads.service.js`
+- `forms.service.js`
+- `form-engine.service.js`
+- `evidences.service.js`
+- `tareas.service.js`
+- `task-active.service.js`
+- `task-completed.service.js`
+- `task-status-state.service.js`
+- `pdis.service.js`
+- `cuadrantes.service.js`
+- `incidencias.service.js`
+- `usuarios.service.js`
+- `entidad.service.js`
 
-```javascript
-// En componentes que necesitan lógica de negocio
-import UserService from '../../services/userService.js';
-import NotificationService from '../../services/notificationService.js';
+## Reglas operativas importantes
 
-// Los servicios de dominio internamente usan servicios core
-const users = await UserService.getAllUsers(); // Usa api.js internamente
-await NotificationService.send('mensaje'); // Usa api.js + lógica específica
-```
+### Catálogos
 
-## Cuándo Crear un Servicio de Dominio
+- el almacenamiento local oficial es IndexedDB con Dexie
+- lectura preferente: cache-first
+- actualización remota: `forceRefresh` cuando aplique
+- si no existe `user.id`, no se debe sincronizar por red
 
-Crea un servicio de dominio cuando:
+Referencia:
 
-- ✅ Hay lógica de negocio compleja que se repite en múltiples componentes
-- ✅ Necesitas transformar o validar datos de manera específica para un dominio
-- ✅ Hay múltiples endpoints API relacionados a una entidad/feature
-- ✅ Quieres centralizar la lógica para facilitar testing
+- `src/core/services/apis-me/CATALOG_STORAGE_INDEXEDDB.md`
 
-**NO** crear un servicio de dominio si:
+### APIs del navegador
 
-- ❌ La lógica es muy simple (una sola llamada API sin transformación)
-- ❌ Se usa en un solo lugar (mantenerlo en el componente)
-- ❌ Es infraestructura genérica (debería ir en core services)
+Antes de usar directamente:
 
-## Ejemplo de Implementación
+- `navigator.onLine`
+- `localStorage`
+- `sessionStorage`
+- geolocalización
+- permisos
 
-### Servicio Core (Actual)
+validar si ya existe servicio compartido. Si no existe y el comportamiento es reutilizable, crearlo aquí primero.
 
-```javascript
-// src/core/services/api.js
-export default async function api(endpoint, options = {}) {
-  const baseUrl = 'http://localhost';
-  
-  try {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Accept': 'application/json',
-        ...options.headers
-      }
-    });
-    
-    return await response.json();
-  } catch (error) {
-    return { success: false, message: 'Error de conexión' };
-  }
-}
-```
+### Formularios
 
-### Servicio de Dominio (Ejemplo Futuro)
+- el acceso al schema debe pasar por servicios y renderer modular
+- las evidencias visuales se suben primero y luego su referencia S3 viaja en `save-text`
 
-```javascript
-// src/services/userService.js (FUTURO)
-import api from '../core/services/api.js';
+### Sesión
 
-class UserService {
-  async getAllUsers() {
-    const response = await api('/api/users');
-    
-    // Lógica de negocio: transformar datos
-    if (response.success) {
-      return response.data.map(user => ({
-        ...user,
-        fullName: `${user.firstName} ${user.lastName}`,
-        isActive: user.status === 'active'
-      }));
-    }
-    
-    throw new Error('Error al obtener usuarios');
-  }
-  
-  async createUser(userData) {
-    // Validaciones de negocio
-    this.validateUserData(userData);
-    
-    const formData = new FormData();
-    formData.append('name', userData.name);
-    formData.append('email', userData.email);
-    
-    return await api('/api/users', {
-      method: 'POST',
-      body: formData
-    });
-  }
-  
-  validateUserData(data) {
-    if (!data.email.includes('@')) {
-      throw new Error('Email inválido');
-    }
-    // Más validaciones específicas...
-  }
-}
+- la sesión real la valida PHP
+- `getUser()` es la referencia para guardas y verificación de autenticación
 
-export default new UserService(); // Singleton
-```
+## Cuándo crear un servicio nuevo
 
-## Migración de Lógica
+Crea un servicio en `src/core/services/` o `src/core/services/apis-me/` cuando:
 
-A medida que la aplicación crezca, considera mover lógica de componentes a servicios de dominio:
+- la lógica se reutiliza en más de una vista
+- encapsula una API del navegador o un endpoint del backend
+- requiere persistencia local compartida
+- evita listeners/chequeos duplicados
 
-**Antes (lógica en componente):**
-```javascript
-// En Dashboard.js
-async loadData() {
-  const response = await api('/api/dashboard/stats');
-  this.stats = response.data;
-  this.calculatePercentages(); // Lógica de negocio en componente
-}
-```
+No lo crees cuando:
 
-**Después (lógica en servicio):**
-```javascript
-// En services/dashboardService.js
-async getStats() {
-  const response = await api('/api/dashboard/stats');
-  return this.calculatePercentages(response.data);
-}
-
-// En Dashboard.js
-async loadData() {
-  this.stats = await DashboardService.getStats(); // Componente más limpio
-}
-```
-
-## Convenciones
-
-1. **Nombres de archivo:** camelCase con sufijo "Service" (ej: `userService.js`)
-2. **Export:** Preferir singleton para servicios stateless
-3. **Errores:** Lanzar errores específicos, no retornar booleanos
-4. **Async:** Todos los métodos que llamen APIs deben ser async
-5. **Documentación:** JSDoc para métodos públicos
-
-## Notas
-
-- Los servicios core **NO DEBEN** importar servicios de dominio
-- Los servicios de dominio **PUEDEN** importar servicios core
-- Los componentes **PUEDEN** importar cualquier servicio
-- Evitar dependencias circulares entre servicios de dominio
+- la lógica es estrictamente visual y local a una sola página
+- no existe potencial real de reutilización
