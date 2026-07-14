@@ -73,6 +73,7 @@ function normalizeDetalleIncidencia(row) {
     STT_DESC: String(row?.STT_DESC || '').trim(),
     TURNO: String(row?.TURNO || '').trim(),
     IDE: String(row?.IDE || '').trim(),
+    IDI: String(row?.IDI || '0').trim() || '0',
     IDR: String(row?.IDR || '').trim(),
     NVL: normalizeDetalleNivelValue(row?.NVL)
   };

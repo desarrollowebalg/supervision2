@@ -23,7 +23,7 @@ Rutas actuales:
 - `#/cuadrantes` -> `src/pages/cuadrantes/Cuadrantes.js`
 - `#/puntos-interes` -> `src/pages/puntosInteres/PuntosInteres.js`
 - `#/supervision` -> `src/pages/supervision/supervision.js`
-- `#/detalle-incidencia/:ide` -> `src/pages/supervision/DetalleIncidencia.js`
+- `#/supervision/detalle/:ide/:idi/` -> `src/pages/supervision/DetalleIncidencia.js`
 - `#/tareas` -> `src/pages/tareas/Tareas.js`
 - `#/tareas/:taskId` -> `src/pages/tareas/TareaDetalle.js`
 - `#/timeline` -> `src/pages/evidencias/Timeline.js`

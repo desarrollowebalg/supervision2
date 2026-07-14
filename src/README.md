@@ -60,7 +60,7 @@ Rutas:
 - `#/cuadrantes`
 - `#/puntos-interes`
 - `#/supervision`
-- `#/detalle-incidencia/:ide`
+- `#/supervision/detalle/:ide/:idi/`
 - `#/tareas`
 - `#/tareas/:taskId`
 - `#/timeline`

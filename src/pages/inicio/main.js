@@ -41,7 +41,7 @@ if (!user.isAuthenticated) {
   registerRoute('/cuadrantes', Cuadrantes, { meta: { title: 'Cuadrantes', requiresAuth: true } });
   registerRoute('/puntos-interes', PuntosInteres, { meta: { title: 'Puntos de interés', requiresAuth: true } });
   registerRoute('/supervision', Supervision, { meta: { title: 'Supervisión', requiresAuth: true } });
-  registerRoute('/detalle-incidencia/:ide', DetalleIncidencia, { meta: { title: 'Detalle de incidencia', requiresAuth: true } });
+  registerRoute('/supervision/detalle/:ide/:idi/', DetalleIncidencia, { meta: { title: 'Detalle de incidencia', requiresAuth: true } });
   registerRoute('/tareas', Tareas, { meta: { title: 'Tareas', requiresAuth: true } });
   registerRoute('/tareas/:taskId', TareaDetalle, { meta: { title: 'tarea-detalle', requiresAuth: true } });
   registerRoute('/timeline', Timeline, { meta: { title: 'Timeline', requiresAuth: true } });

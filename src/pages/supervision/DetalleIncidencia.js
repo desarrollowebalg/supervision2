@@ -18,8 +18,9 @@ export default class DetalleIncidencia {
   render(container, params = {}) {
     this.container = container;
     this.params = params;
-
+    console.log("parámetros del detalle: ",this.params)
     const ide = String(params?.ide || '').trim();
+    const idi = String(params?.idi || '0').trim() || '0';
     const previousLabel = this.navigationContext?.state?.previousLabel || 'Supervisión';
 
     renderInicioLayout(container, {
@@ -42,6 +43,9 @@ export default class DetalleIncidencia {
             <h1 class="uk-card-title uk-margin-small-top uk-margin-remove-bottom">
               Incidencia ${this.escapeHtml(ide || 'sin identificador')}
             </h1>
+            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">
+              IDE: ${this.escapeHtml(ide || 'N/D')} | IDI: ${this.escapeHtml(idi)}
+            </p>
             <div class="uk-alert-primary uk-border-rounded uk-margin-top" uk-alert>
               <p class="uk-margin-remove">
                 Esta página se preparó como destino inicial del flujo. Aquí se mostrará el detalle completo de la incidencia en la siguiente fase.

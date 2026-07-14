@@ -749,6 +749,7 @@ function renderTableShell({
                               class="uk-icon-button"
                               type="button"
                               data-open-detail-page="${escapeHtml(record.IDE)}"
+                              data-open-detail-idi="${escapeHtml(record.IDI || '0')}"
                               aria-label="Ver detalle ${escapeHtml(record.IDE)}"
                               title="Ver detalle"
                             >
@@ -1071,8 +1072,9 @@ export function createSupervisionDetailPanel({ container }) {
     const openDetailTrigger = event.target?.closest('[data-open-detail-page]');
     if (openDetailTrigger) {
       const ide = openDetailTrigger.getAttribute('data-open-detail-page') || '';
+      const idi = openDetailTrigger.getAttribute('data-open-detail-idi') || '0';
       notifyOpenDetailPage();
-      navigate(`/detalle-incidencia/${encodeURIComponent(ide)}`, {
+      navigate(`/supervision/detalle/${encodeURIComponent(ide)}/${encodeURIComponent(idi)}/`, {
         state: {
           from: getCurrentPath(),
           previousLabel: currentSelection?.panelTitle || 'Supervisión'

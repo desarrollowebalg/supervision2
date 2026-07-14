@@ -133,14 +133,18 @@ function getHashPath() {
  */
 function pathToRegex(path) {
   const paramNames = [];
-  
-  // Convertir :param a grupos de captura
-  const regexPattern = path
-    .replace(/\//g, '\\/')
-    .replace(/:([^\/]+)/g, (match, paramName) => {
-      paramNames.push(paramName);
-      return '([^\\/]+)';
-    });
+
+  const regexPattern = String(path || '')
+    .split('/')
+    .map((segment) => {
+      if (segment.startsWith(':')) {
+        paramNames.push(segment.slice(1));
+        return '([^\\/]+)';
+      }
+
+      return segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    })
+    .join('\\/');
   
   return {
     regex: new RegExp(`^${regexPattern}$`),

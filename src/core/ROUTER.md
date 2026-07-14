@@ -7,7 +7,7 @@ Documentación del router real usado por la app en:
 ## Qué resuelve hoy
 
 - hash routing (`#/ruta`)
-- parámetros dinámicos (`:indicator`, `:taskId`, `:ide`)
+- parámetros dinámicos (`:indicator`, `:taskId`, `:ide`, `:idi`)
 - query strings dentro del hash
 - guards globales y por ruta
 - metadata por ruta
@@ -151,7 +151,7 @@ Ejemplos reales de patrones activos:
 
 - `/formularios/:indicator`
 - `/tareas/:taskId`
-- `/detalle-incidencia/:ide`
+- `/supervision/detalle/:ide/:idi/`
 
 Ejemplo de URL:
 
