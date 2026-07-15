@@ -1,4 +1,5 @@
 import { validarUsername, login } from '../../core/services/authService.js';
+import { consumePostLoginRedirect } from '../../core/services/post-login-redirect.service.js';
 import { setUser } from '../../core/store.js';
 import { storageService } from '../../core/services/storage.service.js';
 import { syncAllCatalogs } from '../../core/services/apis-me/catalog-sync.service.js';
@@ -157,6 +158,12 @@ export default class LoginPage {
     } catch (entidadError) {
       console.error('Post-login entidad/entity failed:', entidadError);
       storageService.setSessionItem(ENTITY_VALIDATION_ERROR_KEY, 'Error de conexión');
+    }
+
+    const redirectPath = consumePostLoginRedirect();
+    if (redirectPath) {
+      window.location.href = `/app/default#${redirectPath}`;
+      return;
     }
 
     window.location.href = '/app/default';

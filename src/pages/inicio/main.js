@@ -5,6 +5,7 @@ import '../../utils/pwa-register.js';
 import { initApp } from '../../core/bootstrap.js';
 import { getUserState, setUser } from '../../core/store.js';
 import { getUser } from '../../core/services/authService.js';
+import { buildLoginRedirectUrl, savePostLoginRedirect } from '../../core/services/post-login-redirect.service.js';
 import { handleSessionExpired } from '../../core/services/session-expiration.service.js';
 import { initRouter, registerRoute, navigate, render } from '../../core/router.js';
 
@@ -21,11 +22,33 @@ import Tareas from '../tareas/Tareas.js';
 import TareaDetalle from '../tareas/TareaDetalle.js';
 import Timeline from '../evidencias/Timeline.js';
 
+function hasSessionUserIdentity(sessionCheck) {
+  const payloads = [
+    sessionCheck,
+    sessionCheck?.user,
+    sessionCheck?.data
+  ];
+
+  return payloads.some((payload) => Boolean(
+    payload?.id
+    || payload?.ID_USUARIO
+    || payload?.user
+    || payload?.usuario
+  ));
+}
+
 await initApp();
 
 const user = getUserState();
+const requestedHashPath = window.location.hash.slice(1);
+
 if (!user.isAuthenticated) {
-  window.location.href = '/login/default';
+  if (requestedHashPath) {
+    savePostLoginRedirect(requestedHashPath, { source: 'app-entry' });
+    window.location.href = buildLoginRedirectUrl(requestedHashPath);
+  } else {
+    window.location.href = '/login/default';
+  }
 } else {
   const container = document.querySelector('#appMain');
   container.className = 'app-layout';
@@ -41,6 +64,7 @@ if (!user.isAuthenticated) {
   registerRoute('/cuadrantes', Cuadrantes, { meta: { title: 'Cuadrantes', requiresAuth: true } });
   registerRoute('/puntos-interes', PuntosInteres, { meta: { title: 'Puntos de interés', requiresAuth: true } });
   registerRoute('/supervision', Supervision, { meta: { title: 'Supervisión', requiresAuth: true } });
+  registerRoute('/supervision/detalle/:ide/:idi', DetalleIncidencia, { meta: { title: 'Detalle de incidencia', requiresAuth: true } });
   registerRoute('/supervision/detalle/:ide/:idi/', DetalleIncidencia, { meta: { title: 'Detalle de incidencia', requiresAuth: true } });
   registerRoute('/tareas', Tareas, { meta: { title: 'Tareas', requiresAuth: true } });
   registerRoute('/tareas/:taskId', TareaDetalle, { meta: { title: 'tarea-detalle', requiresAuth: true } });
@@ -50,13 +74,7 @@ if (!user.isAuthenticated) {
     beforeEach: async (context) => {
       if (context?.meta?.requiresAuth) {
         const sessionCheck = await getUser();
-        const sessionValid = Boolean(sessionCheck?.success)
-          && Boolean(
-            sessionCheck?.user?.id
-            || sessionCheck?.user?.ID_USUARIO
-            || sessionCheck?.data?.id
-            || sessionCheck?.id
-          );
+        const sessionValid = Boolean(sessionCheck?.success) && hasSessionUserIdentity(sessionCheck);
 
         if (!sessionValid) {
           setUser(null);

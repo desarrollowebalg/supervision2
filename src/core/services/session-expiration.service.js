@@ -1,4 +1,5 @@
 import { setUser } from '../store.js';
+import { buildCurrentHashRoute, buildLoginRedirectUrl, savePostLoginRedirect } from './post-login-redirect.service.js';
 
 const ACTIVE_FORM_PREFIX = 'forms_active_';
 const ACTIVE_FORM_POINTER_KEY = 'forms_active_current';
@@ -34,9 +35,13 @@ export async function handleSessionExpired(reason = 'SESSION_EXPIRED') {
   }
 
   window[LOGOUT_FLAG] = true;
+  const currentHashRoute = buildCurrentHashRoute();
 
   try {
     clearSensitiveLocalState();
+    if (currentHashRoute) {
+      savePostLoginRedirect(currentHashRoute, { source: reason });
+    }
 
     const message = 'Tu sesion expiro. Vuelve a iniciar sesion.';
     if (typeof window.UIkit?.modal?.alert === 'function') {
@@ -45,7 +50,9 @@ export async function handleSessionExpired(reason = 'SESSION_EXPIRED') {
       window.alert(message);
     }
   } finally {
-    window.location.href = '/login/default';
+    window.location.href = currentHashRoute
+      ? buildLoginRedirectUrl(currentHashRoute)
+      : '/login/default';
   }
 }
 
@@ -66,4 +73,3 @@ export function isSessionExpiredPayload(payload) {
 
   return false;
 }
-
