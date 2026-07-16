@@ -54,18 +54,10 @@ return array(
       "execution" => array(
         "type" => "composed_query",
         "result_mode" => "list",
-        "header_sql" => "SELECT
-            ID_RES_CUESTIONARIO,
-            ID_CUESTIONARIO,
-            COD_USER,
-            FECHA,
-            LATITUD,
-            LONGITUD,
-            BATERIA,
-            FECHA_INICIO_CAPTURA,
-            FECHA_RECEPCION
-          FROM CRM2_RESPUESTAS
-          WHERE ID_RES_CUESTIONARIO = ?",
+        "header_sql" => "SELECT ID_RES_CUESTIONARIO,ID_CUESTIONARIO,FECHA,LATITUD,LONGITUD,BATERIA,FECHA_INICIO_CAPTURA,FECHA_RECEPCION,COD_USER,USU.USUARIO,USU.NOMBRE_COMPLETO,USU.URL_FOTO_PERFIL        
+        FROM CRM2_RESPUESTAS RESP
+        INNER JOIN ADM_USUARIOS USU ON RESP.COD_USER = USU.ID_USUARIO
+        WHERE ID_RES_CUESTIONARIO = ?",
         "detail_sql_template" => "SELECT
             ID_PREGUNTA,
             ID_RES_CUESTIONARIO,
