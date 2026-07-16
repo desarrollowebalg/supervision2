@@ -72,7 +72,9 @@ export default class DetalleIncidencia {
 
     this.handleBackClick = () => {
       const fallbackRoute = this.navigationContext?.state?.from || '/supervision';
-      if (window.history.length > 1) {
+      const hasInternalOrigin = Boolean(this.navigationContext?.state?.from);
+
+      if (hasInternalOrigin && window.history.length > 1) {
         window.history.back();
         return;
       }

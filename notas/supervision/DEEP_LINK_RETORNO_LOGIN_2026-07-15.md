@@ -230,3 +230,55 @@ Una vez confirmado el deep link:
 - `src/pages/login/LoginPage.js`
 - `src/pages/login/main.js`
 
+---
+
+## ContinuaciÃ³n 2026-07-16
+
+### Resultado de validaciÃ³n posterior
+
+Se validÃ³ manualmente el caso de uso completo del deep link y ya quedÃ³ funcional:
+
+1. el usuario abre la URL directa del detalle
+2. si no hay sesiÃ³n, la app redirige a login
+3. despuÃ©s del login, la app regresa correctamente a:
+   - `#/supervision/detalle/:ide/:idi/`
+
+Con esto, el flujo principal de entrada por enlace directo ya quedÃ³ resuelto.
+
+### Hueco adicional detectado
+
+DespuÃ©s de validar el deep link se encontrÃ³ un comportamiento pendiente en:
+
+- `src/pages/supervision/DetalleIncidencia.js`
+
+Escenario:
+
+- si el usuario navegaba desde `#/supervision` hacia el detalle, el botÃ³n de regreso funcionaba correctamente
+- si el usuario llegaba al detalle por URL directa, el botÃ³n intentaba usar `window.history.back()`
+- en ese caso el historial previo podÃ­a no corresponder a una ruta interna vÃ¡lida del app y terminaba mostrando error / 404
+
+### Ajuste aplicado
+
+Se actualizÃ³ el botÃ³n de regreso del detalle para que:
+
+- use `window.history.back()` solo cuando existe origen de navegaciÃ³n interna en `navigationContext.state.from`
+- si el detalle fue abierto por deep link directo, navegue por defecto a:
+  - `#/supervision`
+
+### Estado actualizado
+
+Queda cubierto:
+
+- retorno post-login a la ruta privada originalmente solicitada
+- soporte de deep link al detalle de supervisiÃ³n
+- fallback seguro del botÃ³n de regreso para entrada directa
+
+### Siguiente paso
+
+El frente de deep link / retorno post-login puede considerarse cerrado para este caso de uso.
+
+El siguiente trabajo ya puede enfocarse en:
+
+- cargar el detalle real de la incidencia
+- reemplazar el placeholder actual de `DetalleIncidencia.js`
+- `src/pages/supervision/DetalleIncidencia.js`
