@@ -129,8 +129,8 @@ class apiReports{
     return $this->$property;
   }
 
-  private function construirBindings($executionDefinition){
-    $bindings = isset($executionDefinition["bindings"]) ? $executionDefinition["bindings"] : array();
+  private function construirBindings($executionDefinition, $bindingsKey = "bindings"){
+    $bindings = isset($executionDefinition[$bindingsKey]) ? $executionDefinition[$bindingsKey] : array();
     $types = "";
     $params = array();
 
@@ -260,15 +260,16 @@ class apiReports{
       return;
     }
 
-    $bindingData = $this->construirBindings($executionDefinition);
-    if($bindingData === false){
+    $headerBindingKey = isset($executionDefinition["header_bindings"]) ? "header_bindings" : "bindings";
+    $headerBindingData = $this->construirBindings($executionDefinition, $headerBindingKey);
+    if($headerBindingData === false){
       return;
     }
 
     $headerResult = $this->ejecutarConsultaPreparada(
       $executionDefinition["header_sql"],
-      $bindingData["types"],
-      $bindingData["params"]
+      $headerBindingData["types"],
+      $headerBindingData["params"]
     );
     if($headerResult === false){
       return;
@@ -281,7 +282,13 @@ class apiReports{
     }
 
     $detailSql = sprintf($executionDefinition["detail_sql_template"], $detailTableName);
-    $detailResult = $this->ejecutarConsultaPreparada($detailSql, $bindingData["types"], $bindingData["params"]);
+    $detailBindingKey = isset($executionDefinition["detail_bindings"]) ? "detail_bindings" : "bindings";
+    $detailBindingData = $this->construirBindings($executionDefinition, $detailBindingKey);
+    if($detailBindingData === false){
+      return;
+    }
+
+    $detailResult = $this->ejecutarConsultaPreparada($detailSql, $detailBindingData["types"], $detailBindingData["params"]);
     if($detailResult === false){
       return;
     }

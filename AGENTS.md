@@ -366,6 +366,10 @@ If an integration causes an incident:
 - Si la sesion deja evidencia relevante o cierra un hito, se debe registrar una nota en:
   - `notas/contexto/historial/AAAA-MM-DD-tema.md`
 - `CONTEXTO_ACTIVO.md` resume el estado vigente; no sustituye documentacion tecnica especifica ni contratos operativos existentes.
+- Frases operativas acordadas para uso en chat:
+  - `continuemos desde el contexto activo`
+  - `actualiza el contexto al final`
+  - `cierra con historial`
 
 ## EN - Persistent Operational Context Rule
 - The current operational context must be maintained in:
@@ -375,6 +379,10 @@ If an integration causes an incident:
 - If the session leaves relevant evidence or closes a milestone, a note should be added in:
   - `notas/contexto/historial/AAAA-MM-DD-topic.md`
 - `CONTEXTO_ACTIVO.md` summarizes the current state; it does not replace module-specific technical documentation or existing operational contracts.
+- Agreed operational chat phrases:
+  - `continuemos desde el contexto activo`
+  - `actualiza el contexto al final`
+  - `cierra con historial`
 
 ## EN - Pending Definition
 - Detailed roles and responsibilities per agent.

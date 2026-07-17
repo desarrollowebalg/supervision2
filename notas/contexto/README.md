@@ -18,6 +18,17 @@ El archivo activo del proyecto es:
 - Si durante la sesion cambian objetivo, alcance, decisiones, pendientes o bloqueos, actualizar `CONTEXTO_ACTIVO.md`.
 - Si la sesion deja evidencia relevante o cierra un hito, registrar una nota adicional en `historial/`.
 
+## Frases de trabajo acordadas
+
+Usar estas frases en el chat para activar la convencion de contexto:
+
+- `continuemos desde el contexto activo`
+  - indica revisar `notas/contexto/CONTEXTO_ACTIVO.md` antes de continuar
+- `actualiza el contexto al final`
+  - indica actualizar `notas/contexto/CONTEXTO_ACTIVO.md` al cierre de la tarea
+- `cierra con historial`
+  - indica actualizar `CONTEXTO_ACTIVO.md` y ademas crear una nota en `notas/contexto/historial/AAAA-MM-DD-tema.md`
+
 ## Que si va aqui
 
 - objetivo operativo vigente

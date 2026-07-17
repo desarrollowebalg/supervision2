@@ -54,17 +54,29 @@ return array(
       "execution" => array(
         "type" => "composed_query",
         "result_mode" => "list",
-        "header_sql" => "SELECT ID_RES_CUESTIONARIO,ID_CUESTIONARIO,FECHA,LATITUD,LONGITUD,BATERIA,FECHA_INICIO_CAPTURA,FECHA_RECEPCION,COD_USER,USU.USUARIO,USU.NOMBRE_COMPLETO,USU.URL_FOTO_PERFIL        
+        "header_sql" => "SELECT RESP.ID_RES_CUESTIONARIO AS ID_RES_CUESTIONARIO,ID_CUESTIONARIO,FECHA,LATITUD,LONGITUD,BATERIA,FECHA_INICIO_CAPTURA,FECHA_RECEPCION,COD_USER,USU.USUARIO,USU.NOMBRE_COMPLETO,USU.URL_FOTO_PERFIL,GEORESP.ID_OBJECT_MAP AS CLV_GEO,DESCRIPCION,ITEM_NUMBER     
         FROM CRM2_RESPUESTAS RESP
         INNER JOIN ADM_USUARIOS USU ON RESP.COD_USER = USU.ID_USUARIO
-        WHERE ID_RES_CUESTIONARIO = ?",
-        "detail_sql_template" => "SELECT
-            ID_PREGUNTA,
-            ID_RES_CUESTIONARIO,
-            RESPUESTA
-          FROM %s
+        INNER JOIN ADM_GEOREFERENCIA_RESPUESTAS GEORESP ON RESP.ID_RES_CUESTIONARIO = GEORESP.ID_RES_CUESTIONARIO
+        INNER JOIN ADM_GEOREFERENCIAS GEOREF ON GEORESP.ID_OBJECT_MAP = GEOREF.ID_OBJECT_MAP AND GEOREF.ID_CLIENTE = ?
+        WHERE RESP.ID_RES_CUESTIONARIO = ?",
+        "detail_sql_template" => "SELECT ID_RES_CUESTIONARIO,PREGRES.ID_PREGUNTA AS ID_PREGUNTA,PREGS.ITEM_NUMBER,PREGS.DESCRIPCION,RESPUESTA
+          FROM %s PREGRES
+          INNER JOIN CRM2_PREGUNTAS PREGS ON PREGRES.ID_PREGUNTA = PREGS.ID_PREGUNTA
           WHERE ID_RES_CUESTIONARIO = ?",
-        "bindings" => array(
+        "header_bindings" => array(
+          array(
+            "source" => "property",
+            "name" => "idCliente",
+            "type" => "i",
+          ),
+          array(
+            "source" => "property",
+            "name" => "idResCuestionario",
+            "type" => "i",
+          ),
+        ),
+        "detail_bindings" => array(
           array(
             "source" => "property",
             "name" => "idResCuestionario",

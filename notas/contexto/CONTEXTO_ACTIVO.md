@@ -37,6 +37,10 @@ Hoy no existe una convencion formal unica para continuidad de contexto entre ses
 - Se separa contexto activo de historial para evitar mezclar estado vigente con registro historico.
 - La continuidad se implementa primero como convencion documental formal, no como loader automatico, porque hoy el repo no tiene mecanismo nativo para inyectar un `.md` en cada interaccion.
 - La regla de uso debe quedar documentada tambien en `AGENTS.md` para que forme parte del flujo operativo oficial.
+- Las frases operativas acordadas para esta convencion son:
+  - `continuemos desde el contexto activo`
+  - `actualiza el contexto al final`
+  - `cierra con historial`
 
 ## Archivos clave
 
@@ -86,8 +90,37 @@ Hoy no existe una convencion formal unica para continuidad de contexto entre ses
 
 Usar `notas/contexto/CONTEXTO_ACTIVO.md` como referencia inicial en la siguiente tarea real del proyecto y actualizarlo al cierre para validar que la convencion sea practica.
 
+## Actualizacion de sesion 2026-07-17
+
+- Se ajusto `apis_me/reports/actions.php` para que la accion `evidence` pase `ID_CLIENTE` desde `session_context` hacia el query de cabecera.
+- Se extendio `apis_me/reports/apiReports.class.php` para que `composed_query` soporte `header_bindings` y `detail_bindings`, manteniendo compatibilidad con el esquema previo basado en `bindings`.
+- Motivo: el query de cabecera de evidencia ahora filtra `ADM_GEOREFERENCIAS.ID_CLIENTE`, pero el detalle sigue requiriendo solo `ID_RES_CUESTIONARIO`.
+- Validacion local prevista: `php -l apis_me/reports/actions.php` y `php -l apis_me/reports/apiReports.class.php`.
+
+## Actualizacion de sesion 2026-07-17 - seguimiento de evidencia
+
+- Se preparo `src/pages/supervision/DetalleIncidencia.js` para consumir `/apis_me/reports/evidence/<ide>/` y mostrar el layout de seguimiento en dos columnas con evidencia al 60 por ciento.
+- La columna de evidencia ahora pinta fecha y hora, tarjeta de usuario con `user-avatar-enhanced`, ubicacion/equipo, descripcion multilinea basada en `OBS` y el valor actual de `FT1`.
+- Se agrego `src/core/services/apis-me/reports.service.js` para centralizar el consumo de `reports/evidence`.
+- Se ajusto `apis_me/reports/actions.php` para que `detail` siga usando la tabla dinamica por cliente y exponga `ITEM_NUMBER` y `DESCRIPCION`, necesarios para resolver `OBS` y `FT1` desde frontend.
+
+## Actualizacion de sesion 2026-07-17 - tema y UIkit en seguimiento
+
+- Se ajusto `src/pages/supervision/DetalleIncidencia.js` para que el panel de seguimiento soporte `light/dark` usando tokens globales `--app-*`.
+- La base visual del panel quedo alineada con UIkit usando `uk-card-default`, `uk-grid`, `uk-button`, `uk-text-meta`, `uk-card-title` y encabezados `uk-h*`, evitando depender de `uk-card-secondary`.
+- El CSS custom restante queda solo como complemento para layout 60/40, superficies por tema y espaciado especifico del bloque de evidencia.
+- Validacion ejecutada: `npm run build`.
+
+## Actualizacion de sesion 2026-07-17 - galeria FT1
+
+- Se actualizo `src/pages/supervision/DetalleIncidencia.js` para resolver `FT1` como imagen real usando la base `https://imagenes.movilizandome.net/`.
+- La seccion `Fotografias` ahora renderiza una imagen clicable con UIkit usando `uk-lightbox`, `uk-inline` y `data-caption`, manteniendo soporte `light/dark`.
+- Se agrego manejo de estado vacio cuando la evidencia no tenga fotografia disponible.
+- Validacion ejecutada: `npm run build`.
+
 ## Historial relacionado
 
+- `notas/contexto/historial/2026-07-17-seguimiento-detalle-incidencia.md`
 - `notas/supervision/DEEP_LINK_RETORNO_LOGIN_2026-07-15.md`
 - `src/pages/supervision/SUPERVISION_SIDEBAR_CONFIG.md`
 - `notas/RESUMEN_CAMBIOS.md`
