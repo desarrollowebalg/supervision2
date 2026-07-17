@@ -358,6 +358,24 @@ If an integration causes an incident:
 - When it improves clarity and maintenance, notes should be organized into thematic subdirectories inside `notas/` (for example: `notas/supervision/`).
 - Avoid creating new operational notes outside `notas/` unless there is an explicit exceptional technical reason.
 
+## ES - Regla de Contexto Operativo Persistente
+- El contexto operativo vigente del proyecto debe mantenerse en:
+  - `notas/contexto/CONTEXTO_ACTIVO.md`
+- Antes de iniciar una tarea, se debe revisar ese archivo como referencia de continuidad.
+- Si durante la sesion cambian objetivo, alcance, decisiones, pendientes o bloqueos, se debe actualizar `CONTEXTO_ACTIVO.md`.
+- Si la sesion deja evidencia relevante o cierra un hito, se debe registrar una nota en:
+  - `notas/contexto/historial/AAAA-MM-DD-tema.md`
+- `CONTEXTO_ACTIVO.md` resume el estado vigente; no sustituye documentacion tecnica especifica ni contratos operativos existentes.
+
+## EN - Persistent Operational Context Rule
+- The current operational context must be maintained in:
+  - `notas/contexto/CONTEXTO_ACTIVO.md`
+- Before starting a task, that file should be reviewed as the continuity reference.
+- If the session changes objective, scope, decisions, pending work, or blockers, `CONTEXTO_ACTIVO.md` must be updated.
+- If the session leaves relevant evidence or closes a milestone, a note should be added in:
+  - `notas/contexto/historial/AAAA-MM-DD-topic.md`
+- `CONTEXTO_ACTIVO.md` summarizes the current state; it does not replace module-specific technical documentation or existing operational contracts.
+
 ## EN - Pending Definition
 - Detailed roles and responsibilities per agent.
 - Specific do/don't rules per role.
