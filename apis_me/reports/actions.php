@@ -117,5 +117,38 @@ return array(
         ),
       ),
     ),
+    "history" => array(
+      "label" => "Obtener historial de incidencia desde API externa",
+      "params" => array(
+        array(
+          "name" => "inc",
+          "route_index" => 2,
+          "type" => "int",
+          "target_property" => "idIncidencia",
+          "error_label" => "ID INCIDENCIA",
+        ),
+      ),
+      "execution" => array(
+        "type" => "api",
+        "method" => "GET",
+        "url" => "https://ktw6p76syh.execute-api.us-east-1.amazonaws.com/DEV/Supervision/Incidencias/Historicos",
+        "result_mode" => "list",
+        "response_data_key" => "body",
+        "body" => array(
+          "USU" => array(
+            "source" => "property",
+            "name" => "idUsuario",
+            "type" => "i",
+            "cast" => "int",
+          ),
+          "IDI" => array(
+            "source" => "property",
+            "name" => "idIncidencia",
+            "type" => "i",
+            "cast" => "int",
+          ),
+        ),
+      ),
+    ),
   ),
 );

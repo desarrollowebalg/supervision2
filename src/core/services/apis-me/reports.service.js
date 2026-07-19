@@ -53,3 +53,30 @@ export async function getEvidenceReport(ide) {
     detail: detailRows
   };
 }
+
+function normalizeHistoryEntry(entry = {}) {
+  return {
+    ID: Number(entry?.ID ?? 0),
+    FECHA: String(entry?.FECHA || '').trim(),
+    ID_INC: Number(entry?.ID_INC ?? entry?.IDI ?? 0),
+    ESTATUS: String(entry?.ESTATUS || '').trim(),
+    USUARIO: String(entry?.USUARIO || '').trim(),
+    COMENTARIOS: String(entry?.COMENTARIOS || '').trim()
+  };
+}
+
+export async function getHistoryReport(inc) {
+  const safeInc = String(inc || '').trim();
+  if (!/^\d+$/.test(safeInc)) {
+    throw new Error('Identificador de incidencia invalido');
+  }
+
+  const response = await apisMeGet(`reports/history/${encodeURIComponent(safeInc)}/`);
+  if (!response?.success) {
+    throw new Error(String(response?.message || 'No fue posible consultar el historial'));
+  }
+
+  return Array.isArray(response?.data)
+    ? response.data.map(normalizeHistoryEntry)
+    : [];
+}

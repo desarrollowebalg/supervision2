@@ -204,6 +204,9 @@ class apiReports{
       case "composed_query":
         $this->executeDefinedComposedQuery($executionDefinition);
       break;
+      case "api":
+        $this->executeDefinedApi($executionDefinition);
+      break;
       default:
         $this->erroresConfReportsApi(300, "Tipo de ejecucion no soportado");
       break;
@@ -301,6 +304,151 @@ class apiReports{
     );
   }
 
+  private function executeDefinedApi($executionDefinition){
+    if(!isset($executionDefinition["url"]) || trim((string)$executionDefinition["url"]) === ""){
+      $this->erroresConfReportsApi(300, "URL de API no definida");
+      return;
+    }
+
+    if(!function_exists("curl_init")){
+      $this->erroresConfReportsApi(300, "cURL no disponible en servidor");
+      return;
+    }
+
+    $payload = $this->construirApiPayload($executionDefinition);
+    if($payload === false){
+      return;
+    }
+
+    $rawPayload = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if($rawPayload === false){
+      $this->erroresConfReportsApi(300, "No fue posible serializar el payload de API");
+      return;
+    }
+
+    $method = isset($executionDefinition["method"]) ? strtoupper(trim((string)$executionDefinition["method"])) : "POST";
+    $headers = isset($executionDefinition["headers"]) && is_array($executionDefinition["headers"])
+      ? $executionDefinition["headers"]
+      : array("Content-Type: application/json");
+
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+      CURLOPT_URL => $executionDefinition["url"],
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => $method,
+      CURLOPT_POSTFIELDS => $rawPayload,
+      CURLOPT_HTTPHEADER => $headers,
+    ));
+
+    $response = curl_exec($curl);
+    $httpCode = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    $curlErrno = (int)curl_errno($curl);
+    $curlError = curl_error($curl);
+    curl_close($curl);
+
+    if($response === false){
+      $this->erroresConfReportsApi(300, "Error al invocar API externa: ".$curlError);
+      return;
+    }
+
+    if($curlErrno !== 0){
+      $this->erroresConfReportsApi(300, "Error de cURL al invocar API externa: ".$curlError);
+      return;
+    }
+
+    if($httpCode < 200 || $httpCode >= 300){
+      $this->erroresConfReportsApi(300, "API externa respondio HTTP ".$httpCode);
+      return;
+    }
+
+    if(trim((string)$response) === ""){
+      $this->registros = array();
+      return;
+    }
+
+    $decoded = json_decode($response, true);
+    if($decoded === null && json_last_error() !== JSON_ERROR_NONE){
+      $this->erroresConfReportsApi(300, "Respuesta invalida de API externa");
+      return;
+    }
+
+    $responseData = $this->extractApiResponseData($decoded, $executionDefinition);
+    if($responseData === false && isset($this->registros["Error"])){
+      return;
+    }
+
+    $resultMode = isset($executionDefinition["result_mode"]) ? $executionDefinition["result_mode"] : "list";
+    $this->normalizarResultadoApi($resultMode, $responseData);
+  }
+
+  private function construirApiPayload($executionDefinition){
+    $bodyDefinition = isset($executionDefinition["body"]) ? $executionDefinition["body"] : array();
+    if(!is_array($bodyDefinition)){
+      $this->erroresConfReportsApi(300, "Configuracion de payload API invalida");
+      return false;
+    }
+
+    $payload = array();
+    foreach($bodyDefinition as $fieldName => $fieldDefinition){
+      if(!is_array($fieldDefinition)){
+        $payload[$fieldName] = $fieldDefinition;
+        continue;
+      }
+
+      $value = $this->resolverBinding($fieldDefinition);
+      if($value === false && isset($this->registros["Error"])){
+        return false;
+      }
+
+      $cast = isset($fieldDefinition["cast"]) ? (string)$fieldDefinition["cast"] : "";
+      switch($cast){
+        case "int":
+          $payload[$fieldName] = (int)$value;
+        break;
+        case "string":
+          $payload[$fieldName] = (string)$value;
+        break;
+        default:
+          $payload[$fieldName] = $value;
+        break;
+      }
+    }
+
+    return $payload;
+  }
+
+  private function extractApiResponseData($decoded, $executionDefinition){
+    if(!isset($executionDefinition["response_data_key"]) || trim((string)$executionDefinition["response_data_key"]) === ""){
+      return $decoded;
+    }
+
+    $responseDataKey = (string)$executionDefinition["response_data_key"];
+    if(!is_array($decoded) || !array_key_exists($responseDataKey, $decoded)){
+      $this->erroresConfReportsApi(300, "Respuesta de API externa sin llave ".$responseDataKey);
+      return false;
+    }
+
+    $bodyData = $decoded[$responseDataKey];
+    if(is_string($bodyData)){
+      $trimmedBody = trim($bodyData);
+      if($trimmedBody === ""){
+        return array();
+      }
+
+      $parsedBody = json_decode($trimmedBody, true);
+      if($parsedBody !== null || json_last_error() === JSON_ERROR_NONE){
+        return $parsedBody;
+      }
+    }
+
+    return $bodyData;
+  }
+
   private function resolverTablaDetalleEvidencias(){
     if((int)$this->idCliente <= 0){
       $this->erroresConfReportsApi(300, "Cliente no valido para evidencia");
@@ -319,6 +467,51 @@ class apiReports{
     $rows = @mysqli_fetch_all($result, MYSQLI_ASSOC);
     @mysqli_free_result($result);
     return is_array($rows) ? $rows : array();
+  }
+
+  private function normalizarResultadoApi($resultMode, $decoded){
+    if(!is_array($decoded)){
+      $this->registros = array(
+        array(
+          "value" => $decoded,
+        ),
+      );
+      return;
+    }
+
+    if($this->esListaSecuencial($decoded)){
+      $this->registros = $decoded;
+      return;
+    }
+
+    if(isset($decoded["data"]) && is_array($decoded["data"])){
+      if($resultMode === "single" && $this->esListaSecuencial($decoded["data"]) && isset($decoded["data"][0])){
+        $this->registros = array($decoded["data"][0]);
+        return;
+      }
+
+      $this->registros = $decoded["data"];
+      return;
+    }
+
+    if($resultMode === "single"){
+      $this->registros = array($decoded);
+      return;
+    }
+
+    $this->registros = array($decoded);
+  }
+
+  private function esListaSecuencial($value){
+    if(!is_array($value)){
+      return false;
+    }
+
+    if(empty($value)){
+      return true;
+    }
+
+    return array_keys($value) === range(0, count($value) - 1);
   }
 
   public function numeroRegistros($result){

@@ -2,7 +2,7 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-17
+2026-07-19
 
 ## Responsable sugerido
 
@@ -141,6 +141,20 @@ Usar `notas/contexto/CONTEXTO_ACTIVO.md` como referencia inicial en la siguiente
 - Se simplifico el `uk-offcanvas` de historial en `src/pages/supervision/DetalleIncidencia.js` para mostrar todos los registros en una sola linea de tiempo.
 - Ya no se hace separacion visual por `ESTATUS`; todo el dataset demo se pinta con `historial-component` en orden descendente por `FECHA`.
 - La caja de comentarios del costado derecho se mantiene sin cambios y queda pendiente de conectarse a su futura API especifica.
+
+## Actualizacion de sesion 2026-07-19 - reports/history conectado a API real
+
+- Se agrego la accion declarativa `history` en `apis_me/reports/actions.php`.
+- La ruta operativa queda `/apis_me/reports/history/<inc>/`.
+- `inc` se valida por ruta y se hidrata hacia `idIncidencia`.
+- `ID_USUARIO` se mantiene como fuente de verdad desde `session_context` y se envia a la API externa como `USU`.
+- El parametro `inc` se envia a la API externa como `IDI`.
+- `apis_me/reports/apiReports.class.php` se extendio para soportar `execution.type = "api"` mediante `curl`, payload JSON y extraccion selectiva de `response_data_key`.
+- Para esta accion, la respuesta publica del modulo expone solo el contenido de la llave `body` del proveedor externo.
+- Se agrego `getHistoryReport()` en `src/core/services/apis-me/reports.service.js`.
+- `src/pages/supervision/DetalleIncidencia.js` dejo de usar `HISTORY_DEMO` y ahora consume `reports/history/<inc>/` para poblar el `uk-offcanvas`.
+- Verificacion remota ejecutada con `USU = 954` e `IDI = 30430`: la API externa respondio `statusCode: 200` con un arreglo en `body` que coincide con los registros demo usados previamente.
+- Validacion local pendiente en este entorno: no fue posible ejecutar `php -l` ni `npm run build` porque `php` y `npm` no estan disponibles en la sesion actual.
 
 ## Historial relacionado
 

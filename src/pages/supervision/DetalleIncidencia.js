@@ -6,29 +6,11 @@ import { getSessionCatalogContext } from '../../core/services/apis-me/session-ca
 import '../../components/userAvatar.js';
 import '../../components/comentarios/CommentBox.js';
 import '../../components/historial/historial-component.js';
-import { getEvidenceReport } from '../../core/services/apis-me/reports.service.js';
+import { getEvidenceReport, getHistoryReport } from '../../core/services/apis-me/reports.service.js';
 
 export default class DetalleIncidencia {
   static instancia = null;
   static EVIDENCE_IMAGE_BASE_URL = 'https://imagenes.movilizandome.net/';
-  static HISTORY_DEMO = [
-    {
-      ID: 1,
-      FECHA: '2026-07-17 12:05:20',
-      ID_INC: 30430,
-      ESTATUS: 'LEIDO',
-      USUARIO: 'glara',
-      COMENTARIOS: 'EL USUARIO glara LEYO LA INCIDENCIA'
-    },
-    {
-      ID: 2,
-      FECHA: '2026-07-18 22:54:06',
-      ID_INC: 30430,
-      ESTATUS: 'ATENDIDO',
-      USUARIO: 'glara',
-      COMENTARIOS: 'Prueba del guardado del comentario'
-    }
-  ];
 
   constructor(navigationContext = {}) {
     if (DetalleIncidencia.instancia) {
@@ -40,6 +22,7 @@ export default class DetalleIncidencia {
     this.handleBackClick = null;
     this.requestToken = 0;
     this.pendingEvidenceId = '';
+    this.pendingIncidentId = '';
     this.evidenceState = {
       loading: false,
       error: '',
@@ -57,6 +40,7 @@ export default class DetalleIncidencia {
     const previousLabel = this.navigationContext?.state?.previousLabel || 'Supervisión';
     const commentUser = this.getCommentUserContext();
     this.pendingEvidenceId = ide;
+    this.pendingIncidentId = idi;
 
     renderInicioLayout(container, {
       title: '',
@@ -334,7 +318,7 @@ export default class DetalleIncidencia {
       <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
         <div class="uk-text-center">
           <div uk-spinner></div>
-          <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Cargando historial demo...</p>
+          <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Cargando historial...</p>
         </div>
       </div>
     `;
@@ -358,8 +342,9 @@ export default class DetalleIncidencia {
   async buildHistoryRecords() {
     const usersByUsername = await this.getUsersCatalogMap();
     const fallbackUser = this.getCommentUserContext();
+    const historyEntries = await this.fetchHistoryEntries();
 
-    return DetalleIncidencia.HISTORY_DEMO
+    return historyEntries
       .map((entry) => {
         const normalizedUserName = String(entry?.USUARIO || '').trim();
         const catalogUser = usersByUsername.get(normalizedUserName.toLowerCase()) || null;
@@ -386,6 +371,20 @@ export default class DetalleIncidencia {
         };
       })
       .sort((left, right) => this.toTimestamp(right.timestamp) - this.toTimestamp(left.timestamp));
+  }
+
+  async fetchHistoryEntries() {
+    const safeIncidentId = String(this.pendingIncidentId || '').trim();
+    if (!/^\d+$/.test(safeIncidentId)) {
+      return [];
+    }
+
+    try {
+      return await getHistoryReport(safeIncidentId);
+    } catch (error) {
+      console.warn('No fue posible consultar el historial de la incidencia.', error);
+      return [];
+    }
   }
 
   async getUsersCatalogMap() {
