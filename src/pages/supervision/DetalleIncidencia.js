@@ -1,11 +1,34 @@
 import { renderInicioLayout } from '../inicio-layout.js';
 import { navigate } from '../../core/router.js';
+import { getUserState } from '../../core/store.js';
+import catalogIndexedDbService from '../../core/services/catalog-indexeddb.service.js';
+import { getSessionCatalogContext } from '../../core/services/apis-me/session-catalog-context.service.js';
 import '../../components/userAvatar.js';
+import '../../components/comentarios/CommentBox.js';
+import '../../components/historial/historial-component.js';
 import { getEvidenceReport } from '../../core/services/apis-me/reports.service.js';
 
 export default class DetalleIncidencia {
   static instancia = null;
   static EVIDENCE_IMAGE_BASE_URL = 'https://imagenes.movilizandome.net/';
+  static HISTORY_DEMO = [
+    {
+      ID: 1,
+      FECHA: '2026-07-17 12:05:20',
+      ID_INC: 30430,
+      ESTATUS: 'LEIDO',
+      USUARIO: 'glara',
+      COMENTARIOS: 'EL USUARIO glara LEYO LA INCIDENCIA'
+    },
+    {
+      ID: 2,
+      FECHA: '2026-07-18 22:54:06',
+      ID_INC: 30430,
+      ESTATUS: 'ATENDIDO',
+      USUARIO: 'glara',
+      COMENTARIOS: 'Prueba del guardado del comentario'
+    }
+  ];
 
   constructor(navigationContext = {}) {
     if (DetalleIncidencia.instancia) {
@@ -32,6 +55,7 @@ export default class DetalleIncidencia {
     const ide = String(params?.ide || '').trim();
     const idi = String(params?.idi || '0').trim() || '0';
     const previousLabel = this.navigationContext?.state?.previousLabel || 'Supervisión';
+    const commentUser = this.getCommentUserContext();
     this.pendingEvidenceId = ide;
 
     renderInicioLayout(container, {
@@ -49,13 +73,20 @@ export default class DetalleIncidencia {
                 <span uk-icon="icon: arrow-left; ratio: 0.85"></span>
                 Volver a ${this.escapeHtml(previousLabel)}
               </button>
+              <button
+                class="uk-button uk-button-primary uk-button-small uk-border-rounded uk-margin-small-left"
+                type="button"
+                uk-toggle="target: #detalle-incidencia-history-offcanvas"
+              >
+                <span uk-icon="icon: history; ratio: 0.85"></span>
+                Ver historial
+              </button>
             </div>
-            <p class="uk-text-meta uk-margin-remove-bottom">Seguimiento</p>
             <h1 class="uk-card-title uk-margin-small-top uk-margin-remove-bottom">
-              Seguimiento
+              Seguimiento: ${this.escapeHtml(idi || '0')}
             </h1>
-            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">
-              IDE: ${this.escapeHtml(ide || 'N/D')} | IDI: ${this.escapeHtml(idi)}
+            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom uk-hidden">
+              Origen: ${this.escapeHtml(ide || 'N/D')} | IDI: ${this.escapeHtml(idi || '0')}
             </p>
             <div class="uk-grid-large uk-child-width-1-1 uk-grid-match uk-margin-top" uk-grid>
               <div class="uk-width-3-5@m">
@@ -63,21 +94,47 @@ export default class DetalleIncidencia {
                   <div data-evidence-panel="true"></div>
                 </section>
               </div>
-              <div class="uk-width-2-5@m">
-                <section class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-panel">
-                  <p class="uk-text-meta uk-margin-remove-bottom">Atención de la incidencia</p>
-                  <div class="detail-incidencia-panel__placeholder"></div>
+              <div class="uk-width-2-5@m padding-elemento-derecho">
+                <section class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-panel detail-incidencia-panel--commentary">
+                  <div class="detail-incidencia-commentary">
+                    <div class="detail-incidencia-commentary__header">                      
+                      <h2 class="uk-h4 uk-margin-small-top uk-margin-remove-bottom">Comentarios</h2>
+                    </div>
+                    <comment-box
+                      user-id="${this.escapeHtml(commentUser.userId)}"
+                      user-name="${this.escapeHtml(commentUser.userName)}"
+                      nickname="${this.escapeHtml(commentUser.nickname)}"
+                      user-photo="${this.escapeHtml(commentUser.userPhoto)}"
+                    ></comment-box>
+                  </div>
                 </section>
               </div>
             </div>
           </div>
         </section>
+        <div id="detalle-incidencia-history-offcanvas" uk-offcanvas="flip: true; overlay: true">
+          <div class="uk-offcanvas-bar detail-incidencia-offcanvas">
+            <button class="uk-offcanvas-close" type="button" uk-close></button>
+            <div class="detail-incidencia-offcanvas__header">              
+              <h2 class="uk-h3 uk-margin-small-top uk-margin-remove-bottom">Seguimiento #${this.escapeHtml(idi || 'N/D')}</h2>
+            </div>
+            <div class="detail-incidencia-offcanvas__content" data-history-offcanvas-content="true">
+              <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
+                <div class="uk-text-center">
+                  <div uk-spinner></div>
+                  <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Preparando historial...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       `
     });
 
     container.querySelector('.inicio-padding-card > h1.uk-card-title')?.remove();
     this.bindEvents();
     this.loadEvidence(ide);
+    this.renderHistoryOffcanvas();
   }
 
   bindEvents() {
@@ -198,7 +255,7 @@ export default class DetalleIncidencia {
           <div class="detail-evidence-title-row">
             <span class="detail-evidence-icon" uk-icon="icon: calendar"></span>
             <div>
-              <p class="uk-text-meta uk-margin-remove-bottom">Fecha y hora</p>
+              <p class="uk-text-meta uk-margin-remove-bottom uk-display-inline">Fecha y hora</p>
               <p class="uk-margin-remove detail-evidence-value detail-evidence-value--inline">
                 ${this.escapeHtml(formattedDateTime.date)} ${this.escapeHtml(formattedDateTime.time)}
               </p>
@@ -207,7 +264,7 @@ export default class DetalleIncidencia {
         </section>
 
         <section class="detail-evidence-section">
-          <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-evidence-user-card">
+          <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-remove-top uk-padding-remove-bottom detail-evidence-user-card">
             <div class="uk-flex uk-flex-middle uk-grid-small" uk-grid>
               <div class="uk-width-auto">
                 <user-avatar-enhanced
@@ -225,7 +282,7 @@ export default class DetalleIncidencia {
           </div>
         </section>
 
-        <section class="detail-evidence-section">
+        <section class="detail-evidence-section uk-margin">
           <div class="detail-evidence-title-row">
             <span class="detail-evidence-icon" uk-icon="icon: location"></span>
             <div>
@@ -235,12 +292,12 @@ export default class DetalleIncidencia {
           </div>
         </section>
 
-        <section class="detail-evidence-section">
+        <section class="detail-evidence-section uk-margin-bottom">
           <div class="detail-evidence-title-row detail-evidence-title-row--section">
             <span class="detail-evidence-icon" uk-icon="icon: file-text"></span>
             <h2 class="uk-h4 uk-margin-remove">Descripción</h2>
           </div>
-          <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-evidence-description-card">
+          <div class="uk-card uk-card-default uk-card-body uk-border-rounded uk-padding-remove-top uk-padding-remove-bottom detail-evidence-description-card">
             <p class="uk-margin-remove detail-evidence-description">${this.escapeHtml(observationText || 'Sin descripcion disponible.')}</p>
           </div>
         </section>
@@ -250,7 +307,7 @@ export default class DetalleIncidencia {
             <span class="detail-evidence-icon" uk-icon="icon: image"></span>
             <h2 class="uk-h4 uk-margin-remove">Fotografías</h2>
           </div>
-          <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-evidence-photo-card">
+          <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-evidence-photo-card uk-padding-remove-top uk-padding-remove-bottom">
             ${this.renderPhotoGallery(photoFilename)}
           </div>
         </section>
@@ -265,6 +322,149 @@ export default class DetalleIncidencia {
     }
     this.handleBackClick = null;
     this.requestToken += 1;
+  }
+
+  async renderHistoryOffcanvas() {
+    const slot = this.container?.querySelector('[data-history-offcanvas-content="true"]');
+    if (!slot) {
+      return;
+    }
+
+    slot.innerHTML = `
+      <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
+        <div class="uk-text-center">
+          <div uk-spinner></div>
+          <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Cargando historial demo...</p>
+        </div>
+      </div>
+    `;
+
+    const records = await this.buildHistoryRecords();
+
+    slot.innerHTML = `
+      <div class="detail-incidencia-history-panel">
+        <section class="detail-incidencia-history-group">
+          <div class="detail-incidencia-history-group__header">            
+            <h3 class="uk-h4 uk-margin-small-top uk-margin-remove-bottom">Historial completo</h3>
+          </div>
+          <div class="detail-incidencia-history-group__body">
+            ${this.renderHistoryEntries(records, 'No hay movimientos de historial para mostrar.')}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  async buildHistoryRecords() {
+    const usersByUsername = await this.getUsersCatalogMap();
+    const fallbackUser = this.getCommentUserContext();
+
+    return DetalleIncidencia.HISTORY_DEMO
+      .map((entry) => {
+        const normalizedUserName = String(entry?.USUARIO || '').trim();
+        const catalogUser = usersByUsername.get(normalizedUserName.toLowerCase()) || null;
+        const fullName = String(
+          catalogUser?.NOMBRE_COMPLETO ||
+          catalogUser?.nombre_completo ||
+          (normalizedUserName.toLowerCase() === String(fallbackUser.nickname || '').toLowerCase() ? fallbackUser.userName : normalizedUserName)
+        ).trim();
+        const photoUrl = String(
+          catalogUser?.URL_FOTO_PERFIL ||
+          catalogUser?.foto_perfil ||
+          (normalizedUserName.toLowerCase() === String(fallbackUser.nickname || '').toLowerCase() ? fallbackUser.userPhoto : '')
+        ).trim();
+
+        return {
+          id: Number(entry?.ID ?? 0),
+          idInc: Number(entry?.ID_INC ?? 0),
+          status: String(entry?.ESTATUS || '').trim(),
+          username: normalizedUserName,
+          fullName,
+          photoUrl,
+          comment: String(entry?.COMENTARIOS || '').trim(),
+          timestamp: String(entry?.FECHA || '').trim()
+        };
+      })
+      .sort((left, right) => this.toTimestamp(right.timestamp) - this.toTimestamp(left.timestamp));
+  }
+
+  async getUsersCatalogMap() {
+    try {
+      const { contextKey } = getSessionCatalogContext();
+      const catalog = await catalogIndexedDbService.getCatalog({
+        catalogKey: 'usuarios',
+        contextKey
+      });
+      const rows = Array.isArray(catalog?.data) ? catalog.data : [];
+      return rows.reduce((map, entry) => {
+        const username = String(entry?.USUARIO || entry?.usuario || '').trim().toLowerCase();
+        if (username) {
+          map.set(username, entry);
+        }
+        return map;
+      }, new Map());
+    } catch (error) {
+      console.warn('No fue posible leer el catalogo de usuarios para el historial.', error);
+      return new Map();
+    }
+  }
+
+  renderHistoryEntries(entries = [], emptyMessage = '') {
+    if (!entries.length) {
+      return `
+        <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-history-empty">
+          <p class="uk-margin-remove">${this.escapeHtml(emptyMessage)}</p>
+        </div>
+      `;
+    }
+
+    return entries.map((entry) => {
+      const { date, time } = this.splitDateTime(entry.timestamp);
+      return `
+        <historial-component
+          fecha="${this.escapeHtml(date)}"
+          hora="${this.escapeHtml(time)}"
+          usuario="${this.escapeHtml(entry.username)}"
+          nombre-completo="${this.escapeHtml(entry.fullName || entry.username || 'Usuario')}"
+          foto-usuario="${this.escapeHtml(entry.photoUrl)}"
+          estatus="${this.escapeHtml(entry.status)}"
+          comentario="${this.escapeHtml(entry.comment)}"
+        ></historial-component>
+      `;
+    }).join('');
+  }
+
+  splitDateTime(value) {
+    const safeValue = String(value || '').trim();
+    const match = safeValue.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}:\d{2}:\d{2}))?$/);
+    if (!match) {
+      return {
+        date: safeValue,
+        time: ''
+      };
+    }
+
+    return {
+      date: match[1],
+      time: match[2] || ''
+    };
+  }
+
+  toTimestamp(value) {
+    const safeValue = String(value || '').trim();
+    const normalized = safeValue ? safeValue.replace(' ', 'T') : '';
+    const parsed = Date.parse(normalized);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  getCommentUserContext() {
+    const user = getUserState();
+    return {
+      userId: String(user?.id || '').trim(),
+      userName: String(user?.nombre_completo || user?.usuario || 'Usuario').trim(),
+      nickname: String(user?.usuario || '').trim(),
+      userPhoto: String(user?.foto_perfil || '').trim()
+    };
   }
 
   escapeHtml(value) {
@@ -330,14 +530,14 @@ export default class DetalleIncidencia {
     const escapedFilename = this.escapeHtml(safeFilename);
 
     return `
-      <div class="detail-evidence-photo-gallery" uk-lightbox="animation: slide">
+      <div class="detail-evidence-photo-gallery uk-width-1-2" uk-lightbox="animation: slide">
         <div>
-          <a class="uk-inline detail-evidence-photo-link" href="${escapedUrl}" data-caption="${escapedFilename}">
+          <a class="uk-inline detail-evidence-photo-link uk-height-medium" href="${escapedUrl}" data-caption="${escapedFilename}">
             <img
               src="${escapedUrl}"
-              class="uk-border-rounded detail-evidence-photo-image"
+              class="uk-border-rounded detail-evidence-photo-image uk-height-medium"
               width="1800"
-              height="1200"
+              height="auto"
               alt="${escapedFilename}"
               loading="lazy"
             >
@@ -369,7 +569,8 @@ export default class DetalleIncidencia {
         color: var(--app-text);
       }
 
-      .detail-incidencia-panel--evidence {
+      .detail-incidencia-panel--evidence,
+      .detail-incidencia-panel--commentary {
         background: var(--app-surface);
         color: var(--app-text);
       }
@@ -380,6 +581,60 @@ export default class DetalleIncidencia {
 
       .detail-incidencia-panel__placeholder {
         min-height: 24rem;
+      }
+
+      .detail-incidencia-commentary {
+        display: grid;
+        gap: 1rem;
+        min-height: 24rem;
+        align-content: start;
+      }
+
+      .detail-incidencia-offcanvas {
+        background: var(--app-surface-elevated);
+        color: var(--app-text);
+        box-shadow: var(--app-shadow-soft);
+        width: min(34rem, 92vw);
+      }
+
+      .detail-incidencia-offcanvas__header {
+        margin-bottom: 1.25rem;
+        padding-right: 1.75rem;
+      }
+
+      .detail-incidencia-offcanvas__content {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .detail-incidencia-history-panel {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .detail-incidencia-history-group {
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .detail-incidencia-history-group__body {
+        display: grid;
+        gap: 0.25rem;
+      }
+
+      .detail-incidencia-history-empty {
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
+        color: var(--app-text-muted);
+        box-shadow: none;
+      }
+
+      .detail-incidencia-commentary__header .uk-h4 {
+        color: var(--app-text);
+      }
+
+      .detail-incidencia-commentary comment-box {
+        margin: 0;
       }
 
       .detail-evidence-stack {
@@ -415,6 +670,7 @@ export default class DetalleIncidencia {
 
       .detail-evidence-value--inline {
         font-size: 1.18rem;
+        display: inline-block;
       }
 
       .detail-evidence-user-card,
@@ -436,7 +692,9 @@ export default class DetalleIncidencia {
 
       .detail-incidencia-card .uk-text-meta,
       .detail-evidence-user-card .uk-text-meta,
-      .detail-evidence-title-row .uk-text-meta {
+      .detail-evidence-title-row .uk-text-meta,
+      .detail-incidencia-commentary__header .uk-text-meta,
+      .detail-incidencia-offcanvas .uk-text-meta {
         color: var(--app-text-muted) !important;
       }
 
@@ -473,6 +731,10 @@ export default class DetalleIncidencia {
       .detail-evidence-photo-link:hover .detail-evidence-photo-image,
       .detail-evidence-photo-link:focus-visible .detail-evidence-photo-image {
         transform: scale(1.01);
+      }
+
+      .padding-elemento-derecho {
+        padding-left: 15px;
       }
 
       @media (max-width: 959px) {

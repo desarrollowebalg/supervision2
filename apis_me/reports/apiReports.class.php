@@ -9,6 +9,7 @@ class apiReports{
   private $idCliente = 0;
   private $idUsuario = 0;
   private $idResCuestionario = 0;
+  private $idIncidencia = 0;
   private $registros = array();
 
   function __construct($host,$usuario,$password,$base,$puerto) {

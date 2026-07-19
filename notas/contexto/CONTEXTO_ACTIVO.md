@@ -118,6 +118,30 @@ Usar `notas/contexto/CONTEXTO_ACTIVO.md` como referencia inicial en la siguiente
 - Se agrego manejo de estado vacio cuando la evidencia no tenga fotografia disponible.
 - Validacion ejecutada: `npm run build`.
 
+## Actualizacion de sesion 2026-07-18 - accion reports/incidence
+
+- Se agrego la accion declarativa `incidence` en `apis_me/reports/actions.php`.
+- La ruta operativa queda `/apis_me/reports/incidence/<inc>/`.
+- `inc` se valida como entero por ruta y se hidrata hacia la propiedad `idIncidencia`.
+- `ID_CLIENTE` e `ID_USUARIO` se mantienen como fuente de verdad desde `session_context`.
+- El query a `ADM_INCIDENCIAS` quedo parametrizado con `ID` e `ID_CLIENTE`, evitando SQL inline con nombres de variables en el `WHERE`.
+
+## Actualizacion de sesion 2026-07-19 - historial off-canvas en detalle de incidencia
+
+- Se agrego el boton `Ver historial` a la derecha del regreso en `src/pages/supervision/DetalleIncidencia.js`.
+- El boton abre un `uk-offcanvas` del lado derecho usando `flip: true; overlay: true`, alineado con el patron oficial de UIkit.
+- El off-canvas quedo preparado con datos demo mientras se implementa la API real de historial.
+- La data demo se separa por `ESTATUS`: `ATENDIDO` se pinta como comentarios y el resto como historial.
+- Tanto historial como comentarios se ordenan por `FECHA` descendente para mostrar primero el registro mas reciente.
+- Para enriquecer nombre y foto del usuario se consulta el catalogo local `usuarios` desde IndexedDB usando el `contextKey` de sesion; si no existe entrada, se usa fallback al usuario autenticado o al `USUARIO` del registro.
+- `src/components/historial/historial-component.js` se ajusto para tema actual `light/dark`, fallback visual de avatar, escape de contenido y registro seguro del custom element.
+
+## Actualizacion de sesion 2026-07-19 - timeline unificado en off-canvas
+
+- Se simplifico el `uk-offcanvas` de historial en `src/pages/supervision/DetalleIncidencia.js` para mostrar todos los registros en una sola linea de tiempo.
+- Ya no se hace separacion visual por `ESTATUS`; todo el dataset demo se pinta con `historial-component` en orden descendente por `FECHA`.
+- La caja de comentarios del costado derecho se mantiene sin cambios y queda pendiente de conectarse a su futura API especifica.
+
 ## Historial relacionado
 
 - `notas/contexto/historial/2026-07-17-seguimiento-detalle-incidencia.md`

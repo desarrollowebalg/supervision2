@@ -85,5 +85,37 @@ return array(
         ),
       ),
     ),
+    "incidence" => array(
+      "label" => "Obtener incidencia por identificador",
+      "params" => array(
+        array(
+          "name" => "inc",
+          "route_index" => 2,
+          "type" => "int",
+          "target_property" => "idIncidencia",
+          "error_label" => "ID INCIDENCIA",
+        ),
+      ),
+      "execution" => array(
+        "type" => "query",
+        "result_mode" => "list",
+        "sql" => "SELECT ID,ID_USUARIO_CREO AS CREADA_POR,ID_ESTATUS,ID_TIPO_INC,ID_OBJECT_MAP,ID_EVIDENCIA,NIVEL
+          FROM ADM_INCIDENCIAS
+          WHERE ID = ?
+          AND ID_CLIENTE = ?",
+        "bindings" => array(
+          array(
+            "source" => "property",
+            "name" => "idIncidencia",
+            "type" => "i",
+          ),
+          array(
+            "source" => "property",
+            "name" => "idCliente",
+            "type" => "i",
+          ),
+        ),
+      ),
+    ),
   ),
 );
