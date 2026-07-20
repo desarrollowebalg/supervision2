@@ -2,7 +2,7 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-19
+2026-07-20
 
 ## Responsable sugerido
 
@@ -155,6 +155,20 @@ Usar `notas/contexto/CONTEXTO_ACTIVO.md` como referencia inicial en la siguiente
 - `src/pages/supervision/DetalleIncidencia.js` dejo de usar `HISTORY_DEMO` y ahora consume `reports/history/<inc>/` para poblar el `uk-offcanvas`.
 - Verificacion remota ejecutada con `USU = 954` e `IDI = 30430`: la API externa respondio `statusCode: 200` con un arreglo en `body` que coincide con los registros demo usados previamente.
 - Validacion local pendiente en este entorno: no fue posible ejecutar `php -l` ni `npm run build` porque `php` y `npm` no estan disponibles en la sesion actual.
+
+## Actualizacion de sesion 2026-07-20 - supervision/leer hacia API externa
+
+- Se agrego la accion declarativa `leer` en `apis_me/supervision/actions.php`.
+- La ruta operativa queda `/apis_me/supervision/leer/<ide>/<item>/`.
+- `ide` se valida por ruta y se hidrata hacia `idEvidencia`.
+- `item` se valida por ruta y se hidrata hacia `itemNumber`.
+- `ID_USUARIO` se mantiene como fuente de verdad desde `session_context` y se envia a la API externa como `USU`.
+- `itemNumber` se envia a la API externa como `PDI`.
+- `idEvidencia` se envia a la API externa como `EVD`.
+- `apis_me/supervision/apiSupervision.class.php` se extendio para soportar `execution.type = "api"` mediante `curl`, payload JSON y parseo configurable de llaves JSON en la respuesta externa.
+- Para `leer`, el modulo devuelve directamente la llave `body` ya parseada como JSON, de modo que `ID` quede disponible de forma inmediata para el frontend sin envolver `statusCode`.
+- Verificacion remota ejecutada el lunes 20 de julio de 2026 con `USU = 36925`, `PDI = M2512225537-434` y `EVD = 67433043`: la API externa respondio `{"statusCode":200,"body":{"ID":2894}}`.
+- Validacion local pendiente en este entorno: no fue posible ejecutar `php -l` porque `php` no esta disponible en la sesion actual.
 
 ## Historial relacionado
 
