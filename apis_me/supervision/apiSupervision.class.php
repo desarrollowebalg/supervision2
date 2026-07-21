@@ -9,7 +9,10 @@ class apiSupervision{
   private $idCliente = 0;
   private $idUsuario = 0;
   private $idEvidencia = 0;
+  private $idIncidencia = 0;
   private $itemNumber = "";
+  private $observaciones = "";
+  private $tipoAtencion = 0;
   private $registros = array();
 
   function __construct($host,$usuario,$password,$base,$puerto) {

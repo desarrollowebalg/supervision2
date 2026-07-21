@@ -87,5 +87,68 @@ return array(
         ),
       ),
     ),
+    "incidenceAct" => array(
+      "label" => "Actualizar incidencia desde API externa de supervision",
+      "params" => array(
+        array(
+          "name" => "idi",
+          "route_index" => 2,
+          "type" => "int",
+          "target_property" => "idIncidencia",
+          "error_label" => "ID INCIDENCIA",
+        ),
+        array(
+          "name" => "obs",
+          "route_index" => 3,
+          "type" => "string",
+          "target_property" => "observaciones",
+          "error_label" => "OBSERVACIONES",
+        ),
+        array(
+          "name" => "tip",
+          "route_index" => 4,
+          "type" => "int",
+          "target_property" => "tipoAtencion",
+          "error_label" => "TIPO DE ATENCION",
+        ),
+      ),
+      "execution" => array(
+        "type" => "api",
+        "method" => "PUT",
+        "url" => "https://ktw6p76syh.execute-api.us-east-1.amazonaws.com/DEV/Supervision/Incidencias/Actualizaciones",
+        "result_mode" => "list",
+        "empty_result_status" => 200,
+        "empty_result_data" => array(),
+        "headers" => array(
+          "Content-Type: application/json",
+        ),
+        "body" => array(
+          "USU" => array(
+            "source" => "property",
+            "name" => "idUsuario",
+            "type" => "i",
+            "cast" => "int",
+          ),
+          "IDI" => array(
+            "source" => "property",
+            "name" => "idIncidencia",
+            "type" => "i",
+            "cast" => "int",
+          ),
+          "OBS" => array(
+            "source" => "property",
+            "name" => "observaciones",
+            "type" => "s",
+            "cast" => "string",
+          ),
+          "TIP" => array(
+            "source" => "property",
+            "name" => "tipoAtencion",
+            "type" => "i",
+            "cast" => "int",
+          ),
+        ),
+      ),
+    ),
   ),
 );

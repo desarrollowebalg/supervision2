@@ -131,7 +131,7 @@
         return (int)$rawValue;
       case "string":
       default:
-        return $rawValue;
+        return rawurldecode($rawValue);
     }
   }
 

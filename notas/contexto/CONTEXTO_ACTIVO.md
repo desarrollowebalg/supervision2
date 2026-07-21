@@ -2,7 +2,7 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-20
+2026-07-21
 
 ## Responsable sugerido
 
@@ -10,23 +10,25 @@ api-action-agent
 
 ## Objetivo actual
 
-Dejar operativo el flujo `supervision/leer` para que el frontend pueda obtener desde el endpoint local el identificador de incidencia creado por la API externa y usar `data.ID` en el siguiente paso funcional.
+Dejar operativo el flujo de detalle e incidencia en `supervision`, incluyendo creacion de incidencia desde evidencia, historial real y accion de actualizacion `incidenceAct`, dejando claro el contrato recomendado para observaciones en llamadas `PUT`.
 
 ## Estado actual
 
-El ultimo avance confirmado del proyecto ya no es documental sino tecnico sobre el modulo `apis_me/supervision`:
+El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervision` y su modulo `apis_me/supervision`:
 
-- Se creo el modulo `apis_me/supervision/` con estructura estandar:
+- El modulo `apis_me/supervision/` sigue activo con estructura estandar:
   - `.htaccess`
   - `index.php`
   - `actions.php`
   - `apiSupervision.class.php`
-- Existe una accion minima `ping` para validar disponibilidad del modulo.
-- La accion declarativa `leer` ya esta implementada en `apis_me/supervision/actions.php`.
-- La ruta operativa vigente es `/apis_me/supervision/leer/<ide>/<item>/`.
-- El endpoint local devuelve directamente la llave `body` parseada como JSON para consumo simple desde frontend.
-
-La ultima verificacion remota confirmada el lunes 20 de julio de 2026 devolvio correctamente un identificador de incidencia desde el proveedor externo.
+- Acciones vigentes en el modulo:
+  - `ping`
+  - `leer`
+  - `incidenceAct`
+- La ruta `leer` ya permite que frontend obtenga `data.ID` para sustituir `idi = 0` por el identificador real de incidencia.
+- `src/pages/supervision/DetalleIncidencia.js` ya consume ese flujo y reemplaza la ruta dentro de la SPA sin `hard refresh`.
+- La accion `incidenceAct` ya existe con contrato actual por ruta `/apis_me/supervision/incidenceAct/<idi>/<obs>/<tip>/`.
+- La recomendacion operativa vigente es no mantener `obs` como texto libre en la URL a mediano plazo y migrarlo a `body` JSON en el `PUT`.
 
 ## Alcance confirmado
 
@@ -34,7 +36,8 @@ La ultima verificacion remota confirmada el lunes 20 de julio de 2026 devolvio c
 - Enviar `item` como `PDI` hacia la API externa.
 - Enviar `ide` como `EVD` hacia la API externa.
 - Exponer al frontend solo el JSON util de `body`, sin envolver `statusCode` en la respuesta local final.
-- Dejar el modulo listo para que el siguiente trabajo conecte el consumidor frontend.
+- Mantener `incidenceAct` operativo con `USU`, `IDI`, `OBS` y `TIP`.
+- Dejar documentado que el contrato recomendado para observaciones en `PUT` es `body` JSON, aunque la implementacion actual siga aceptando `obs` por ruta.
 
 ## Decisiones vigentes
 
@@ -42,6 +45,7 @@ La ultima verificacion remota confirmada el lunes 20 de julio de 2026 devolvio c
 - El contexto activo debe reflejar el ultimo frente real del proyecto, aunque el detalle historico siga viviendo en `notas/contexto/historial/`.
 - Para `supervision/leer`, el contrato vigente es que el frontend lea `data.ID`.
 - `apiSupervision.class.php` ya soporta `execution.type = "api"` con `curl`, serializacion JSON y parseo configurable de respuesta externa.
+- Para `incidenceAct`, la implementacion vigente acepta `obs` por ruta con `rawurldecode`, pero la recomendacion de arquitectura es migrar observaciones a `body` JSON en un `PUT` real.
 - La nota de historial base para este contexto es `notas/contexto/historial/2026-07-20-supervision-leer-api-externa.md`.
 
 ## Archivos clave
@@ -65,26 +69,68 @@ La ultima verificacion remota confirmada el lunes 20 de julio de 2026 devolvio c
 
 ## Pendientes inmediatos
 
-1. Conectar el frontend consumidor de `supervision/leer`.
-2. Usar `data.ID` como identificador de incidencia creada en el flujo que dispare la lectura.
-3. Ejecutar validacion local de PHP cuando el entorno disponga de `php`.
-4. Actualizar este contexto al cierre de la siguiente tarea tecnica relacionada.
+1. Conectar desde frontend el consumo real de `incidenceAct`.
+2. Definir si `obs` permanecera temporalmente en ruta o se migrara ya a `body` JSON.
+3. Si se migra `obs` a `body`, ajustar `apis_me/supervision/index.php` para leer payload `PUT` de forma uniforme.
+4. Validar integralmente el flujo completo de detalle: generar incidencia, consultar historial y actualizar incidencia.
+
+## Actualizacion de sesion 2026-07-21 - detalle con generacion de incidencia
+
+- Se conecto el frontend de `src/pages/supervision/DetalleIncidencia.js` al endpoint local `/apis_me/supervision/leer/<ide>/<item>/` mediante el nuevo servicio `src/core/services/apis-me/supervision.service.js`.
+- Cuando la ruta entra como `#/supervision/detalle/:ide/0/`, la vista ahora:
+  - muestra `Generando incidencia...`
+  - carga evidencia primero
+  - extrae `ID_RES_CUESTIONARIO` y `ITEM_NUMBER`
+  - llama `supervision/leer`
+  - reemplaza la ruta con `#/supervision/detalle/:ide/:idi/` usando el `ID` devuelto por la API
+- Mientras `idi = 0`, el historial no se consulta y el bloque de comentarios queda temporalmente deshabilitado con mensajes de espera o error.
+- Se adopto la estrategia SPA de reemplazo de hash sin `hard refresh`, aprovechando el rerender natural del router actual.
+- Validacion ejecutada: `npm run build` el martes 21 de julio de 2026.
+
+## Actualizacion de sesion 2026-07-21 - accion supervision/incidenceAct
+
+- Se agrego la accion declarativa `incidenceAct` en `apis_me/supervision/actions.php`.
+- La ruta operativa queda `/apis_me/supervision/incidenceAct/<idi>/<obs>/<tip>/`.
+- `idi` se valida por ruta y se hidrata hacia `idIncidencia`.
+- `obs` se valida por ruta y se hidrata hacia `observaciones`.
+- `tip` se valida por ruta y se hidrata hacia `tipoAtencion`.
+- `ID_CLIENTE` e `ID_USUARIO` se mantienen como fuente de verdad desde `session_context`.
+- La accion usa `execution.type = "api"` con metodo HTTP `PUT` hacia `https://ktw6p76syh.execute-api.us-east-1.amazonaws.com/DEV/Supervision/Incidencias/Actualizaciones`.
+- El payload configurado hacia la API externa queda con el contrato:
+  - `USU` desde sesion
+  - `IDI` desde parametro de ruta
+  - `OBS` desde parametro de ruta
+  - `TIP` desde parametro de ruta
+- Se ajusto `apis_me/supervision/index.php` para aplicar `rawurldecode` a parametros de tipo `string`, permitiendo comentarios codificados en URL para `obs`.
+- Se extendio `apis_me/supervision/apiSupervision.class.php` con las propiedades `idIncidencia`, `observaciones` y `tipoAtencion`.
+- Validacion ejecutada el martes 21 de julio de 2026:
+  - `php -l apis_me/supervision/actions.php`
+  - `php -l apis_me/supervision/apiSupervision.class.php`
+  - `php -l apis_me/supervision/index.php`
+
+## Actualizacion de sesion 2026-07-21 - recomendacion para observaciones en PUT
+
+- Se reviso el contrato de `incidenceAct` para el parametro `obs`, que hoy viaja como segmento de ruta.
+- Se dejo asentado que esta implementacion actual funciona solo como solucion temporal cuando frontend envie `obs` con `encodeURIComponent(...)`.
+- La recomendacion vigente es migrar `obs` a `body` JSON y dejar en ruta solo identificadores estables como `idi` y `tip`.
+- Motivo: `obs` es texto libre y puede incluir acentos, espacios, signos, diagonales, `#`, `?`, comillas o saltos de linea, lo que vuelve fragil el uso de URL como contenedor principal.
+- Si frontend mantiene el contrato actual por ruta, debe codificar el texto con `encodeURIComponent(obs)` antes de invocar `PUT /apis_me/supervision/incidenceAct/<idi>/<obs>/<tip>/`.
 
 ## Riesgos o bloqueos
 
-- En esta sesion no hay `php` disponible para ejecutar `php -l`.
 - Si el frontend asume la envoltura completa del proveedor externo, fallara porque el endpoint local ahora expone directamente `body`.
 - Cualquier cambio posterior en el contrato de la API externa requerira revisar el parseo en `apiSupervision.class.php`.
+- Mantener `obs` en la URL puede fallar o degradarse con textos largos o caracteres reservados, aun usando codificacion.
 
 ## Validacion pendiente
 
-- Ejecutar `php -l apis_me/supervision/actions.php`.
-- Ejecutar `php -l apis_me/supervision/apiSupervision.class.php`.
-- Validar el consumidor frontend una vez que se conecte al endpoint local.
+- Validar el consumidor frontend de `incidenceAct`.
+- Probar envio de observaciones con acentos, signos y texto largo.
+- Si se decide migrar `obs` a body, validar `PUT` real con payload JSON desde frontend.
 
 ## Siguiente paso recomendado
 
-Implementar o revisar el consumidor frontend de `/apis_me/supervision/leer/<ide>/<item>/` para que tome `data.ID` y continúe el flujo de incidencia.
+Implementar o revisar el consumidor frontend de `incidenceAct` y decidir si se conserva temporalmente `obs` en ruta con `encodeURIComponent(...)` o se migra de inmediato a `body` JSON.
 
 ## Actualizacion de sesion 2026-07-17
 

@@ -7,6 +7,7 @@ import '../../components/userAvatar.js';
 import '../../components/comentarios/CommentBox.js';
 import '../../components/historial/historial-component.js';
 import { getEvidenceReport, getHistoryReport } from '../../core/services/apis-me/reports.service.js';
+import { markEvidenceAsReadAndCreateIncident } from '../../core/services/apis-me/supervision.service.js';
 
 export default class DetalleIncidencia {
   static instancia = null;
@@ -23,6 +24,8 @@ export default class DetalleIncidencia {
     this.requestToken = 0;
     this.pendingEvidenceId = '';
     this.pendingIncidentId = '';
+    this.isCreatingIncident = false;
+    this.incidentCreationError = '';
     this.evidenceState = {
       loading: false,
       error: '',
@@ -39,8 +42,13 @@ export default class DetalleIncidencia {
     const idi = String(params?.idi || '0').trim() || '0';
     const previousLabel = this.navigationContext?.state?.previousLabel || 'Supervisión';
     const commentUser = this.getCommentUserContext();
+    const isPendingIncident = this.isPendingIncidentId(idi);
+    const headerTitle = isPendingIncident ? 'Generando incidencia...' : `Seguimiento: ${idi || '0'}`;
+    const historyTitle = isPendingIncident ? 'Generando seguimiento' : `Seguimiento #${idi || 'N/D'}`;
     this.pendingEvidenceId = ide;
     this.pendingIncidentId = idi;
+    this.isCreatingIncident = false;
+    this.incidentCreationError = '';
 
     renderInicioLayout(container, {
       title: '',
@@ -60,16 +68,19 @@ export default class DetalleIncidencia {
               <button
                 class="uk-button uk-button-primary uk-button-small uk-border-rounded uk-margin-small-left"
                 type="button"
-                uk-toggle="target: #detalle-incidencia-history-offcanvas"
+                ${isPendingIncident ? 'disabled aria-disabled="true"' : 'uk-toggle="target: #detalle-incidencia-history-offcanvas"'}
               >
                 <span uk-icon="icon: history; ratio: 0.85"></span>
                 Ver historial
               </button>
             </div>
             <h1 class="uk-card-title uk-margin-small-top uk-margin-remove-bottom">
-              Seguimiento: ${this.escapeHtml(idi || '0')}
+              ${this.escapeHtml(headerTitle)}
             </h1>
-            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom uk-hidden">
+            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom ${isPendingIncident ? '' : 'uk-hidden'}">
+              Estamos marcando la evidencia como leída y creando el seguimiento.
+            </p>
+            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">
               Origen: ${this.escapeHtml(ide || 'N/D')} | IDI: ${this.escapeHtml(idi || '0')}
             </p>
             <div class="uk-grid-large uk-child-width-1-1 uk-grid-match uk-margin-top" uk-grid>
@@ -84,12 +95,9 @@ export default class DetalleIncidencia {
                     <div class="detail-incidencia-commentary__header">                      
                       <h2 class="uk-h4 uk-margin-small-top uk-margin-remove-bottom">Comentarios</h2>
                     </div>
-                    <comment-box
-                      user-id="${this.escapeHtml(commentUser.userId)}"
-                      user-name="${this.escapeHtml(commentUser.userName)}"
-                      nickname="${this.escapeHtml(commentUser.nickname)}"
-                      user-photo="${this.escapeHtml(commentUser.userPhoto)}"
-                    ></comment-box>
+                    <div data-commentary-panel="true">
+                      ${this.renderCommentaryContent(isPendingIncident, commentUser)}
+                    </div>
                   </div>
                 </section>
               </div>
@@ -100,7 +108,7 @@ export default class DetalleIncidencia {
           <div class="uk-offcanvas-bar detail-incidencia-offcanvas">
             <button class="uk-offcanvas-close" type="button" uk-close></button>
             <div class="detail-incidencia-offcanvas__header">              
-              <h2 class="uk-h3 uk-margin-small-top uk-margin-remove-bottom">Seguimiento #${this.escapeHtml(idi || 'N/D')}</h2>
+              <h2 class="uk-h3 uk-margin-small-top uk-margin-remove-bottom">${this.escapeHtml(historyTitle)}</h2>
             </div>
             <div class="detail-incidencia-offcanvas__content" data-history-offcanvas-content="true">
               <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
@@ -117,8 +125,10 @@ export default class DetalleIncidencia {
 
     container.querySelector('.inicio-padding-card > h1.uk-card-title')?.remove();
     this.bindEvents();
-    this.loadEvidence(ide);
-    this.renderHistoryOffcanvas();
+    if (isPendingIncident) {
+      this.renderHistoryOffcanvas();
+    }
+    this.initializeDetailFlow(ide, idi);
   }
 
   bindEvents() {
@@ -144,6 +154,21 @@ export default class DetalleIncidencia {
     };
 
     backButton.addEventListener('click', this.handleBackClick);
+  }
+
+  async initializeDetailFlow(ide, idi) {
+    await this.loadEvidence(ide);
+
+    if (this.pendingEvidenceId !== String(ide || '').trim()) {
+      return;
+    }
+
+    if (this.isPendingIncidentId(idi)) {
+      await this.createIncidentFromEvidence();
+      return;
+    }
+
+    this.renderHistoryOffcanvas();
   }
 
   async loadEvidence(ide) {
@@ -190,6 +215,7 @@ export default class DetalleIncidencia {
     }
 
     this.renderEvidencePanel();
+    return this.evidenceState.record;
   }
 
   renderEvidencePanel() {
@@ -311,6 +337,20 @@ export default class DetalleIncidencia {
   async renderHistoryOffcanvas() {
     const slot = this.container?.querySelector('[data-history-offcanvas-content="true"]');
     if (!slot) {
+      return;
+    }
+
+    if (this.isPendingIncidentId(this.pendingIncidentId)) {
+      const pendingMessage = this.isCreatingIncident
+        ? 'Estamos generando la incidencia y habilitaremos el historial en cuanto termine el proceso.'
+        : (this.incidentCreationError || 'El historial se habilitara cuando la incidencia termine de generarse.');
+      slot.innerHTML = `
+        <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-history-empty">
+          <p class="uk-margin-remove">
+            ${this.escapeHtml(pendingMessage)}
+          </p>
+        </div>
+      `;
       return;
     }
 
@@ -466,6 +506,90 @@ export default class DetalleIncidencia {
     };
   }
 
+  renderCommentaryContent(isPendingIncident, commentUser) {
+    if (isPendingIncident) {
+      const waitingMessage = this.isCreatingIncident
+        ? 'Estamos generando la incidencia. Los comentarios se habilitaran al finalizar.'
+        : (this.incidentCreationError || 'Los comentarios estaran disponibles cuando se genere la incidencia.');
+      return `
+        <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-commentary__waiting">
+          <p class="uk-margin-remove">
+            ${this.escapeHtml(waitingMessage)}
+          </p>
+        </div>
+      `;
+    }
+
+    return `
+      <comment-box
+        user-id="${this.escapeHtml(commentUser.userId)}"
+        user-name="${this.escapeHtml(commentUser.userName)}"
+        nickname="${this.escapeHtml(commentUser.nickname)}"
+        user-photo="${this.escapeHtml(commentUser.userPhoto)}"
+      ></comment-box>
+    `;
+  }
+
+  isPendingIncidentId(value) {
+    return String(value || '').trim() === '0';
+  }
+
+  async createIncidentFromEvidence() {
+    if (this.isCreatingIncident) {
+      return;
+    }
+
+    const evidenceHeader = this.evidenceState.record?.header;
+    const idResCuestionario = String(evidenceHeader?.ID_RES_CUESTIONARIO || '').trim();
+    const itemNumber = String(evidenceHeader?.ITEM_NUMBER || '').trim();
+
+    if (!/^\d+$/.test(idResCuestionario) || !itemNumber) {
+      this.incidentCreationError = 'No fue posible obtener la referencia necesaria para generar la incidencia.';
+      this.renderCommentaryPanelState();
+      this.renderHistoryOffcanvas();
+      return;
+    }
+
+    this.isCreatingIncident = true;
+    this.incidentCreationError = '';
+    this.renderCommentaryPanelState();
+    this.renderHistoryOffcanvas();
+
+    try {
+      const incidentId = await markEvidenceAsReadAndCreateIncident(idResCuestionario, itemNumber);
+      const safeEvidenceId = encodeURIComponent(this.pendingEvidenceId);
+      const safeIncidentId = encodeURIComponent(String(incidentId));
+
+      navigate(`/supervision/detalle/${safeEvidenceId}/${safeIncidentId}/`, {
+        replace: true,
+        state: {
+          ...(this.navigationContext?.state || {}),
+          from: this.navigationContext?.state?.from || '/supervision',
+          previousLabel: this.navigationContext?.state?.previousLabel || 'Supervisión'
+        }
+      });
+    } catch (error) {
+      this.incidentCreationError = error instanceof Error
+        ? error.message
+        : 'No fue posible generar la incidencia.';
+      this.isCreatingIncident = false;
+      this.renderCommentaryPanelState();
+      this.renderHistoryOffcanvas();
+    }
+  }
+
+  renderCommentaryPanelState() {
+    const slot = this.container?.querySelector('[data-commentary-panel="true"]');
+    if (!slot) {
+      return;
+    }
+
+    slot.innerHTML = this.renderCommentaryContent(
+      this.isPendingIncidentId(this.pendingIncidentId),
+      this.getCommentUserContext()
+    );
+  }
+
   escapeHtml(value) {
     return String(value || '')
       .replaceAll('&', '&amp;')
@@ -587,6 +711,12 @@ export default class DetalleIncidencia {
         gap: 1rem;
         min-height: 24rem;
         align-content: start;
+      }
+
+      .detail-incidencia-commentary__waiting {
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
+        color: var(--app-text-muted);
       }
 
       .detail-incidencia-offcanvas {
