@@ -6,32 +6,36 @@
 
 ## Responsable sugerido
 
-frontend-agent
+documentation-agent
 
 ## Objetivo actual
 
-Dejar consolidado el flujo real de detalle e incidencia en `supervision`, con comentarios operativos desde frontend, historial real reutilizado en dos vistas y contrato estable de `incidenceAct` para `PUT` con observaciones en body JSON.
+Dejar consolidado el flujo operativo de atencion de incidencias en `supervision`, incluyendo comentarios, cambio de estatus, bloqueo de acciones terminales, exportacion PDF del seguimiento y sincronizacion del catalogo para evitar desfases al regresar al panel.
 
 ## Estado actual
 
-El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervision` y su modulo `apis_me/supervision`:
+El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/DetalleIncidencia.js` y en la coherencia del regreso al catalogo de `supervision`:
 
-- El modulo `apis_me/supervision/` sigue activo con estructura estandar:
-  - `.htaccess`
-  - `index.php`
-  - `actions.php`
-  - `apiSupervision.class.php`
-- Acciones vigentes en el modulo:
-  - `ping`
-  - `leer`
-  - `incidenceAct`
-- La ruta `leer` ya permite que frontend obtenga `data.ID` para sustituir `idi = 0` por el identificador real de incidencia.
-- `src/pages/supervision/DetalleIncidencia.js` ya consume ese flujo y reemplaza la ruta dentro de la SPA sin `hard refresh`.
-- La accion `incidenceAct` ya opera con contrato local `/apis_me/supervision/incidenceAct/<idi>/<tip>/` y recibe `obs` en el body JSON del `PUT`.
-- `src/pages/supervision/DetalleIncidencia.js` ya consume `incidenceAct` al guardar comentarios desde `CommentBox`.
-- El historial real de `reports/history` ahora alimenta dos vistas:
-  - comentarios recientes bajo la caja de comentarios para registros `ESTATUS = ATENDIDO`
-  - off-canvas lateral para el resto del historial, con enlace explicito para desplegar tambien los comentarios
+- `DetalleIncidencia` ya muestra el estatus actual de la incidencia desde `reports/incidence` junto a la etiqueta `Seguimiento:`.
+- El boton `Atender incidencia` ya abre un modal funcional con:
+  - numero de incidencia
+  - resumen relevante
+  - `CommentBox` abierto listo para captura
+  - selector de accion con `TIP = 3`, `4` y `2`
+  - botones `Cancelar` y `Guardar y atender incidencia`
+- El guardado de atencion ya consume `/apis_me/supervision/incidenceAct/<idi>/<tip>/` con `obs` en body JSON y ya refresca historial y estatus al responder correctamente.
+- El boton de guardado en el modal ya se deshabilita durante el proceso y se muestran notificaciones UIkit segun el resultado.
+- `CommentBox` ya puede operar sin depender del clic previo mediante atributos de apertura programatica, manteniendo intacto el flujo tradicional por clic.
+- El historial lateral ya reutiliza el mismo estilo visual para comentarios y timeline, evitando mezcla de componentes visuales distintos.
+- Cuando la incidencia queda en estatus terminal o no editable:
+  - `Atender incidencia` deja de estar disponible
+  - la captura de comentarios se bloquea en la UI
+  - el usuario ya no puede abrir ni guardar nuevos comentarios sobre la incidencia cerrada o finalizada
+- Se agrego un boton `PDF` que abre una nueva pestaña con un documento imprimible del seguimiento:
+  - evidencia/origen
+  - resumen de incidencia
+  - historial completo
+- Cuando se agrega comentario o se atiende la incidencia, frontend ya dispara un refresco en segundo plano del catalogo de `supervision` para reducir el desfase al volver a la vista anterior.
 
 ## Alcance confirmado
 
@@ -40,8 +44,9 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 - Enviar `ide` como `EVD` hacia la API externa.
 - Exponer al frontend solo el JSON util de `body`, sin envolver `statusCode` en la respuesta local final.
 - Mantener `incidenceAct` operativo con `USU`, `IDI`, `OBS` y `TIP`.
-- Mantener `tip = 1` para comentarios en el flujo actual de `DetalleIncidencia`, sin cerrar el endpoint a otros `TIP` futuros desde otras vistas frontend.
+- Mantener `tip = 1` para comentarios en el flujo de comentarios y habilitar tambien `TIP = 3`, `4` y `2` para el flujo de atencion desde modal.
 - Mantener `obs` en body JSON como contrato vigente para texto libre en `PUT`.
+- Evitar depender solo del TTL del catalogo cuando la propia vista ya conoce que hubo una mutacion de la incidencia.
 
 ## Decisiones vigentes
 
@@ -51,18 +56,25 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 - `apiSupervision.class.php` ya soporta `execution.type = "api"` con `curl`, serializacion JSON y parseo configurable de respuesta externa.
 - Para `incidenceAct`, el contrato vigente ya usa `obs` en body JSON y deja `idi` y `tip` como parametros de ruta.
 - Los comentarios visibles en la columna derecha y los comentarios desplegables del off-canvas salen de la misma fuente `reports/history`, filtrando `ESTATUS = ATENDIDO`.
-- La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-22-supervision-comentarios-historial.md`.
+- `reports/incidence` queda como fuente de verdad para pintar el estatus actual en el header del detalle.
+- Los estatus terminales para atencion son `RECHAZADA (4)` y `CERRADA (2)`, por lo que el boton `Atender incidencia` no debe quedar operativo en esos casos.
+- Los estatus que bloquean nuevos comentarios desde la UI son `APROBADA (3)`, `RECHAZADA (4)` y `CERRADA (2)`.
+- El refresco del catalogo de `supervision` despues de comentar o atender debe ejecutarse en segundo plano con `forceRefresh`, usando el contexto de seleccion con el que se abrio el detalle.
+- La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-22-supervision-atencion-estado-cache-pdf.md`.
 
 ## Archivos clave
 
 - `apis_me/supervision/index.php`
 - `apis_me/supervision/actions.php`
 - `apis_me/supervision/apiSupervision.class.php`
+- `src/core/services/apis-me/incidencias.service.js`
 - `src/core/services/apis-me/supervision.service.js`
+- `src/core/services/apis-me/reports.service.js`
 - `src/components/comentarios/CommentBox.js`
 - `src/components/comentarios/comment-history-item.js`
+- `src/components/supervision-detail/supervision-detail-panel.js`
 - `src/pages/supervision/DetalleIncidencia.js`
-- `notas/contexto/historial/2026-07-22-supervision-comentarios-historial.md`
+- `notas/contexto/historial/2026-07-22-supervision-atencion-estado-cache-pdf.md`
 - `notas/contexto/CONTEXTO_ACTIVO.md`
 - `AGENTS.md`
 
@@ -78,10 +90,33 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 
 ## Pendientes inmediatos
 
-1. Conectar desde frontend el consumo real de `incidenceAct`.
-2. Definir si `obs` permanecera temporalmente en ruta o se migrara ya a `body` JSON.
-3. Si se migra `obs` a `body`, ajustar `apis_me/supervision/index.php` para leer payload `PUT` de forma uniforme.
-4. Validar integralmente el flujo completo de detalle: generar incidencia, consultar historial y actualizar incidencia.
+1. Validar en flujo completo que el regreso al panel de `supervision` ya refleje el cambio sin esperar el TTL normal del catalogo.
+2. Confirmar visualmente si el formato imprimible del boton `PDF` cubre la necesidad operativa o si despues se requiere generacion binaria real.
+3. Revisar si hay otros puntos del frontend que permitan mutar incidencia y que tambien deban disparar sincronizacion en segundo plano.
+4. Limpiar o centralizar cualquier log temporal restante si reaparece durante nuevas iteraciones del flujo.
+
+## Actualizacion de sesion 2026-07-22 - atencion de incidencia, estatus, PDF y sincronizacion del catalogo
+
+- Se habilito en `src/pages/supervision/DetalleIncidencia.js` el flujo completo de `Atender incidencia` mediante un modal UIkit con comentario, selector de accion y envio a `incidenceAct`.
+- Se agrego soporte frontend para `TIP = 3` (`Aprobar`), `TIP = 4` (`Rechazar`) y `TIP = 2` (`Cerrar`) sin afectar el flujo existente de comentarios con `TIP = 1`.
+- Se fortalecio `src/components/comentarios/CommentBox.js` para:
+  - abrirse programaticamente sin clic previo
+  - ocultar acciones cuando se usa embebido en otros flujos
+  - exponer helpers de lectura, limpieza, foco y reset del texto
+- Se corrigio el flujo del modal de atencion para que el submit realmente localice sus referencias internas y ejecute el `PUT` al presionar `Guardar y atender incidencia`.
+- Se ajusto el cierre y reapertura del modal para que no quede bloqueado despues de una interaccion previa.
+- Se eliminaron los logs de depuracion una vez confirmado el flujo exitoso con respuesta `200`.
+- El header de `DetalleIncidencia` ahora muestra el estatus actual de la incidencia a la derecha de `Seguimiento: <idi>`.
+- Se agrego el boton `PDF`, que abre una nueva pestaña con una vista imprimible del seguimiento completo sin bloquear la pestaña operativa actual.
+- Se definio que `Atender incidencia` queda deshabilitado cuando la incidencia ya esta en estatus terminal `2` o `4`.
+- Se definio que la captura de comentarios queda bloqueada cuando la incidencia esta en `3`, `4` o `2`, para evitar mutaciones no permitidas sobre incidencias terminadas.
+- `src/components/comentarios/comment-history-item.js` y el historial del detalle quedaron alineados visualmente para que comentarios y timeline no mezclen estilos distintos.
+- Desde `src/components/supervision-detail/supervision-detail-panel.js` ahora se envia a la ruta de detalle el contexto de seleccion necesario para poder refrescar el catalogo correcto al volver.
+- `DetalleIncidencia` ahora ejecuta refresco en segundo plano de:
+  - `getIncidenciasDetalle(..., { forceRefresh: true })`
+  - `getIncidenciasByDate(..., { forceRefresh: true })`
+  despues de guardar comentario o atender la incidencia.
+- La razon de este refresco es evitar el desfase provocado por el cache IndexedDB con TTL cuando el usuario vuelve inmediatamente a la vista anterior.
 
 ## Actualizacion de sesion 2026-07-22 - comentarios reales y separacion visual del historial
 
@@ -150,18 +185,19 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 
 - Si el frontend asume la envoltura completa del proveedor externo, fallara porque el endpoint local ahora expone directamente `body`.
 - Cualquier cambio posterior en el contrato de la API externa requerira revisar el parseo en `apiSupervision.class.php`.
-- Los otros consumidores futuros de `incidenceAct` deberan seguir enviando `tip` por ruta segun su accion especifica; hoy solo el flujo de comentarios fija `tip = 1`.
+- Los otros consumidores futuros de `incidenceAct` deberan seguir enviando `tip` por ruta segun su accion especifica; hoy el detalle ya usa `tip = 1`, `2`, `3` y `4`.
+- El flujo de refresco en segundo plano depende de que el detalle haya recibido contexto suficiente de seleccion al ser abierto desde el panel de `supervision`.
+- El boton `PDF` genera una vista imprimible HTML en nueva pestaña; si despues se requiere un PDF binario exacto, habra que cambiar la estrategia.
 
 ## Validacion pendiente
 
-- Ejecutar `npm run build` cuando el entorno tenga Node/NPM disponible.
-- Ejecutar `php -l` sobre `apis_me/supervision/index.php` y `apis_me/supervision/actions.php` cuando el entorno tenga PHP disponible.
-- Validar manualmente el enlace del off-canvas para mostrar/ocultar comentarios de atencion dentro del historial.
-- Definir los `TIP` que usaran las otras acciones futuras del frontend, aprovechando el mismo endpoint `incidenceAct`.
+- Validar manualmente el retorno inmediato al panel de `supervision` tras comentar y tras atender una incidencia para confirmar que el refresh en segundo plano elimino el desfase.
+- Revisar visualmente el contenido del `PDF` con diferentes incidencias para confirmar que evidencia, resumen e historial cubren el caso operativo.
+- Confirmar si el bloqueo de comentarios para estatus `3`, `4` y `2` coincide exactamente con la regla de negocio final.
 
 ## Siguiente paso recomendado
 
-Definir los siguientes consumidores frontend de `incidenceAct` que usaran otros valores de `TIP`, manteniendo `CommentBox` solo para comentarios con `TIP = 1`.
+Validar punta a punta el regreso desde `DetalleIncidencia` hacia `supervision` para confirmar que la sincronizacion en segundo plano deja consistente el catalogo y definir si el mismo patron debe extenderse a otros catalogos mutables del modulo.
 
 ## Actualizacion de sesion 2026-07-17
 

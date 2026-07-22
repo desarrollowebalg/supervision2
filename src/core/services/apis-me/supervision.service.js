@@ -38,20 +38,40 @@ export async function markEvidenceAsReadAndCreateIncident(idResCuestionario, ite
 }
 
 export async function updateIncidentComment(incidentId, tipoAtencion, observaciones) {
+  return updateIncidentAction(incidentId, tipoAtencion, observaciones, {
+    invalidIncidentMessage: 'Identificador de incidencia invalido para guardar el comentario',
+    invalidTypeMessage: 'Tipo de atencion invalido para guardar el comentario',
+    emptyObservationMessage: 'Escribe un comentario antes de guardar',
+    requestErrorMessage: 'No fue posible guardar el comentario'
+  });
+}
+
+export async function updateIncidentAction(
+  incidentId,
+  tipoAtencion,
+  observaciones,
+  messages = {}
+) {
   const safeIncidentId = String(incidentId || '').trim();
   const safeTipoAtencion = String(tipoAtencion || '').trim();
   const safeObservaciones = String(observaciones || '').trim();
+  const {
+    invalidIncidentMessage = 'Identificador de incidencia invalido para actualizar la incidencia',
+    invalidTypeMessage = 'Tipo de atencion invalido para actualizar la incidencia',
+    emptyObservationMessage = 'Escribe un comentario antes de guardar',
+    requestErrorMessage = 'No fue posible actualizar la incidencia'
+  } = messages;
 
   if (!/^\d+$/.test(safeIncidentId)) {
-    throw new Error('Identificador de incidencia invalido para guardar el comentario');
+    throw new Error(invalidIncidentMessage);
   }
 
   if (!/^\d+$/.test(safeTipoAtencion)) {
-    throw new Error('Tipo de atencion invalido para guardar el comentario');
+    throw new Error(invalidTypeMessage);
   }
 
   if (!safeObservaciones) {
-    throw new Error('Escribe un comentario antes de guardar');
+    throw new Error(emptyObservationMessage);
   }
 
   const response = await apisMePut(
@@ -60,7 +80,7 @@ export async function updateIncidentComment(incidentId, tipoAtencion, observacio
   );
 
   if (!response?.success) {
-    throw new Error(String(response?.message || 'No fue posible guardar el comentario'));
+    throw new Error(String(response?.message || requestErrorMessage));
   }
 
   return response;

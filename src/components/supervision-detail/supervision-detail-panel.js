@@ -1077,7 +1077,14 @@ export function createSupervisionDetailPanel({ container }) {
       navigate(`/supervision/detalle/${encodeURIComponent(ide)}/${encodeURIComponent(idi)}/`, {
         state: {
           from: getCurrentPath(),
-          previousLabel: currentSelection?.panelTitle || 'Supervisión'
+          previousLabel: currentSelection?.panelTitle || 'Supervisión',
+          supervisionSelection: currentSelection
+            ? {
+                userId: Number(currentSelection.userId || 0),
+                selectedDate: String(currentSelection.selectedDate || '').trim(),
+                nivel: resolveSelectionLevel(currentSelection)
+              }
+            : null
         }
       });
     }

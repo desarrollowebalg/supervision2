@@ -4,7 +4,7 @@ class CommentBox extends HTMLElement {
         this.attachShadow({ mode: 'open' });
 
         this.placeholderText = 'De clic para agregar comentarios';
-        this.isActive = false;
+        this.isActive = this.shouldStartOpen();
         this.isSaving = false;
         this.errorMessage = '';
 
@@ -14,11 +14,28 @@ class CommentBox extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['user-id', 'user-name', 'nickname', 'user-photo'];
+        return ['user-id', 'user-name', 'nickname', 'user-photo', 'open', 'auto-open', 'hide-actions'];
     }
 
-    attributeChangedCallback() {
+    attributeChangedCallback(name, oldValue, newValue) {
+        if ((name === 'open' || name === 'auto-open') && oldValue !== newValue) {
+            this.isActive = this.shouldStartOpen();
+        }
+
         this.updateContent();
+    }
+
+    shouldStartOpen() {
+        return this.hasTruthyAttribute('open') || this.hasTruthyAttribute('auto-open');
+    }
+
+    hasTruthyAttribute(attributeName) {
+        if (!this.hasAttribute(attributeName)) {
+            return false;
+        }
+
+        const rawValue = String(this.getAttribute(attributeName) || '').trim().toLowerCase();
+        return rawValue === '' || rawValue === 'true' || rawValue === '1' || rawValue === attributeName;
     }
 
     createInitialStructure() {
@@ -99,6 +116,10 @@ class CommentBox extends HTMLElement {
                 display: flex;
                 gap: 0.75rem;
                 justify-content: flex-end;
+            }
+
+            .buttons.hidden {
+                display: none;
             }
 
             button {
@@ -231,6 +252,7 @@ class CommentBox extends HTMLElement {
         const cancelButton = this.shadowRoot.querySelector('.cancel-btn');
         const saveButton = this.shadowRoot.querySelector('.save-btn');
         const statusMessage = this.shadowRoot.querySelector('.status-message');
+        const buttons = this.shadowRoot.querySelector('.buttons');
 
         container.classList.toggle('active', this.isActive);
         editor.classList.toggle('active', this.isActive);
@@ -246,6 +268,7 @@ class CommentBox extends HTMLElement {
         saveButton.textContent = this.isSaving ? 'Guardando...' : 'Guardar';
         statusMessage.textContent = this.errorMessage;
         statusMessage.classList.toggle('active', Boolean(this.errorMessage));
+        buttons.classList.toggle('hidden', this.hasAttribute('hide-actions'));
     }
 
     setupEventListeners() {
@@ -313,6 +336,25 @@ class CommentBox extends HTMLElement {
         this.shadowRoot.querySelector('.placeholder').textContent = text;
     }
 
+    getCommentText() {
+        return String(this.shadowRoot.querySelector('textarea')?.value || '').trim();
+    }
+
+    setCommentText(text) {
+        const textarea = this.shadowRoot.querySelector('textarea');
+        if (textarea) {
+            textarea.value = String(text || '');
+        }
+    }
+
+    clearCommentText() {
+        this.setCommentText('');
+    }
+
+    focusTextarea() {
+        this.shadowRoot.querySelector('textarea')?.focus();
+    }
+
     setSavingState(isSaving) {
         this.isSaving = Boolean(isSaving);
         this.updateContent();
@@ -327,6 +369,15 @@ class CommentBox extends HTMLElement {
         this.isSaving = false;
         this.errorMessage = '';
         this.deactivate();
+    }
+
+    reset(options = {}) {
+        const { keepOpen = this.shouldStartOpen() } = options;
+        this.isSaving = false;
+        this.errorMessage = '';
+        this.clearCommentText();
+        this.isActive = Boolean(keepOpen);
+        this.updateContent();
     }
 }
 
