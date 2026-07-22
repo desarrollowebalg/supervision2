@@ -5,6 +5,8 @@ class CommentBox extends HTMLElement {
 
         this.placeholderText = 'De clic para agregar comentarios';
         this.isActive = false;
+        this.isSaving = false;
+        this.errorMessage = '';
 
         this.createInitialStructure();
         this.setupEventListeners();
@@ -157,6 +159,27 @@ class CommentBox extends HTMLElement {
                 color: var(--app-text-muted, #64748b);
                 font-size: 0.9em;
             }
+
+            .status-message {
+                display: none;
+                padding: 0.75rem 0.85rem;
+                border-radius: 10px;
+                background: color-mix(in srgb, #dc2626 10%, var(--app-surface, #ffffff));
+                border: 1px solid color-mix(in srgb, #dc2626 30%, var(--app-border, #d0d7de));
+                color: #991b1b;
+                font-size: 0.92rem;
+                line-height: 1.45;
+            }
+
+            .status-message.active {
+                display: block;
+            }
+
+            textarea:disabled,
+            button:disabled {
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
         `;
 
         const container = document.createElement('div');
@@ -180,6 +203,7 @@ class CommentBox extends HTMLElement {
                     <span class="user-nickname"></span>
                 </div>
             </div>
+            <div class="status-message" role="alert"></div>
             <textarea placeholder="Escribe tu comentario aqui..."></textarea>
             <div class="buttons">
                 <button class="cancel-btn" type="button">Cancelar</button>
@@ -203,6 +227,10 @@ class CommentBox extends HTMLElement {
         const userPhotoImg = this.shadowRoot.querySelector('.user-photo');
         const userNameSpan = this.shadowRoot.querySelector('.user-name');
         const userNicknameSpan = this.shadowRoot.querySelector('.user-nickname');
+        const textarea = this.shadowRoot.querySelector('textarea');
+        const cancelButton = this.shadowRoot.querySelector('.cancel-btn');
+        const saveButton = this.shadowRoot.querySelector('.save-btn');
+        const statusMessage = this.shadowRoot.querySelector('.status-message');
 
         container.classList.toggle('active', this.isActive);
         editor.classList.toggle('active', this.isActive);
@@ -212,6 +240,12 @@ class CommentBox extends HTMLElement {
         userPhotoImg.alt = userName || '';
         userNameSpan.textContent = userName || '';
         userNicknameSpan.textContent = nickname ? `@${nickname}` : '';
+        textarea.disabled = this.isSaving;
+        cancelButton.disabled = this.isSaving;
+        saveButton.disabled = this.isSaving;
+        saveButton.textContent = this.isSaving ? 'Guardando...' : 'Guardar';
+        statusMessage.textContent = this.errorMessage;
+        statusMessage.classList.toggle('active', Boolean(this.errorMessage));
     }
 
     setupEventListeners() {
@@ -235,22 +269,35 @@ class CommentBox extends HTMLElement {
     }
 
     deactivate() {
+        if (this.isSaving) {
+            return;
+        }
+
         this.isActive = false;
         this.shadowRoot.querySelector('textarea').value = '';
+        this.errorMessage = '';
         this.updateContent();
     }
 
     saveComment() {
+        if (this.isSaving) {
+            return;
+        }
+
         const textarea = this.shadowRoot.querySelector('textarea');
         const commentText = textarea.value.trim();
 
         if (commentText) {
+            this.errorMessage = '';
+            this.updateContent();
+
             const comment = {
                 userId: this.getAttribute('user-id'),
                 userName: this.getAttribute('user-name'),
                 nickname: this.getAttribute('nickname'),
                 text: commentText,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                source: this
             };
 
             this.dispatchEvent(new CustomEvent('comment-saved', {
@@ -258,14 +305,28 @@ class CommentBox extends HTMLElement {
                 bubbles: true,
                 composed: true
             }));
-
-            this.deactivate();
         }
     }
 
     setPlaceholderText(text) {
         this.placeholderText = text;
         this.shadowRoot.querySelector('.placeholder').textContent = text;
+    }
+
+    setSavingState(isSaving) {
+        this.isSaving = Boolean(isSaving);
+        this.updateContent();
+    }
+
+    showErrorMessage(message) {
+        this.errorMessage = String(message || '').trim();
+        this.updateContent();
+    }
+
+    completeSave() {
+        this.isSaving = false;
+        this.errorMessage = '';
+        this.deactivate();
     }
 }
 

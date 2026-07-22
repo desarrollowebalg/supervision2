@@ -4,8 +4,8 @@
   set_time_limit(0);
   header("Access-Control-Allow-Origin: *");
   header('Access-Control-Allow-Credentials: true');
-  header('Access-Control-Allow-Methods: GET, POST');
-  header("Access-Control-Allow-Headers: X-Requested-With");
+  header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
+  header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
   header('Content-Type: application/json; charset=utf-8');
   header('P3P: CP="IDC DSP COR CURa ADMa OUR IND PHY ONL COM STA"');
   ob_start();
@@ -15,7 +15,13 @@
 
   $moduleConfig = require dirname(__FILE__) . "/actions.php";
 
+  if($_SERVER['REQUEST_METHOD'] === 'OPTIONS'){
+    http_response_code(204);
+    exit();
+  }
+
   iniciarSesionApi();
+  $requestBody = obtenerBodyJsonRequest();
 
   $routes = new Route(true);
   $route = $routes->getRoutes();
@@ -38,7 +44,7 @@
   $supervisionApi = new apiSupervision($config_bd["host"],$config_bd["user"],$config_bd["pass"],$config_bd["bname"],$config_bd["port"]);
 
   hidratarContextoSesion($supervisionApi, $moduleConfig["session_context"]);
-  $resolvedParams = resolverParametrosAccion($route, $actionDefinition);
+  $resolvedParams = resolverParametrosAccion($route, $actionDefinition, $requestBody);
   hidratarPropiedadesAccion($supervisionApi, $actionDefinition, $resolvedParams);
 
   $supervisionApi->executeDefinedAction($actionDefinition);
@@ -96,21 +102,40 @@
     }
   }
 
-  function resolverParametrosAccion($route, $actionDefinition){
+  function obtenerBodyJsonRequest(){
+    $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string)$_SERVER['REQUEST_METHOD']) : 'GET';
+    if($method !== 'PUT' && $method !== 'POST' && $method !== 'PATCH'){
+      return array();
+    }
+
+    $rawInput = file_get_contents("php://input");
+    if($rawInput === false){
+      responderApi(300, "No fue posible leer el body de la solicitud");
+      exit();
+    }
+
+    $rawInput = trim($rawInput);
+    if($rawInput === ""){
+      return array();
+    }
+
+    $decoded = json_decode($rawInput, true);
+    if(!is_array($decoded) || json_last_error() !== JSON_ERROR_NONE){
+      responderApi(300, "Body JSON invalido");
+      exit();
+    }
+
+    return $decoded;
+  }
+
+  function resolverParametrosAccion($route, $actionDefinition, $requestBody = array()){
     $resolvedParams = array();
     $params = isset($actionDefinition["params"]) ? $actionDefinition["params"] : array();
 
     foreach($params as $paramDefinition){
-      $routeIndex = $paramDefinition["route_index"];
-      $errorLabel = $paramDefinition["error_label"];
-
-      if(!isset($route[$routeIndex])){
-        responderApi(300, "Error, especifique un ".$errorLabel." valido");
-        exit();
-      }
-
-      $rawValue = trim((string)$route[$routeIndex]);
-      if($rawValue === ""){
+      $rawValue = obtenerValorParametro($route, $requestBody, $paramDefinition);
+      if($rawValue === false){
+        $errorLabel = $paramDefinition["error_label"];
         responderApi(300, "Error, especifique un ".$errorLabel." valido");
         exit();
       }
@@ -119,6 +144,47 @@
     }
 
     return $resolvedParams;
+  }
+
+  function obtenerValorParametro($route, $requestBody, $paramDefinition){
+    $source = isset($paramDefinition["source"]) ? strtolower(trim((string)$paramDefinition["source"])) : "route";
+
+    if($source === "body"){
+      $bodyKey = isset($paramDefinition["body_key"]) && trim((string)$paramDefinition["body_key"]) !== ""
+        ? (string)$paramDefinition["body_key"]
+        : $paramDefinition["name"];
+
+      if(!is_array($requestBody) || !array_key_exists($bodyKey, $requestBody)){
+        return false;
+      }
+
+      $bodyValue = $requestBody[$bodyKey];
+      if(is_string($bodyValue)){
+        return $bodyValue;
+      }
+
+      if(is_numeric($bodyValue)){
+        return (string)$bodyValue;
+      }
+
+      return false;
+    }
+
+    if(!isset($paramDefinition["route_index"])){
+      return false;
+    }
+
+    $routeIndex = $paramDefinition["route_index"];
+    if(!isset($route[$routeIndex])){
+      return false;
+    }
+
+    $rawValue = trim((string)$route[$routeIndex]);
+    if($rawValue === ""){
+      return false;
+    }
+
+    return $rawValue;
   }
 
   function normalizarParametro($rawValue, $paramDefinition){
@@ -131,7 +197,16 @@
         return (int)$rawValue;
       case "string":
       default:
-        return rawurldecode($rawValue);
+        $normalizedValue = isset($paramDefinition["source"]) && strtolower(trim((string)$paramDefinition["source"])) === "body"
+          ? (string)$rawValue
+          : rawurldecode($rawValue);
+
+        if(trim($normalizedValue) === ""){
+          responderApi(300, "Error, especifique un ".$paramDefinition["error_label"]." valido");
+          exit();
+        }
+
+        return $normalizedValue;
     }
   }
 

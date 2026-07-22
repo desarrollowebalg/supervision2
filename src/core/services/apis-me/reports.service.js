@@ -65,6 +65,36 @@ function normalizeHistoryEntry(entry = {}) {
   };
 }
 
+function normalizeIncidentEntry(entry = {}) {
+  return {
+    ID: Number(entry?.ID ?? 0),
+    CREADA_POR: Number(entry?.CREADA_POR ?? 0),
+    ID_ESTATUS: Number(entry?.ID_ESTATUS ?? 0),
+    ID_TIPO_INC: Number(entry?.ID_TIPO_INC ?? 0),
+    ID_OBJECT_MAP: String(entry?.ID_OBJECT_MAP || '').trim(),
+    ID_EVIDENCIA: Number(entry?.ID_EVIDENCIA ?? 0),
+    NIVEL: Number(entry?.NIVEL ?? 0)
+  };
+}
+
+export async function getIncidentReport(inc) {
+  const safeInc = String(inc || '').trim();
+  if (!/^\d+$/.test(safeInc)) {
+    throw new Error('Identificador de incidencia invalido');
+  }
+
+  const response = await apisMeGet(`reports/incidence/${encodeURIComponent(safeInc)}/`);
+  if (!response?.success) {
+    throw new Error(String(response?.message || 'No fue posible consultar la incidencia'));
+  }
+
+  const rows = Array.isArray(response?.data)
+    ? response.data.map(normalizeIncidentEntry)
+    : [];
+
+  return rows[0] || null;
+}
+
 export async function getHistoryReport(inc) {
   const safeInc = String(inc || '').trim();
   if (!/^\d+$/.test(safeInc)) {

@@ -2,15 +2,15 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-21
+2026-07-22
 
 ## Responsable sugerido
 
-api-action-agent
+frontend-agent
 
 ## Objetivo actual
 
-Dejar operativo el flujo de detalle e incidencia en `supervision`, incluyendo creacion de incidencia desde evidencia, historial real y accion de actualizacion `incidenceAct`, dejando claro el contrato recomendado para observaciones en llamadas `PUT`.
+Dejar consolidado el flujo real de detalle e incidencia en `supervision`, con comentarios operativos desde frontend, historial real reutilizado en dos vistas y contrato estable de `incidenceAct` para `PUT` con observaciones en body JSON.
 
 ## Estado actual
 
@@ -27,8 +27,11 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
   - `incidenceAct`
 - La ruta `leer` ya permite que frontend obtenga `data.ID` para sustituir `idi = 0` por el identificador real de incidencia.
 - `src/pages/supervision/DetalleIncidencia.js` ya consume ese flujo y reemplaza la ruta dentro de la SPA sin `hard refresh`.
-- La accion `incidenceAct` ya existe con contrato actual por ruta `/apis_me/supervision/incidenceAct/<idi>/<obs>/<tip>/`.
-- La recomendacion operativa vigente es no mantener `obs` como texto libre en la URL a mediano plazo y migrarlo a `body` JSON en el `PUT`.
+- La accion `incidenceAct` ya opera con contrato local `/apis_me/supervision/incidenceAct/<idi>/<tip>/` y recibe `obs` en el body JSON del `PUT`.
+- `src/pages/supervision/DetalleIncidencia.js` ya consume `incidenceAct` al guardar comentarios desde `CommentBox`.
+- El historial real de `reports/history` ahora alimenta dos vistas:
+  - comentarios recientes bajo la caja de comentarios para registros `ESTATUS = ATENDIDO`
+  - off-canvas lateral para el resto del historial, con enlace explicito para desplegar tambien los comentarios
 
 ## Alcance confirmado
 
@@ -37,7 +40,8 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 - Enviar `ide` como `EVD` hacia la API externa.
 - Exponer al frontend solo el JSON util de `body`, sin envolver `statusCode` en la respuesta local final.
 - Mantener `incidenceAct` operativo con `USU`, `IDI`, `OBS` y `TIP`.
-- Dejar documentado que el contrato recomendado para observaciones en `PUT` es `body` JSON, aunque la implementacion actual siga aceptando `obs` por ruta.
+- Mantener `tip = 1` para comentarios en el flujo actual de `DetalleIncidencia`, sin cerrar el endpoint a otros `TIP` futuros desde otras vistas frontend.
+- Mantener `obs` en body JSON como contrato vigente para texto libre en `PUT`.
 
 ## Decisiones vigentes
 
@@ -45,15 +49,20 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 - El contexto activo debe reflejar el ultimo frente real del proyecto, aunque el detalle historico siga viviendo en `notas/contexto/historial/`.
 - Para `supervision/leer`, el contrato vigente es que el frontend lea `data.ID`.
 - `apiSupervision.class.php` ya soporta `execution.type = "api"` con `curl`, serializacion JSON y parseo configurable de respuesta externa.
-- Para `incidenceAct`, la implementacion vigente acepta `obs` por ruta con `rawurldecode`, pero la recomendacion de arquitectura es migrar observaciones a `body` JSON en un `PUT` real.
-- La nota de historial base para este contexto es `notas/contexto/historial/2026-07-20-supervision-leer-api-externa.md`.
+- Para `incidenceAct`, el contrato vigente ya usa `obs` en body JSON y deja `idi` y `tip` como parametros de ruta.
+- Los comentarios visibles en la columna derecha y los comentarios desplegables del off-canvas salen de la misma fuente `reports/history`, filtrando `ESTATUS = ATENDIDO`.
+- La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-22-supervision-comentarios-historial.md`.
 
 ## Archivos clave
 
 - `apis_me/supervision/index.php`
 - `apis_me/supervision/actions.php`
 - `apis_me/supervision/apiSupervision.class.php`
-- `notas/contexto/historial/2026-07-20-supervision-leer-api-externa.md`
+- `src/core/services/apis-me/supervision.service.js`
+- `src/components/comentarios/CommentBox.js`
+- `src/components/comentarios/comment-history-item.js`
+- `src/pages/supervision/DetalleIncidencia.js`
+- `notas/contexto/historial/2026-07-22-supervision-comentarios-historial.md`
 - `notas/contexto/CONTEXTO_ACTIVO.md`
 - `AGENTS.md`
 
@@ -73,6 +82,27 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 2. Definir si `obs` permanecera temporalmente en ruta o se migrara ya a `body` JSON.
 3. Si se migra `obs` a `body`, ajustar `apis_me/supervision/index.php` para leer payload `PUT` de forma uniforme.
 4. Validar integralmente el flujo completo de detalle: generar incidencia, consultar historial y actualizar incidencia.
+
+## Actualizacion de sesion 2026-07-22 - comentarios reales y separacion visual del historial
+
+- Se ajusto `apis_me/supervision/index.php` para aceptar `PUT`, `OPTIONS`, `Content-Type: application/json` y lectura uniforme de `php://input`.
+- La accion `incidenceAct` en `apis_me/supervision/actions.php` dejo de recibir `obs` por ruta y ahora lo recibe desde body JSON con `source = body`.
+- Se agrego `apisMePut()` en `src/core/services/apis-me/client.js`.
+- Se agrego `updateIncidentComment()` en `src/core/services/apis-me/supervision.service.js`.
+- `src/components/comentarios/CommentBox.js` ahora conserva el texto mientras guarda, muestra estado de guardado y error, y solo limpia el textarea cuando el `PUT` responde correctamente.
+- `src/pages/supervision/DetalleIncidencia.js` ya escucha `comment-saved` y guarda comentarios reales contra `/apis_me/supervision/incidenceAct/<idi>/<tip>/`.
+- Para el flujo actual de comentarios, frontend envia `tip = 1` al guardar desde `DetalleIncidencia`.
+- Se creo el web component reutilizable `src/components/comentarios/comment-history-item.js` para mostrar comentarios con una UI mas ligera.
+- La columna derecha de `DetalleIncidencia` ahora muestra:
+  - `CommentBox`
+  - lista de comentarios recientes filtrados por `ESTATUS = ATENDIDO`
+- El off-canvas de historial mantiene visibles por defecto solo las otras acciones y agrega un enlace `Mostrar comentarios de atencion` para desplegar tambien los registros `ATENDIDO` sin sobrecargar la vista inicial.
+- Tanto comentarios como historial se siguen ordenando de la fecha mas reciente a la mas antigua.
+- Validacion funcional reportada por usuario el miercoles 22 de julio de 2026:
+  - guardado de comentarios funcionando sin problema
+- Validacion automatica pendiente en este entorno:
+  - no fue posible ejecutar `npm run build` porque `npm` no esta disponible en la sesion actual
+  - no fue posible ejecutar `php -l` porque `php` no esta disponible en la sesion actual
 
 ## Actualizacion de sesion 2026-07-21 - detalle con generacion de incidencia
 
@@ -120,17 +150,18 @@ El ultimo avance confirmado del proyecto es tecnico sobre el detalle de `supervi
 
 - Si el frontend asume la envoltura completa del proveedor externo, fallara porque el endpoint local ahora expone directamente `body`.
 - Cualquier cambio posterior en el contrato de la API externa requerira revisar el parseo en `apiSupervision.class.php`.
-- Mantener `obs` en la URL puede fallar o degradarse con textos largos o caracteres reservados, aun usando codificacion.
+- Los otros consumidores futuros de `incidenceAct` deberan seguir enviando `tip` por ruta segun su accion especifica; hoy solo el flujo de comentarios fija `tip = 1`.
 
 ## Validacion pendiente
 
-- Validar el consumidor frontend de `incidenceAct`.
-- Probar envio de observaciones con acentos, signos y texto largo.
-- Si se decide migrar `obs` a body, validar `PUT` real con payload JSON desde frontend.
+- Ejecutar `npm run build` cuando el entorno tenga Node/NPM disponible.
+- Ejecutar `php -l` sobre `apis_me/supervision/index.php` y `apis_me/supervision/actions.php` cuando el entorno tenga PHP disponible.
+- Validar manualmente el enlace del off-canvas para mostrar/ocultar comentarios de atencion dentro del historial.
+- Definir los `TIP` que usaran las otras acciones futuras del frontend, aprovechando el mismo endpoint `incidenceAct`.
 
 ## Siguiente paso recomendado
 
-Implementar o revisar el consumidor frontend de `incidenceAct` y decidir si se conserva temporalmente `obs` en ruta con `encodeURIComponent(...)` o se migra de inmediato a `body` JSON.
+Definir los siguientes consumidores frontend de `incidenceAct` que usaran otros valores de `TIP`, manteniendo `CommentBox` solo para comentarios con `TIP = 1`.
 
 ## Actualizacion de sesion 2026-07-17
 

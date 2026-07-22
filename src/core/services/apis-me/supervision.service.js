@@ -1,4 +1,4 @@
-import { apisMeGet } from './client.js';
+import { apisMeGet, apisMePut } from './client.js';
 
 function normalizeIncidentCreationResponse(payload = {}) {
   return {
@@ -35,4 +35,33 @@ export async function markEvidenceAsReadAndCreateIncident(idResCuestionario, ite
   }
 
   return normalizedResponse.incidentId;
+}
+
+export async function updateIncidentComment(incidentId, tipoAtencion, observaciones) {
+  const safeIncidentId = String(incidentId || '').trim();
+  const safeTipoAtencion = String(tipoAtencion || '').trim();
+  const safeObservaciones = String(observaciones || '').trim();
+
+  if (!/^\d+$/.test(safeIncidentId)) {
+    throw new Error('Identificador de incidencia invalido para guardar el comentario');
+  }
+
+  if (!/^\d+$/.test(safeTipoAtencion)) {
+    throw new Error('Tipo de atencion invalido para guardar el comentario');
+  }
+
+  if (!safeObservaciones) {
+    throw new Error('Escribe un comentario antes de guardar');
+  }
+
+  const response = await apisMePut(
+    `supervision/incidenceAct/${encodeURIComponent(safeIncidentId)}/${encodeURIComponent(safeTipoAtencion)}/`,
+    { obs: safeObservaciones }
+  );
+
+  if (!response?.success) {
+    throw new Error(String(response?.message || 'No fue posible guardar el comentario'));
+  }
+
+  return response;
 }

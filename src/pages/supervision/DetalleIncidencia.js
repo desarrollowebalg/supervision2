@@ -5,13 +5,15 @@ import catalogIndexedDbService from '../../core/services/catalog-indexeddb.servi
 import { getSessionCatalogContext } from '../../core/services/apis-me/session-catalog-context.service.js';
 import '../../components/userAvatar.js';
 import '../../components/comentarios/CommentBox.js';
+import '../../components/comentarios/comment-history-item.js';
 import '../../components/historial/historial-component.js';
 import { getEvidenceReport, getHistoryReport } from '../../core/services/apis-me/reports.service.js';
-import { markEvidenceAsReadAndCreateIncident } from '../../core/services/apis-me/supervision.service.js';
+import { markEvidenceAsReadAndCreateIncident, updateIncidentComment } from '../../core/services/apis-me/supervision.service.js';
 
 export default class DetalleIncidencia {
   static instancia = null;
   static EVIDENCE_IMAGE_BASE_URL = 'https://imagenes.movilizandome.net/';
+  static COMMENT_INCIDENT_TYPE = 1;
 
   constructor(navigationContext = {}) {
     if (DetalleIncidencia.instancia) {
@@ -21,6 +23,7 @@ export default class DetalleIncidencia {
 
     this.navigationContext = navigationContext;
     this.handleBackClick = null;
+    this.handleCommentSaved = null;
     this.requestToken = 0;
     this.pendingEvidenceId = '';
     this.pendingIncidentId = '';
@@ -154,6 +157,16 @@ export default class DetalleIncidencia {
     };
 
     backButton.addEventListener('click', this.handleBackClick);
+
+    if (this.handleCommentSaved) {
+      this.container?.removeEventListener('comment-saved', this.handleCommentSaved);
+    }
+
+    this.handleCommentSaved = (event) => {
+      this.handleCommentSaveRequest(event);
+    };
+
+    this.container?.addEventListener('comment-saved', this.handleCommentSaved);
   }
 
   async initializeDetailFlow(ide, idi) {
@@ -168,7 +181,7 @@ export default class DetalleIncidencia {
       return;
     }
 
-    this.renderHistoryOffcanvas();
+    await this.refreshHistoryViews();
   }
 
   async loadEvidence(ide) {
@@ -330,11 +343,21 @@ export default class DetalleIncidencia {
     if (backButton && this.handleBackClick) {
       backButton.removeEventListener('click', this.handleBackClick);
     }
+    if (this.container && this.handleCommentSaved) {
+      this.container.removeEventListener('comment-saved', this.handleCommentSaved);
+    }
     this.handleBackClick = null;
+    this.handleCommentSaved = null;
     this.requestToken += 1;
   }
 
-  async renderHistoryOffcanvas() {
+  async refreshHistoryViews() {
+    const records = await this.buildHistoryRecords();
+    this.renderHistoryOffcanvas(records);
+    this.renderCommentHistory(records);
+  }
+
+  renderHistoryOffcanvas(records = null) {
     const slot = this.container?.querySelector('[data-history-offcanvas-content="true"]');
     if (!slot) {
       return;
@@ -354,16 +377,24 @@ export default class DetalleIncidencia {
       return;
     }
 
-    slot.innerHTML = `
-      <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
-        <div class="uk-text-center">
-          <div uk-spinner></div>
-          <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Cargando historial...</p>
-        </div>
-      </div>
-    `;
+    const historyRecords = Array.isArray(records)
+      ? records.filter((entry) => !this.isCommentStatus(entry.status))
+      : [];
+    const commentRecords = Array.isArray(records)
+      ? records.filter((entry) => this.isCommentStatus(entry.status))
+      : [];
 
-    const records = await this.buildHistoryRecords();
+    if (!Array.isArray(records)) {
+      slot.innerHTML = `
+        <div class="uk-flex uk-flex-center uk-flex-middle uk-padding detail-incidencia-panel__state">
+          <div class="uk-text-center">
+            <div uk-spinner></div>
+            <p class="uk-text-meta uk-margin-small-top uk-margin-remove-bottom">Cargando historial...</p>
+          </div>
+        </div>
+      `;
+      return;
+    }
 
     slot.innerHTML = `
       <div class="detail-incidencia-history-panel">
@@ -372,9 +403,42 @@ export default class DetalleIncidencia {
             <h3 class="uk-h4 uk-margin-small-top uk-margin-remove-bottom">Historial completo</h3>
           </div>
           <div class="detail-incidencia-history-group__body">
-            ${this.renderHistoryEntries(records, 'No hay movimientos de historial para mostrar.')}
+            ${this.renderHistoryEntries(historyRecords, 'No hay movimientos de historial para mostrar.')}
           </div>
         </section>
+        ${commentRecords.length ? `
+          <section class="detail-incidencia-history-group">
+            <div class="detail-incidencia-history-group__toggle">
+              <a
+                href="#"
+                class="uk-link-reset detail-incidencia-history-toggle-link"
+                uk-toggle="target: #detalle-incidencia-history-comments; cls: uk-hidden"
+              >
+                Mostrar comentarios de atencion
+              </a>
+            </div>
+            <div id="detalle-incidencia-history-comments" class="uk-hidden">
+              <div class="detail-incidencia-history-group__header">
+                <h3 class="uk-h4 uk-margin-small-top uk-margin-remove-bottom">Comentarios de atencion</h3>
+              </div>
+              <div class="detail-incidencia-comments-list">
+                ${commentRecords.map((entry) => {
+                  const { date, time } = this.splitDateTime(entry.timestamp);
+                  return `
+                    <comment-history-item
+                      fecha="${this.escapeHtml(date)}"
+                      hora="${this.escapeHtml(time)}"
+                      usuario="${this.escapeHtml(entry.username)}"
+                      nombre-completo="${this.escapeHtml(entry.fullName || entry.username || 'Usuario')}"
+                      foto-usuario="${this.escapeHtml(entry.photoUrl)}"
+                      comentario="${this.escapeHtml(entry.comment)}"
+                    ></comment-history-item>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </section>
+        ` : ''}
       </div>
     `;
   }
@@ -473,6 +537,53 @@ export default class DetalleIncidencia {
     }).join('');
   }
 
+  renderCommentHistory(entries = []) {
+    const slot = this.container?.querySelector('[data-comment-history-panel="true"]');
+    if (!slot) {
+      return;
+    }
+
+    const commentEntries = (Array.isArray(entries) ? entries : [])
+      .filter((entry) => this.isCommentStatus(entry.status));
+
+    if (!commentEntries.length) {
+      slot.innerHTML = `
+        <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-comments-empty">
+          <p class="uk-margin-remove">No hay comentarios de atencion para mostrar.</p>
+        </div>
+      `;
+      return;
+    }
+
+    slot.innerHTML = `
+      <div class="detail-incidencia-comments-list">
+        ${commentEntries.map((entry) => {
+          const { date, time } = this.splitDateTime(entry.timestamp);
+          return `
+            <comment-history-item
+              fecha="${this.escapeHtml(date)}"
+              hora="${this.escapeHtml(time)}"
+              usuario="${this.escapeHtml(entry.username)}"
+              nombre-completo="${this.escapeHtml(entry.fullName || entry.username || 'Usuario')}"
+              foto-usuario="${this.escapeHtml(entry.photoUrl)}"
+              comentario="${this.escapeHtml(entry.comment)}"
+            ></comment-history-item>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  isCommentStatus(status) {
+    const normalizedStatus = String(status || '')
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    return normalizedStatus === 'ATENDIDO';
+  }
+
   splitDateTime(value) {
     const safeValue = String(value || '').trim();
     const match = safeValue.match(/^(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}:\d{2}:\d{2}))?$/);
@@ -527,6 +638,16 @@ export default class DetalleIncidencia {
         nickname="${this.escapeHtml(commentUser.nickname)}"
         user-photo="${this.escapeHtml(commentUser.userPhoto)}"
       ></comment-box>
+      <div class="detail-incidencia-commentary__feed">
+        <div class="detail-incidencia-commentary__subheader">
+          <h3 class="uk-h5 uk-margin-remove">Comentarios recientes</h3>
+        </div>
+        <div data-comment-history-panel="true">
+          <div class="uk-card uk-card-default uk-card-body uk-border-rounded detail-incidencia-comments-empty">
+            <p class="uk-margin-remove">Cargando comentarios...</p>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -575,6 +696,40 @@ export default class DetalleIncidencia {
       this.isCreatingIncident = false;
       this.renderCommentaryPanelState();
       this.renderHistoryOffcanvas();
+    }
+  }
+
+  async handleCommentSaveRequest(event) {
+    const commentBox = event?.target;
+    if (!(commentBox instanceof HTMLElement) || commentBox.tagName?.toLowerCase() !== 'comment-box') {
+      return;
+    }
+
+    const commentText = String(event?.detail?.text || '').trim();
+    const safeIncidentId = String(this.pendingIncidentId || '').trim();
+    if (!commentText) {
+      commentBox.showErrorMessage('Escribe un comentario antes de guardar.');
+      return;
+    }
+
+    if (!/^\d+$/.test(safeIncidentId) || this.isPendingIncidentId(safeIncidentId)) {
+      commentBox.showErrorMessage('La incidencia todavia no esta lista para guardar comentarios.');
+      return;
+    }
+
+    commentBox.setSavingState(true);
+    commentBox.showErrorMessage('');
+
+    try {
+      await updateIncidentComment(safeIncidentId, DetalleIncidencia.COMMENT_INCIDENT_TYPE, commentText);
+      commentBox.completeSave();
+      await this.refreshHistoryViews();
+    } catch (error) {
+      commentBox.showErrorMessage(
+        error instanceof Error ? error.message : 'No fue posible guardar el comentario.'
+      );
+    } finally {
+      commentBox.setSavingState(false);
     }
   }
 
@@ -751,6 +906,23 @@ export default class DetalleIncidencia {
         gap: 0.25rem;
       }
 
+      .detail-incidencia-history-group__toggle {
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .detail-incidencia-history-toggle-link {
+        color: var(--app-primary, #1e87f0);
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+
+      .detail-incidencia-history-toggle-link:hover,
+      .detail-incidencia-history-toggle-link:focus-visible {
+        color: var(--app-primary-hover, #0f7ae5);
+        text-decoration: underline;
+      }
+
       .detail-incidencia-history-empty {
         background: var(--app-surface);
         border: 1px solid var(--app-border);
@@ -764,6 +936,27 @@ export default class DetalleIncidencia {
 
       .detail-incidencia-commentary comment-box {
         margin: 0;
+      }
+
+      .detail-incidencia-commentary__feed {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .detail-incidencia-commentary__subheader .uk-h5 {
+        color: var(--app-text);
+      }
+
+      .detail-incidencia-comments-list {
+        display: grid;
+        gap: 0;
+      }
+
+      .detail-incidencia-comments-empty {
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
+        color: var(--app-text-muted);
+        box-shadow: none;
       }
 
       .detail-evidence-stack {

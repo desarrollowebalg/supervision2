@@ -24,3 +24,15 @@ export async function apisMePost(path, body = {}) {
     body: JSON.stringify(body ?? {})
   });
 }
+
+export async function apisMePut(path, body = {}) {
+  const cleanPath = normalizePath(path);
+  return api(`${APIS_ME_BASE_URL}/${cleanPath}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify(body ?? {})
+  });
+}

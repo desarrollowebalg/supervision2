@@ -98,18 +98,19 @@ return array(
           "error_label" => "ID INCIDENCIA",
         ),
         array(
-          "name" => "obs",
-          "route_index" => 3,
-          "type" => "string",
-          "target_property" => "observaciones",
-          "error_label" => "OBSERVACIONES",
-        ),
-        array(
           "name" => "tip",
-          "route_index" => 4,
+          "route_index" => 3,
           "type" => "int",
           "target_property" => "tipoAtencion",
           "error_label" => "TIPO DE ATENCION",
+        ),
+        array(
+          "name" => "obs",
+          "source" => "body",
+          "body_key" => "obs",
+          "type" => "string",
+          "target_property" => "observaciones",
+          "error_label" => "OBSERVACIONES",
         ),
       ),
       "execution" => array(
