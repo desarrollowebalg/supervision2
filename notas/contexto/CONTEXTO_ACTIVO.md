@@ -2,7 +2,7 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-22
+2026-07-23
 
 ## Responsable sugerido
 
@@ -60,7 +60,7 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 - Los estatus terminales para atencion son `RECHAZADA (4)` y `CERRADA (2)`, por lo que el boton `Atender incidencia` no debe quedar operativo en esos casos.
 - Los estatus que bloquean nuevos comentarios desde la UI son `APROBADA (3)`, `RECHAZADA (4)` y `CERRADA (2)`.
 - El refresco del catalogo de `supervision` despues de comentar o atender debe ejecutarse en segundo plano con `forceRefresh`, usando el contexto de seleccion con el que se abrio el detalle.
-- La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-22-supervision-atencion-estado-cache-pdf.md`.
+- La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-23-cierre-supervision-atencion-estado-cache-pdf.md`.
 
 ## Archivos clave
 
@@ -74,7 +74,7 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 - `src/components/comentarios/comment-history-item.js`
 - `src/components/supervision-detail/supervision-detail-panel.js`
 - `src/pages/supervision/DetalleIncidencia.js`
-- `notas/contexto/historial/2026-07-22-supervision-atencion-estado-cache-pdf.md`
+- `notas/contexto/historial/2026-07-23-cierre-supervision-atencion-estado-cache-pdf.md`
 - `notas/contexto/CONTEXTO_ACTIVO.md`
 - `AGENTS.md`
 
@@ -198,6 +198,16 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 ## Siguiente paso recomendado
 
 Validar punta a punta el regreso desde `DetalleIncidencia` hacia `supervision` para confirmar que la sincronizacion en segundo plano deja consistente el catalogo y definir si el mismo patron debe extenderse a otros catalogos mutables del modulo.
+
+## Actualizacion de sesion 2026-07-23 - cierre con historial
+
+- Se deja como estado operativo vigente el frente de `DetalleIncidencia` con comentarios reales, modal de atencion, bloqueo de acciones terminales, boton `PDF` y refresco en segundo plano del catalogo de `supervision`.
+- No se registran cambios adicionales de codigo en esta sesion; el cierre se hace para consolidar continuidad documental y dejar el siguiente paso claramente acotado.
+- La validacion pendiente se mantiene igual:
+  - confirmar en flujo real el regreso inmediato al panel sin desfase por TTL
+  - revisar si la vista imprimible actual del boton `PDF` es suficiente o si despues se requerira PDF binario real
+  - detectar otros puntos de mutacion de incidencias que deban disparar `forceRefresh`
+- La nota de historial de cierre para esta continuidad queda en `notas/contexto/historial/2026-07-23-cierre-supervision-atencion-estado-cache-pdf.md`.
 
 ## Actualizacion de sesion 2026-07-17
 
