@@ -1012,7 +1012,7 @@ export function createSupervisionDetailPanel({ container }) {
   }
 
   function notifyOpenDetailPage() {
-    const message = 'Se abrirá una nueva página con el detalle de la incidencia.';
+    const message = 'Verificando información, por favor espera...';
     if (window.UIkit?.notification) {
       window.UIkit.notification({
         message,
