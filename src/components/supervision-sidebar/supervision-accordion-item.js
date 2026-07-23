@@ -44,7 +44,7 @@ export function renderSupervisionAccordionItem(panel) {
       </a>
       <div class="uk-accordion-content uk-margin-small-top">
         <span class="uk-badge supervision2-pending-badge supervision2-pending-badge--inactive">
-          Pendientes:
+          <span class="supervision2-pending-label">Pendientes:</span>
           <span id="${bindings.pendingId}" class="supervision2-pending-total">0</span>
         </span>
         <div id="${bindings.listId}" class="supervision2-users-container"></div>

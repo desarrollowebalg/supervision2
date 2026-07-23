@@ -330,7 +330,7 @@ export async function getIncidenciasDetalle({
       });
 
   const cacheNotice = isTodaySelection
-    ? 'La información consultada corresponde a hoy y puede actualizarse. Esta vista usa una vigencia máxima de 5 minutos, pero no se actualizará automáticamente; primero se te notificará.'
+    ? 'La información consultada corresponde a hoy y puede actualizarse.'
     : null;
   const ttlMs = resolveDetalleTtlMs({ historicalWeek, isTodaySelection });
 

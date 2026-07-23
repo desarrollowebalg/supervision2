@@ -289,6 +289,37 @@ Validar punta a punta el regreso desde `DetalleIncidencia` hacia `supervision` p
 - Verificacion remota ejecutada el lunes 20 de julio de 2026 con `USU = 36925`, `PDI = M2512225537-434` y `EVD = 67433043`: la API externa respondio `{"statusCode":200,"body":{"ID":2894}}`.
 - Validacion local pendiente en este entorno: no fue posible ejecutar `php -l` porque `php` no esta disponible en la sesion actual.
 
+## Actualizacion de sesion 2026-07-23 - dashboard demo de supervision
+
+- Se creo una nueva pagina frontend `Dashboard` como demo navegable para explorar la futura analitica de incidencias usando la estructura JSON mas reciente compartida en la sesion.
+- La nueva pagina vive en:
+  - `src/pages/dashboard/Dashboard.js`
+  - `src/pages/dashboard/dashboard-demo.data.js`
+- Se agrego la ruta autenticada `#/dashboard` en `src/pages/inicio/main.js`.
+- Se anclo el acceso `Dashboard` al menu lateral en `src/components/sidebar-menu-component.js`.
+- El demo usa un dataset mock derivado de la muestra entregada por usuario, manteniendo la semantica real de:
+  - fechas disponibles `2026-07-20` a `2026-07-23`
+  - estatus `No leida *`, `Leida`, `Aprobada`, `Cerrada` y `Rechazada`
+  - turnos `T1` y `T2`
+  - puntos de revision `OALGEDW`, `OFICINA_ALG`, `OALGOR` y `OALGSJ`
+- La navegacion por fecha ya quedo funcional dentro de la pagina, aunque por ahora sigue siendo demo local y no consume servicio real.
+- La vista incluye:
+  - tarjetas KPI
+  - distribucion por estatus
+  - distribucion por punto de revision
+  - distribucion por turno
+  - bloque de nivel
+  - tendencia por hora
+  - tabla operativa del dia
+  - panel lateral de detalle al seleccionar una incidencia
+- Se respeto la realidad actual del dataset: `NVL` solo viene con valor `0` en la muestra completa, por lo que el bloque de niveles no inventa categorias adicionales.
+- Validacion ejecutada: `vite build` con el runtime local de Node del workspace, finalizando correctamente el jueves 23 de julio de 2026.
+- Siguiente paso natural de este frente:
+  - reemplazar `dashboard-demo.data.js` por un servicio real reusable en `src/core/services/`
+  - definir contrato de filtros remotos o locales por fecha
+  - confirmar si el dashboard quedara como modulo de supervision o como vista transversal separada
+  - mapear valores reales de `NVL` cuando la API ya los entregue con variedad operativa
+
 ## Historial relacionado
 
 - `notas/contexto/historial/2026-07-17-seguimiento-detalle-incidencia.md`

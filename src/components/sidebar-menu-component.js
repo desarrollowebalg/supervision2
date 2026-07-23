@@ -37,21 +37,14 @@ class SidebarMenuComponent extends HTMLElement {
   get items() {
     return [
       { path: '/inicio', label: 'Inicio', icon: 'home' },
+      { path: '/dashboard', label: 'Dashboard', icon: 'grid' },
       { path: '/supervision', label: 'Supervisión', icon: 'comments' },
-      { path: '/formularios', label: 'Formularios', icon: 'file-text' },
-      { path: '/tareas', label: 'Tareas', icon: 'check' },
       { path: '/cuadrantes', label: 'Cuadrantes', icon: 'thumbnails' },
-      { path: '/puntos-interes', label: 'Puntos de interes', icon: 'location' },
     ];
-    // { path: '/formularios', label: 'Formularios', icon: 'file-text' },
-    // { path: '/tareas', label: 'Tareas', icon: 'check' }
   }
 
   get sentItems() {
-    return [
-      { path: '/timeline', label: 'Bandeja de salida', icon: 'clock' }
-    ];
-    // return [];
+    return [];
   }
 
   get syncItem() {

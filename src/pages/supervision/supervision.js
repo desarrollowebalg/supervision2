@@ -225,7 +225,8 @@ export default class Supervision {
         --supervision2-shadow: var(--app-shadow);
         --supervision2-shadow-soft: var(--app-shadow-soft);
         --supervision2-badge-bg: color-mix(in srgb, var(--app-surface-elevated) 70%, var(--app-border) 30%);
-        --supervision2-badge-text: var(--app-text-muted);
+        --supervision2-badge-text: var(--app-text);
+        --supervision2-badge-value: var(--app-text);
         --supervision2-page-lift: 0.75rem;
         height: var(--supervision2-viewport-height, auto);
         min-height: var(--supervision2-viewport-height, auto);
@@ -327,7 +328,7 @@ export default class Supervision {
       .supervision2-detail-stats {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 0.20rem;
       }
 
       .supervision2-detail-stat {
@@ -749,9 +750,13 @@ export default class Supervision {
         color: var(--supervision2-badge-text);
       }
 
+      .supervision2-pending-label {
+        color: var(--supervision2-badge-text);
+      }
+
       .supervision2-pending-total {
         font-weight: 600;
-        color: inherit;
+        color: var(--supervision2-badge-value);
       }
 
       .supervision2-empty-detail {

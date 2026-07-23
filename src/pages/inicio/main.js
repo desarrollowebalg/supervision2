@@ -10,6 +10,7 @@ import { handleSessionExpired } from '../../core/services/session-expiration.ser
 import { initRouter, registerRoute, navigate, render } from '../../core/router.js';
 
 import Inicio from '../Inicio.js';
+import Dashboard from '../dashboard/Dashboard.js';
 import Profile from '../profile/Profile.js';
 import Settings from '../settings.js';
 import Formularios from '../formularios/formularios.js';
@@ -57,6 +58,7 @@ if (!user.isAuthenticated) {
   const content = document.querySelector('#appContent');
 
   registerRoute('/inicio', Inicio, { meta: { title: 'Inicio', requiresAuth: true } });
+  registerRoute('/dashboard', Dashboard, { meta: { title: 'Dashboard', requiresAuth: true } });
   registerRoute('/profile', Profile, { meta: { title: 'Perfil de usuario', requiresAuth: true } });
   registerRoute('/settings', Settings, { meta: { title: 'Configuración', requiresAuth: true } });
   registerRoute('/formularios', Formularios, { meta: { title: 'Formularios', requiresAuth: true } });
