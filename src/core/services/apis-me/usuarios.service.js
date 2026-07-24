@@ -7,6 +7,7 @@ import {
 } from './session-catalog-context.service.js';
 
 const MAX_DAYS_SESSION_KEY = 'maxdays';
+const CONF_FORMS_SESSION_KEY = 'confForms';
 const DEFAULT_MAX_DAYS = 7;
 const USERS_CACHE_TTL_MS = 30 * 60 * 1000;
 const USERS_CATALOG_KEY = 'usuarios';
@@ -72,6 +73,24 @@ function extractList(payload) {
 async function fetchUsersList() {
   const response = await apisMeGet('usuarios/listar/');
   return extractList(response?.data);
+}
+
+function findFormsConfig(payload) {
+  const rows = extractList(payload);
+  return rows.find((row) => String(row?.NOMBRE_CONF || '').toUpperCase() === 'FORMULARIOS') || null;
+}
+
+export async function fetchAndStoreFormsConfig() {
+  const response = await apisMeGet('usuarios/conf/');
+  const confForms = findFormsConfig(response?.data);
+
+  if (confForms) {
+    storageService.setSessionItem(CONF_FORMS_SESSION_KEY, confForms);
+    return confForms;
+  }
+
+  storageService.removeSessionItem(CONF_FORMS_SESSION_KEY);
+  return null;
 }
 
 export async function syncClientUsers() {

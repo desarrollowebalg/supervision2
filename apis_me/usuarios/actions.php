@@ -39,6 +39,22 @@ return array(
         ),
       ),
     ),
+    "conf" => array(
+      "label" => "Obtener configuracion de rondineros por cliente",
+      "params" => array(),
+      "execution" => array(
+        "type" => "query",
+        "result_mode" => "list",
+        "sql" => "SELECT NOMBRE_CONF, VALOR FROM ADM_RONDINEROS_CONF WHERE ID_CLIENTE = ?",
+        "bindings" => array(
+          array(
+            "source" => "property",
+            "name" => "idCliente",
+            "type" => "i",
+          ),
+        ),
+      ),
+    ),
     "maxdays" => array(
       "label" => "Obtener DIAS_MAX_DESCARGA por usuario de sesion",
       "params" => array(),

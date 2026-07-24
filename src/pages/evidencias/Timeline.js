@@ -1,6 +1,6 @@
 import { renderInicioLayout } from '../inicio-layout.js';
 
-import '../../components/forms-timeline-component.js';
+import '../../components/incidences-timeline-component.js';
 
 export default class Timeline {
   static instancia = null;
@@ -25,11 +25,14 @@ export default class Timeline {
     this.ensureTimelinePageStyles();
 
     renderInicioLayout(container, {
-      title: 'Bandeja de salida',
-      description: 'Consulta y reintenta el envío de evidencias almacenadas localmente.',
+      title: 'Incidencias semanales',
+      description: 'Consulta las incidencias registradas durante la semana actual usando el mismo origen del widget de inicio.',
       contentHtml: `
         <section class="timeline-page uk-width-1-1">
-          <forms-timeline-component days-window="7" title="Bandeja de salida" subtitle="Registros guardados"></forms-timeline-component>
+          <incidences-timeline-component
+            title="Incidencias de la semana"
+            subtitle="Registros del lunes al domingo de la semana actual">
+          </incidences-timeline-component>
         </section>
       `
     });
@@ -51,11 +54,11 @@ export default class Timeline {
         color: var(--timeline-page-text);
       }
 
-      .timeline-page forms-timeline-component {
+      .timeline-page incidences-timeline-component {
         display: block;
       }
 
-      .timeline-page forms-timeline-component > section,
+      .timeline-page incidences-timeline-component > section,
       .timeline-page .uk-card {
         border-color: var(--timeline-page-border);
       }

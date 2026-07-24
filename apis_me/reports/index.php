@@ -129,9 +129,18 @@
           exit();
         }
         return (int)$rawValue;
+      case "date":
+        $decodedValue = rawurldecode($rawValue);
+        $date = DateTime::createFromFormat('Y-m-d', $decodedValue);
+        $isValidDate = $date && $date->format('Y-m-d') === $decodedValue;
+        if(!$isValidDate){
+          responderApi(300, "Error, especifique una ".$paramDefinition["error_label"]." valida");
+          exit();
+        }
+        return $decodedValue;
       case "string":
       default:
-        return $rawValue;
+        return rawurldecode($rawValue);
     }
   }
 

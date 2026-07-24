@@ -2,19 +2,19 @@
 
 ## Fecha de ultima actualizacion
 
-2026-07-23
+2026-07-24
 
 ## Responsable sugerido
 
-documentation-agent
+frontend-agent
 
 ## Objetivo actual
 
-Dejar consolidado el flujo operativo de atencion de incidencias en `supervision`, incluyendo comentarios, cambio de estatus, bloqueo de acciones terminales, exportacion PDF del seguimiento y sincronizacion del catalogo para evitar desfases al regresar al panel.
+Mantener consolidado el flujo operativo de atencion de incidencias en `supervision` y extender la portada `Inicio` con el nuevo timeline semanal de incidencias alimentado por `reports/evidencesWeek`, resolviendo `IDFORM` desde `confForms`.
 
 ## Estado actual
 
-El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/DetalleIncidencia.js` y en la coherencia del regreso al catalogo de `supervision`:
+El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/DetalleIncidencia.js`, en la coherencia del regreso al catalogo de `supervision` y en la nueva tarjeta semanal de incidencias dentro de `Inicio`:
 
 - `DetalleIncidencia` ya muestra el estatus actual de la incidencia desde `reports/incidence` junto a la etiqueta `Seguimiento:`.
 - El boton `Atender incidencia` ya abre un modal funcional con:
@@ -36,6 +36,12 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
   - resumen de incidencia
   - historial completo
 - Cuando se agrega comentario o se atiende la incidencia, frontend ya dispara un refresco en segundo plano del catalogo de `supervision` para reducir el desfase al volver a la vista anterior.
+- `src/pages/Inicio.js` ya sustituyo el preview anterior basado en `forms-timeline-component` por `incidences-timeline-component`.
+- El nuevo componente consulta `/apis_me/reports/evidencesWeek/<fechai>/<fechaf>/<idf>/` calculando en frontend el rango lunes-domingo de la semana actual.
+- `idf` ya se resuelve desde `sessionStorage.confForms`, buscando en `VALOR` la entrada con `FORM_INCIDENCIA = true` y usando su `IDFORM`.
+- El timeline nuevo es de solo lectura, normaliza de forma tolerante la respuesta remota para pintar fecha, estatus, identificador, usuario y detalle crudo.
+- `Inicio` ya fuerza una sincronizacion del timeline semanal al cargar y guarda el resultado en un catalogo IndexedDB compartido para evitar pedir el endpoint en cada render.
+- `#/timeline` ya consume el mismo `incidences-timeline-component` que `Inicio`, leyendo del catalogo compartido en lugar de disparar otra solicitud remota por navegacion.
 
 ## Alcance confirmado
 
@@ -47,6 +53,8 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 - Mantener `tip = 1` para comentarios en el flujo de comentarios y habilitar tambien `TIP = 3`, `4` y `2` para el flujo de atencion desde modal.
 - Mantener `obs` en body JSON como contrato vigente para texto libre en `PUT`.
 - Evitar depender solo del TTL del catalogo cuando la propia vista ya conoce que hubo una mutacion de la incidencia.
+- Mantener `confForms` como fuente temporal de configuracion frontend para resolver el formulario de incidencias en `Inicio`.
+- Mantener el timeline semanal de incidencias en un catalogo frontend compartido para desacoplar la recarga de `Inicio` del consumo de `Timeline`.
 
 ## Decisiones vigentes
 
@@ -61,6 +69,8 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 - Los estatus que bloquean nuevos comentarios desde la UI son `APROBADA (3)`, `RECHAZADA (4)` y `CERRADA (2)`.
 - El refresco del catalogo de `supervision` despues de comentar o atender debe ejecutarse en segundo plano con `forceRefresh`, usando el contexto de seleccion con el que se abrio el detalle.
 - La nota de historial base mas reciente para este frente pasa a ser `notas/contexto/historial/2026-07-23-cierre-supervision-atencion-estado-cache-pdf.md`.
+- Para el timeline semanal en `Inicio`, el rango visible debe calcularse localmente como lunes-domingo usando la fecha actual del cliente.
+- El refresco remoto de incidencias semanales debe ejecutarse al entrar a `Inicio`; los componentes visuales deben consumir desde cache local compartido.
 
 ## Archivos clave
 
@@ -74,6 +84,11 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 - `src/components/comentarios/comment-history-item.js`
 - `src/components/supervision-detail/supervision-detail-panel.js`
 - `src/pages/supervision/DetalleIncidencia.js`
+- `src/core/services/apis-me/reports.service.js`
+- `src/components/incidences-timeline-component.js`
+- `src/components/forms-timeline-component.js`
+- `src/pages/Inicio.js`
+- `src/pages/evidencias/Timeline.js`
 - `notas/contexto/historial/2026-07-23-cierre-supervision-atencion-estado-cache-pdf.md`
 - `notas/contexto/CONTEXTO_ACTIVO.md`
 - `AGENTS.md`
@@ -94,6 +109,8 @@ El ultimo avance confirmado del proyecto se concentra en `src/pages/supervision/
 2. Confirmar visualmente si el formato imprimible del boton `PDF` cubre la necesidad operativa o si despues se requiere generacion binaria real.
 3. Revisar si hay otros puntos del frontend que permitan mutar incidencia y que tambien deban disparar sincronizacion en segundo plano.
 4. Limpiar o centralizar cualquier log temporal restante si reaparece durante nuevas iteraciones del flujo.
+5. Confirmar con datos reales si el shape final de `reports/evidencesWeek` coincide con el normalizador tolerante implementado en `incidences-timeline-component`.
+6. Evaluar si la sincronizacion semanal de incidencias tambien debe engancharse a sync manual global o si basta con el refresco al entrar a `Inicio`.
 
 ## Actualizacion de sesion 2026-07-22 - atencion de incidencia, estatus, PDF y sincronizacion del catalogo
 
@@ -318,7 +335,26 @@ Validar punta a punta el regreso desde `DetalleIncidencia` hacia `supervision` p
   - reemplazar `dashboard-demo.data.js` por un servicio real reusable en `src/core/services/`
   - definir contrato de filtros remotos o locales por fecha
   - confirmar si el dashboard quedara como modulo de supervision o como vista transversal separada
-  - mapear valores reales de `NVL` cuando la API ya los entregue con variedad operativa
+- mapear valores reales de `NVL` cuando la API ya los entregue con variedad operativa
+
+## Actualizacion de sesion 2026-07-24 - timeline semanal de incidencias en Inicio
+
+- Se agrego en `src/core/services/apis-me/reports.service.js` el consumo reusable de `reports/evidencesWeek`.
+- El servicio ya calcula el rango semanal actual como lunes-domingo a partir de la fecha local del cliente.
+- El `IDFORM` se resuelve desde `sessionStorage.confForms`, tomando `VALOR` y buscando la entrada con `FORM_INCIDENCIA = true`.
+- Se creo `src/components/incidences-timeline-component.js` como copia adaptada del timeline previo, pero ahora de solo lectura y alimentado por la API semanal de incidencias.
+- `src/pages/Inicio.js` ya usa `incidences-timeline-component` en lugar de `forms-timeline-component`.
+- El nuevo componente muestra timeline semanal, detalle en modal movil y un normalizador tolerante para distintas llaves de fecha, estatus, identificador y usuario mientras se confirma el shape definitivo del endpoint.
+- Validacion ejecutada: `pnpm build` con el runtime local del workspace el viernes 24 de julio de 2026.
+
+## Actualizacion de sesion 2026-07-24 - catalogo compartido del timeline semanal y alineacion de Timeline
+
+- `src/core/services/apis-me/reports.service.js` ahora guarda el resultado de `reports/evidencesWeek` en un catalogo IndexedDB compartido `incidencias_weekly_timeline`.
+- `src/pages/Inicio.js` ya fuerza `syncWeeklyIncidencesCatalog()` al cargar para refrescar el dataset semanal antes de renderizar el widget.
+- `src/components/incidences-timeline-component.js` dejo de invocar el endpoint directamente y ahora lee solo desde el catalogo local compartido.
+- `src/pages/evidencias/Timeline.js` ya fue alineada al nuevo flujo y muestra el mismo timeline semanal de incidencias que el preview de `Inicio`.
+- Con esta estructura, navegar de `Inicio` a `#/timeline` ya no genera una nueva consulta remota por cada apertura de la vista.
+- Validacion ejecutada: `pnpm build` con el runtime local del workspace el viernes 24 de julio de 2026.
 
 ## Historial relacionado
 

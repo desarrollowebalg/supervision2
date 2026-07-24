@@ -10,6 +10,11 @@ class apiReports{
   private $idUsuario = 0;
   private $idResCuestionario = 0;
   private $idIncidencia = 0;
+  private $fechaInicial = "";
+  private $fechaFinal = "";
+  private $fechaInicialCompleta = "";
+  private $fechaFinalCompleta = "";
+  private $idFormulario = 0;
   private $registros = array();
 
   function __construct($host,$usuario,$password,$base,$puerto) {
@@ -25,6 +30,18 @@ class apiReports{
   }
 
   public function __set($name, $value) {
+    if($name === "fechaInicial"){
+      $this->fechaInicial = (string)$value;
+      $this->fechaInicialCompleta = $this->fechaInicial . " 00:00:00";
+      return $this->fechaInicial;
+    }
+
+    if($name === "fechaFinal"){
+      $this->fechaFinal = (string)$value;
+      $this->fechaFinalCompleta = $this->fechaFinal . " 23:59:59";
+      return $this->fechaFinal;
+    }
+
     return $this->$name = $value;
   }
 

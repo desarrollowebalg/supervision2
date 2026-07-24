@@ -39,3 +39,18 @@ http://localhost:8070/apis_me/incidencias/detalle/2026-07-20/2026-07-26/954/
 - OFICINA_ALG => itemNumber pdi
 
 http://localhost:8070/apis_me/supervision/leer/72507676/OFICINA_ALG/
+
+### Consultar configuracion rondineros
+
+- Se ocupa el parámetro del ID_CLIENTE
+
+http://localhost:8070/apis_me/usuarios/conf/
+
+
+### Evidencias semanales
+
+- fechai => 2026-07-20
+- fechaf => 2026-07-26
+- idf => 11113
+
+/apis_me/reports/evidencesWeek/<fechai>/<fechaf>/<idf>/

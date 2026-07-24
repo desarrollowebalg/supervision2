@@ -150,5 +150,64 @@ return array(
         ),
       ),
     ),
+    "evidencesWeek" => array(
+      "label" => "Obtener evidencias semanales por rango y formulario desde API externa",
+      "params" => array(
+        array(
+          "name" => "fechai",
+          "route_index" => 2,
+          "type" => "date",
+          "target_property" => "fechaInicial",
+          "error_label" => "FECHA INICIAL",
+        ),
+        array(
+          "name" => "fechaf",
+          "route_index" => 3,
+          "type" => "date",
+          "target_property" => "fechaFinal",
+          "error_label" => "FECHA FINAL",
+        ),
+        array(
+          "name" => "idf",
+          "route_index" => 4,
+          "type" => "int",
+          "target_property" => "idFormulario",
+          "error_label" => "ID FORMULARIO",
+        ),
+      ),
+      "execution" => array(
+        "type" => "api",
+        "method" => "GET",
+        "url" => "https://ktw6p76syh.execute-api.us-east-1.amazonaws.com/DEV/Reportes/RepEvForm",
+        "result_mode" => "list",
+        "response_data_key" => "body",
+        "body" => array(
+          "USU" => array(
+            "source" => "property",
+            "name" => "idUsuario",
+            "type" => "i",
+            "cast" => "int",
+          ),
+          "FECHA_I" => array(
+            "source" => "property",
+            "name" => "fechaInicialCompleta",
+            "type" => "s",
+            "cast" => "string",
+          ),
+          "FECHA_F" => array(
+            "source" => "property",
+            "name" => "fechaFinalCompleta",
+            "type" => "s",
+            "cast" => "string",
+          ),
+          "ID_F" => array(
+            "source" => "property",
+            "name" => "idFormulario",
+            "type" => "i",
+            "cast" => "int",
+          ),
+        ),
+      ),
+    ),
   ),
 );

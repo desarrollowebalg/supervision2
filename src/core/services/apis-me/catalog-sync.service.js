@@ -1,4 +1,4 @@
-import { syncClientUsers } from './usuarios.service.js';
+import { fetchAndStoreFormsConfig, syncClientUsers } from './usuarios.service.js';
 import { syncClientCuadrantes } from './cuadrantes.service.js';
 import { getSessionCatalogContext } from './session-catalog-context.service.js';
 import catalogIndexedDbService from '../catalog-indexeddb.service.js';
@@ -11,15 +11,17 @@ export async function syncAllCatalogs({ refreshMaxDays = true } = {}) {
     await catalogIndexedDbService.clearAnonCatalogEntries({ catalogKeys: CATALOG_KEYS });
   }
 
-  const [users, cuadrantes] = await Promise.all([
+  const [users, cuadrantes, confForms] = await Promise.all([
     syncClientUsers(),
-    syncClientCuadrantes()
+    syncClientCuadrantes(),
+    fetchAndStoreFormsConfig()
   ]);
 
   return {
     skipped: !sessionContext.hasStableIdentity,
     reason: sessionContext.hasStableIdentity ? null : 'missing_user_id',
     users,
-    cuadrantes
+    cuadrantes,
+    confForms
   };
 }

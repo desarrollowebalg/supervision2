@@ -1,10 +1,11 @@
 import { getUserState } from '../core/store.js';
 import { storageService } from '../core/services/storage.service.js';
 import { fetchEntidadEntity, hasValidCodEntity, getEntidadValidationErrorMessage } from '../core/services/apis-me/entidad.service.js';
+import { syncWeeklyIncidencesCatalog } from '../core/services/apis-me/reports.service.js';
 import { renderInicioLayout } from './inicio-layout.js';
 
 import '../components/userAvatar.js';
-import '../components/forms-timeline-component.js';
+import '../components/incidences-timeline-component.js';
 import '../components/tasks-summary-widget.js';
 
 const ENTITY_VALIDATION_ERROR_KEY = 'entityValidationError';
@@ -22,6 +23,12 @@ export default class Inicio {
   }
 
   async inicializar(container) {
+    try {
+      await syncWeeklyIncidencesCatalog();
+    } catch (error) {
+      console.warn('No fue posible sincronizar incidencias semanales al cargar Inicio.', error);
+    }
+
     if (container) {
       this.render(container);
     }
@@ -53,7 +60,7 @@ export default class Inicio {
 
     renderInicioLayout(container, {
       title: 'Bienvenido',
-      description: 'Resumen rapido de tu actividad reciente y pendientes.',
+      description: '',
       contentHtml: `
         <section class="welcome-home uk-width-1-1">
           <div class="uk-card uk-card-primary uk-card-body welcome-hero welcome-hero-text uk-margin-small-bottom">
@@ -84,24 +91,24 @@ export default class Inicio {
               <span class="uk-text-meta uk-hidden">Menu principal</span>
             </div>
             <div class="welcome-quick-access" data-quick-access>
-              <a class="welcome-kpi-link" href="#/tareas" data-route="/tareas">
-                <span class="welcome-kpi-icon" uk-icon="icon: check; ratio: 1.7"></span>
-                <span class="welcome-kpi-text">Tareas</span>
+              <a class="welcome-kpi-link" href="#/dashboard" data-route="/dashboard">
+                <span class="welcome-kpi-icon" uk-icon="icon: grid; ratio: 1.7"></span>
+                <span class="welcome-kpi-text">Dashboard</span>
               </a>
-              <a class="welcome-kpi-link" href="#/formularios" data-route="/formularios">
-                <span class="welcome-kpi-icon" uk-icon="icon: file-text; ratio: 1.7"></span>
-                <span class="welcome-kpi-text">Formularios</span>
+              <a class="welcome-kpi-link" href="#/supervision" data-route="/supervision">
+                <span class="welcome-kpi-icon" uk-icon="icon: comments; ratio: 1.7"></span>
+                <span class="welcome-kpi-text">Supervisión</span>
               </a>
-              <a class="welcome-kpi-link" href="#/puntos-interes" data-route="/puntos-interes">
-                <span class="welcome-kpi-icon" uk-icon="icon: location; ratio: 1.7"></span>
-                <span class="welcome-kpi-text">Puntos de interes</span>
+              <a class="welcome-kpi-link" href="#/settings" data-route="/settings">
+                <span class="welcome-kpi-icon" uk-icon="icon: settings; ratio: 1.7"></span>
+                <span class="welcome-kpi-text">Configuración</span>
               </a>
             </div>
           </div>
 
           <a class="timeline-preview-link" href="#/timeline" data-route="/timeline" aria-label="Ver timeline completo">
             <div class="timeline-preview-wrap">
-              <forms-timeline-component days-window="7"></forms-timeline-component>
+              <incidences-timeline-component></incidences-timeline-component>
               <div class="timeline-preview-fade"></div>
             </div>
           </a>
